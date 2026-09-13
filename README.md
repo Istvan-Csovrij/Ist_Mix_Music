@@ -48,33 +48,17 @@ Doppelklicke einfach auf:
 
 ## 🐙 Auf dein GitHub Profil hochladen
 
-Um dein Projekt auf GitHub zu veröffentlichen:
+## 🐙 Dein GitHub Repository
 
-### Schritt 1: Neues Repository auf GitHub erstellen
-1. Gehe im Browser auf [https://github.com/new](https://github.com/new).
-2. Gib als Repository-Name ein: `Ist_Mix_Music`.
-3. Wähle **Public** (Öffentlich) und klicke auf **"Create repository"**.
-
-### Schritt 2: Code von deinem PC auf GitHub hochladen (Push)
-Öffne PowerShell oder die Eingabeaufforderung in diesem Ordner und führe aus:
-
-```powershell
-git remote add origin https://github.com/istvancsovrij/Ist_Mix_Music.git
-git branch -M main
-git push -u origin main
-```
-
-*(Falls du ein GitHub Personal Access Token oder Browser-Login benötigst, melde dich einfach kurz an).*
+Das Projekt ist live auf deinem GitHub-Profil veröffentlicht:
+👉 **[https://github.com/Istvan-Csovrij/Ist_Mix_Music](https://github.com/Istvan-Csovrij/Ist_Mix_Music)**
 
 ---
 
 ## 🌐 Gratis Online-Website via GitHub Pages (Weltweit am Handy öffnen)
 
-Sobald das Repository auf GitHub ist:
-1. Gehe in deinem GitHub-Repository auf **Settings** -> **Pages**.
-2. Wähle unter **Branch**: `main` und `/ (root)` aus und klicke auf **Save**.
-3. Nach ca. 1 Minute ist deine App unter folgender Adresse weltweit auf jedem Handy erreichbar:
-   👉 **`https://istvancsovrij.github.io/Ist_Mix_Music/`**
+Deine App ist automatisch über GitHub Pages online und auf jedem Smartphone ohne Installation erreichbar:
+👉 **[https://istvan-csovrij.github.io/Ist_Mix_Music/](https://istvan-csovrij.github.io/Ist_Mix_Music/)**
 
 ---
 
