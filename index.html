@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0c0e14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Ist_Mix_Musik 🎧 DJ Studio & Beat Maker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Top Header with Master Controls -->
+  <header>
+    <div class="logo-area">
+      <div class="logo-icon">🎧</div>
+      <div class="logo-text">
+        <h1>IST MIX MUSIK</h1>
+        <p>Mobile DJ Studio, Beatmaker & Vocal Recorder</p>
+      </div>
+    </div>
+
+    <div class="master-controls">
+      <div class="tempo-box">
+        <label for="bpm-slider">TEMPO:</label>
+        <input type="range" id="bpm-slider" min="70" max="160" value="120">
+        <span id="bpm-display">120 BPM</span>
+      </div>
+
+      <button id="btn-rec-master" class="btn-rec-master">
+        ⏺ Mix Aufnehmen
+      </button>
+
+      <button id="btn-download-mix" class="btn-download-mix">
+        💾 Mix Herunterladen
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main>
+
+    <!-- SECTION 1: DJ Decks (Traktor Style) -->
+    <section class="dj-studio-area">
+      <div class="section-header">
+        <h2>💿 DJ Decks & Crossfader</h2>
+      </div>
+
+      <div class="decks-wrapper">
+        <!-- Deck A -->
+        <div class="deck deck-a">
+          <div class="deck-title-bar">
+            <span class="deck-badge">DECK A</span>
+            <span id="deck-a-track-name" class="deck-track-info">Keine Datei geladen</span>
+          </div>
+
+          <label class="file-uploader-btn">
+            📂 Eigene Musik hochladen (MP3/WAV)
+            <input type="file" id="deck-a-file-input" accept="audio/*">
+          </label>
+
+          <div class="waveform-container">
+            <canvas id="deck-a-waveform" class="waveform-canvas"></canvas>
+            <div id="deck-a-cursor" class="playback-cursor"></div>
+          </div>
+
+          <div class="deck-controls-row">
+            <button id="deck-a-play" class="btn-transport">▶ PLAY</button>
+            <button id="deck-a-cue" class="btn-transport btn-cue">CUE</button>
+          </div>
+
+          <div class="deck-eq-controls">
+            <div class="eq-knob-box">
+              <label>BASS</label>
+              <input type="range" id="deck-a-eq-low" min="-18" max="12" value="0">
+            </div>
+            <div class="eq-knob-box">
+              <label>MITTEN</label>
+              <input type="range" id="deck-a-eq-mid" min="-18" max="12" value="0">
+            </div>
+            <div class="eq-knob-box">
+              <label>HÖHEN</label>
+              <input type="range" id="deck-a-eq-high" min="-18" max="12" value="0">
+            </div>
+          </div>
+        </div>
+
+        <!-- Center Crossfader -->
+        <div class="center-mixer">
+          <span class="crossfader-label">CROSSFADER</span>
+          <div class="crossfader-box">
+            <input type="range" id="crossfader-slider" class="crossfader-slider" min="0" max="1" step="0.01" value="0.5">
+            <div class="crossfader-indicators">
+              <span class="indicator-a">◄ DECK A</span>
+              <span class="indicator-b">DECK B ►</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deck B -->
+        <div class="deck deck-b">
+          <div class="deck-title-bar">
+            <span class="deck-badge">DECK B</span>
+            <span id="deck-b-track-name" class="deck-track-info">Keine Datei geladen</span>
+          </div>
+
+          <label class="file-uploader-btn">
+            📂 Eigene Musik hochladen (MP3/WAV)
+            <input type="file" id="deck-b-file-input" accept="audio/*">
+          </label>
+
+          <div class="waveform-container">
+            <canvas id="deck-b-waveform" class="waveform-canvas"></canvas>
+            <div id="deck-b-cursor" class="playback-cursor"></div>
+          </div>
+
+          <div class="deck-controls-row">
+            <button id="deck-b-play" class="btn-transport">▶ PLAY</button>
+            <button id="deck-b-cue" class="btn-transport btn-cue">CUE</button>
+          </div>
+
+          <div class="deck-eq-controls">
+            <div class="eq-knob-box">
+              <label>BASS</label>
+              <input type="range" id="deck-b-eq-low" min="-18" max="12" value="0">
+            </div>
+            <div class="eq-knob-box">
+              <label>MITTEN</label>
+              <input type="range" id="deck-b-eq-mid" min="-18" max="12" value="0">
+            </div>
+            <div class="eq-knob-box">
+              <label>HÖHEN</label>
+              <input type="range" id="deck-b-eq-high" min="-18" max="12" value="0">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: Voice & Mic Studio ("Eigene Stimme Aufnehmen & Kreieren") -->
+    <section class="voice-studio-area">
+      <div class="section-header">
+        <h2>🎤 Eigene Stimme Aufnehmen & Kreieren</h2>
+      </div>
+
+      <div class="mic-wrapper">
+        <div class="mic-recorder-card">
+          <button id="btn-mic-record" class="btn-mic-record" title="Klicken um Stimme aufzunehmen">
+            🎤
+          </button>
+          <div id="mic-status-text" class="mic-status-text">
+            Tippe auf das Mikrofon, um deine Stimme aufzunehmen
+          </div>
+          <canvas id="mic-visualizer" class="mic-visualizer"></canvas>
+        </div>
+
+        <div class="mic-effects-card">
+          <h3 style="font-size:13px; font-weight:bold; color:var(--neon-cyan);">Stimmen-Effekte & Aufnahmen</h3>
+          
+          <div class="vocal-fx-controls">
+            <div class="vocal-fx-box">
+              <label><span>ECHO / DELAY</span></label>
+              <input type="range" id="vocal-echo-slider" min="0" max="0.8" step="0.05" value="0">
+            </div>
+            <div class="vocal-fx-box">
+              <label><span>LAUTSTÄRKE</span></label>
+              <input type="range" id="vocal-vol-slider" min="0" max="1.5" step="0.05" value="1.0">
+            </div>
+          </div>
+
+          <div id="vocal-takes-list" class="vocal-takes-list">
+            <!-- Recorded vocal takes render here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Beat Maker & Drum Pads ("Selber Musik Machen") -->
+    <section class="beatmaker-area">
+      <div class="section-header">
+        <h2>🥁 Selber Musik Machen - Beat Pads & Sequencer</h2>
+      </div>
+
+      <!-- 8 Drum & Synth Touch Pads -->
+      <div class="pads-grid">
+        <div id="pad-kick" class="drum-pad pad-kick">
+          <span class="pad-name">808 KICK</span>
+          <span class="pad-key">Taste 1</span>
+        </div>
+        <div id="pad-snare" class="drum-pad pad-snare">
+          <span class="pad-name">SNARE</span>
+          <span class="pad-key">Taste 2</span>
+        </div>
+        <div id="pad-hihat" class="drum-pad pad-hihat">
+          <span class="pad-name">HI-HAT</span>
+          <span class="pad-key">Taste 3</span>
+        </div>
+        <div id="pad-clap" class="drum-pad pad-clap">
+          <span class="pad-name">CLAP</span>
+          <span class="pad-key">Taste 4</span>
+        </div>
+        <div id="pad-bass" class="drum-pad pad-bass">
+          <span class="pad-name">808 BASS</span>
+          <span class="pad-key">Taste 5</span>
+        </div>
+        <div id="pad-chord" class="drum-pad pad-chord">
+          <span class="pad-name">SYNTH AKKORD</span>
+          <span class="pad-key">Taste 6</span>
+        </div>
+        <div id="pad-lead" class="drum-pad pad-lead">
+          <span class="pad-name">MELODIE</span>
+          <span class="pad-key">Taste 7</span>
+        </div>
+        <div id="pad-fx" class="drum-pad pad-fx">
+          <span class="pad-name">DJ SCRATCH FX</span>
+          <span class="pad-key">Taste 8</span>
+        </div>
+      </div>
+
+      <!-- 16-Step Beat Sequencer -->
+      <div class="sequencer-card">
+        <div class="sequencer-header">
+          <h3 style="font-size:13px; font-weight:bold; color:var(--neon-green);">16-Step Rhythmus Sequencer (Loop)</h3>
+          <div style="display:flex; gap:8px;">
+            <button id="seq-btn-play" class="seq-btn-play">▶ BEAT STARTEN</button>
+            <button id="seq-btn-clear" class="seq-btn-clear">Löschen</button>
+          </div>
+        </div>
+
+        <div id="seq-rows-container" class="seq-rows-container">
+          <!-- Sequencer rows render dynamically -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div>Ist_Mix_Musik &bull; Erstellt für Istvan &bull; Touch & Mobil-Ready</div>
+    <div>Tippe auf den Bildschirm, um Audio zu aktivieren</div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/audio-engine.js"></script>
+  <script src="js/dj-decks.js"></script>
+  <script src="js/mic-recorder.js"></script>
+  <script src="js/beat-pads.js"></script>
+  <script src="js/master-recorder.js"></script>
+
+  <script>
+    // Initialize Studios on load
+    window.addEventListener('DOMContentLoaded', () => {
+      window.initDecks();
+      window.initVocalStudio();
+      window.initBeatStudio();
+      window.initMasterRecorder();
+
+      // Master BPM slider listener
+      const bpmSlider = document.getElementById('bpm-slider');
+      const bpmDisplay = document.getElementById('bpm-display');
+      if (bpmSlider && bpmDisplay) {
+        bpmSlider.addEventListener('input', (e) => {
+          const bpm = parseInt(e.target.value, 10);
+          bpmDisplay.textContent = `${bpm} BPM`;
+          window.audioEngine.setBpm(bpm);
+        });
+      }
+
+      // Unlock audio on any first touch or click anywhere
+      const unlockListener = () => {
+        window.audioEngine.unlockAudio();
+        document.removeEventListener('click', unlockListener);
+        document.removeEventListener('touchstart', unlockListener);
+      };
+      document.addEventListener('click', unlockListener);
+      document.addEventListener('touchstart', unlockListener);
+    });
+  </script>
+</body>
+</html>

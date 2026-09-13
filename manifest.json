@@ -1,0 +1,17 @@
+{
+  "name": "Ist_Mix_Musik",
+  "short_name": "IstMix",
+  "description": "Mobile DJ Studio, Beatmaker & Vocal Recorder für Istvan",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0c0e14",
+  "theme_color": "#0c0e14",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/feathericons/feather/master/icons/disc.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
