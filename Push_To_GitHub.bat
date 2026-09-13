@@ -1,9 +1,9 @@
 @echo off
-title Ist_Mix_Musik - GitHub Sync & Push
+title Ist_Mix_Music - GitHub Sync & Push
 cd /d "%~dp0"
 
 echo ======================================================
-echo    Ist_Mix_Musik - GitHub Synchronisation & Push
+echo    Ist_Mix_Music - GitHub Synchronisation & Push
 echo ======================================================
 echo.
 
@@ -11,10 +11,10 @@ git remote -v | findstr "origin" >nul
 if %ERRORLEVEL% NEQ 0 (
     echo Noch kein GitHub Repository verknuepft!
     echo.
-    echo Bitte erstelle ein neues Repository namens 'Ist_Mix_Musik' auf GitHub:
+    echo Bitte erstelle ein neues Repository namens 'Ist_Mix_Music' auf GitHub:
     echo https://github.com/new
     echo.
-    set /p REPO_URL="Fuege die GitHub Repository URL ein (z.B. https://github.com/istvancsovrij/Ist_Mix_Musik.git): "
+    set /p REPO_URL="Fuege die GitHub Repository URL ein (z.B. https://github.com/istvancsovrij/Ist_Mix_Music.git): "
     if defined REPO_URL (
         git remote add origin %REPO_URL%
         git branch -M main
@@ -33,7 +33,7 @@ git add .
 echo.
 set /p COMMIT_MSG="[2/3] Was hast du geaendert? (z.B. Neue Beats oder Design-Update): "
 if not defined COMMIT_MSG (
-    set COMMIT_MSG=Update Ist_Mix_Musik
+    set COMMIT_MSG=Update Ist_Mix_Music
 )
 
 git commit -m "%COMMIT_MSG%"

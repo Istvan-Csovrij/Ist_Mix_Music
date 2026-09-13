@@ -1,5 +1,5 @@
 """
-Ist_Mix_Musik - Local Server & Mobile Host
+Ist_Mix_Music - Local Server & Mobile Host
 Starts an HTTP server, automatically opens your browser on PC,
 and displays your local WiFi IP so you can open it on your smartphone!
 """

@@ -1,5 +1,5 @@
 /**
- * Ist_Mix_Musik - Master Session Recorder & Exporter
+ * Ist_Mix_Music - Master Session Recorder & Exporter
  * Captures all live audio (DJ Decks, Mic Vocals, Beatmaker) into a single downloadable mix.
  */
 
@@ -129,7 +129,7 @@ class MasterRecorder {
     }
 
     const dateStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    const filename = `Ist_Mix_Musik_${dateStr}.webm`;
+    const filename = `Ist_Mix_Music_${dateStr}.webm`;
 
     const a = document.createElement('a');
     a.href = this.latestMixUrl;

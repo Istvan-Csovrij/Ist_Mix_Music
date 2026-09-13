@@ -1,5 +1,5 @@
 /**
- * Ist_Mix_Musik - Professional 4-Deck Traktor DJ Controller
+ * Ist_Mix_Music - Professional 4-Deck Traktor DJ Controller
  * Provides 4 full decks with multi-color waveforms, rotating vinyl jog wheels,
  * HotCues, loops, pitch faders, 3-band EQ + kills, DJ filter sweeps, solo/mute,
  * and 4-channel crossfader assignment.

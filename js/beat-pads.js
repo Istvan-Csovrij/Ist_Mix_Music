@@ -1,5 +1,5 @@
 /**
- * Ist_Mix_Musik - Beat Pads & 16-Step Sequencer
+ * Ist_Mix_Music - Beat Pads & 16-Step Sequencer
  * Multi-touch drum pads and high-precision rhythmic step sequencer.
  */
 

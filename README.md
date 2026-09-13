@@ -1,4 +1,4 @@
-# 🎧 Ist_Mix_Musik - DJ Studio, Beatmaker & Vocal Recorder
+# 🎧 Ist_Mix_Music - DJ Studio, Beatmaker & Vocal Recorder
 
 Eine moderne, mobil-optimierte Musik-Produktions- und DJ-Web-Applikation für PC, Tablet und Smartphone (iOS & Android).
 
@@ -35,12 +35,12 @@ Erstellt für **Istvan Csovrij**.
 
 ### 1. Am PC starten:
 Doppelklicke einfach auf:
-- **`Start_Ist_Mix_Musik.bat`**
+- **`Start_Ist_Mix_Music.bat`**
 - Der Server startet und öffnet automatisch deinen Browser (`http://localhost:8080`).
 
 ### 2. Auf dem Handy / Smartphone öffnen:
 1. Verbinde dein Handy mit demselben WLAN wie deinen PC.
-2. Beim Starten von `Start_Ist_Mix_Musik.bat` wird dir deine lokale Handy-URL angezeigt (z.B. `http://192.168.178.xx:8080`).
+2. Beim Starten von `Start_Ist_Mix_Music.bat` wird dir deine lokale Handy-URL angezeigt (z.B. `http://192.168.178.xx:8080`).
 3. Öffne diese Adresse einfach im Browser deines Smartphones (Safari auf iPhone oder Chrome auf Android)!
 4. **Tipp:** Im Handy-Browser auf **"Zum Startbildschirm hinzufügen"** tippen, um sie wie eine echte App zu installieren!
 
@@ -52,14 +52,14 @@ Um dein Projekt auf GitHub zu veröffentlichen:
 
 ### Schritt 1: Neues Repository auf GitHub erstellen
 1. Gehe im Browser auf [https://github.com/new](https://github.com/new).
-2. Gib als Repository-Name ein: `Ist_Mix_Musik`.
+2. Gib als Repository-Name ein: `Ist_Mix_Music`.
 3. Wähle **Public** (Öffentlich) und klicke auf **"Create repository"**.
 
 ### Schritt 2: Code von deinem PC auf GitHub hochladen (Push)
 Öffne PowerShell oder die Eingabeaufforderung in diesem Ordner und führe aus:
 
 ```powershell
-git remote add origin https://github.com/istvancsovrij/Ist_Mix_Musik.git
+git remote add origin https://github.com/istvancsovrij/Ist_Mix_Music.git
 git branch -M main
 git push -u origin main
 ```
@@ -74,7 +74,7 @@ Sobald das Repository auf GitHub ist:
 1. Gehe in deinem GitHub-Repository auf **Settings** -> **Pages**.
 2. Wähle unter **Branch**: `main` und `/ (root)` aus und klicke auf **Save**.
 3. Nach ca. 1 Minute ist deine App unter folgender Adresse weltweit auf jedem Handy erreichbar:
-   👉 **`https://istvancsovrij.github.io/Ist_Mix_Musik/`**
+   👉 **`https://istvancsovrij.github.io/Ist_Mix_Music/`**
 
 ---
 

@@ -1,5 +1,5 @@
 /**
- * Ist_Mix_Musik - Professional Vocal & Mic Studio
+ * Ist_Mix_Music - Professional Vocal & Mic Studio
  * Dedicated microphone channel strip with Solo, Mute, 3-Band EQ, Echo, Reverb, and Fader.
  */
 

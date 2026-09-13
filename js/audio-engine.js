@@ -1,5 +1,5 @@
 /**
- * Ist_Mix_Musik - Core 4-Deck Web Audio Engine
+ * Ist_Mix_Music - Core 4-Deck Web Audio Engine
  * Manages Master AudioContext, 4 Deck Busses (A, B, C, D), Mic Bus, Drums Bus, and Master Recording.
  */
 
