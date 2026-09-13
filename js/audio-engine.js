@@ -349,6 +349,179 @@ class AudioEngine {
     osc.start(t);
     osc.stop(t + 0.55);
   }
+
+  // =========================================================================
+  // ELECTRO HOUSE DJ EFFECTS & DROP TOOLS
+  // =========================================================================
+
+  playNoiseRiser(durationSec = 4.0) {
+    this.unlockAudio();
+    if (!this.noiseBuffer) return;
+    const t = this.ctx.currentTime;
+
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = this.noiseBuffer;
+    noise.loop = true;
+
+    // Resonant Bandpass sweeping up
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.Q.setValueAtTime(5.0, t);
+    filter.frequency.setValueAtTime(300, t);
+    filter.frequency.exponentialRampToValueAtTime(11000, t + durationSec);
+
+    // Volume crescendo
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.05, t);
+    gain.gain.linearRampToValueAtTime(0.9, t + durationSec - 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + durationSec + 0.1);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    noise.start(t);
+    noise.stop(t + durationSec + 0.15);
+  }
+
+  playSubDrop() {
+    this.unlockAudio();
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    // Huge 808 sub impact: 180Hz down to 26Hz
+    osc.frequency.setValueAtTime(180, t);
+    osc.frequency.exponentialRampToValueAtTime(26, t + 1.2);
+
+    gain.gain.setValueAtTime(1.4, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 2.2);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(t);
+    osc.stop(t + 2.3);
+  }
+
+  playLaserSiren() {
+    this.unlockAudio();
+    const t = this.ctx.currentTime;
+
+    // Siren tone modulated by LFO
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(700, t);
+
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(6, t); // 6 Hz siren wobble
+    lfoGain.gain.setValueAtTime(350, t);
+
+    lfo.connect(osc.frequency);
+
+    gain.gain.setValueAtTime(0.4, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    lfo.start(t);
+    osc.start(t);
+    lfo.stop(t + 1.9);
+    osc.stop(t + 1.9);
+  }
+
+  playAirHorn() {
+    this.unlockAudio();
+    const t = this.ctx.currentTime;
+    // Classic 3-tone reggae / electro airhorn chords
+    const freqs = [370, 466, 554];
+    freqs.forEach((freq) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.setValueAtTime(freq * 1.03, t + 0.12); // pitch bend kick
+
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.setValueAtTime(0.25, t + 0.25);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(t);
+      osc.stop(t + 0.6);
+    });
+  }
+
+  toggleSidechainPump(active) {
+    this.isPumping = active;
+    if (!this.masterGain) return;
+    const ctx = this.ctx;
+
+    if (this.sidechainTimer) {
+      clearInterval(this.sidechainTimer);
+      this.sidechainTimer = null;
+      this.masterGain.gain.setTargetAtTime(0.9, ctx.currentTime, 0.05);
+    }
+
+    if (active) {
+      const bpm = this.bpm || 120;
+      const quarterNoteMs = (60.0 / bpm) * 1000;
+      const pump = () => {
+        if (!this.isPumping) return;
+        const now = ctx.currentTime;
+        // Duck on beat, recover before next beat
+        this.masterGain.gain.setValueAtTime(0.18, now);
+        this.masterGain.gain.exponentialRampToValueAtTime(0.95, now + (quarterNoteMs / 1000) * 0.7);
+      };
+      pump();
+      this.sidechainTimer = setInterval(pump, quarterNoteMs);
+    }
+  }
+
+  toggleJetFlanger(active) {
+    this.isFlanging = active;
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    if (!this.flangerDelay) {
+      this.flangerDelay = ctx.createDelay();
+      this.flangerDelay.delayTime.value = 0.003;
+
+      this.flangerFeedback = ctx.createGain();
+      this.flangerFeedback.gain.value = 0.7;
+
+      this.flangerLfo = ctx.createOscillator();
+      this.flangerLfo.frequency.value = 0.3; // slow jet sweep
+      this.flangerLfoGain = ctx.createGain();
+      this.flangerLfoGain.gain.value = 0.0025;
+
+      this.flangerLfo.connect(this.flangerLfoGain);
+      this.flangerLfoGain.connect(this.flangerDelay.delayTime);
+
+      this.flangerDelay.connect(this.flangerFeedback);
+      this.flangerFeedback.connect(this.flangerDelay);
+
+      this.flangerMix = ctx.createGain();
+      this.flangerMix.gain.value = 0.0;
+
+      this.masterGain.connect(this.flangerDelay);
+      this.flangerDelay.connect(this.flangerMix);
+      this.flangerMix.connect(this.masterLimiter);
+
+      this.flangerLfo.start();
+    }
+
+    const t = ctx.currentTime;
+    this.flangerMix.gain.setTargetAtTime(active ? 0.75 : 0.0, t, 0.05);
+  }
 }
 
 // Global instance

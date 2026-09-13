@@ -55,6 +55,79 @@
   <!-- Main Workstation Layout -->
   <main>
 
+    <!-- SECTION: Traktor Scrolling Master Waveform Screen (Reference Image 1) -->
+    <section class="traktor-monitor-section">
+      <div class="monitor-header">
+        <div class="monitor-deck-strip">
+          <span style="font-size:11px; font-weight:900; color:var(--deck-a-color);">TRAKTOR MASTER WAVEFORMS</span>
+          <span style="font-size:10px; color:var(--text-dim);">&bull; SCROLLING BEAT GRID & CENTER RED NEEDLE</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:9px; color:var(--text-dim);">OBEN:</label>
+            <select id="monitor-select-top" class="monitor-deck-select">
+              <option value="deck-a" selected>DECK A (Cyan)</option>
+              <option value="deck-c">DECK C (Orange)</option>
+            </select>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:9px; color:var(--text-dim);">UNTEN:</label>
+            <select id="monitor-select-bottom" class="monitor-deck-select">
+              <option value="deck-b" selected>DECK B (Pink)</option>
+              <option value="deck-d">DECK D (Lila)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="scrolling-waveform-container" title="Klicke oder tippe, um in den Tracks zu springen">
+        <canvas id="traktor-scrolling-canvas" class="scrolling-waveform-canvas"></canvas>
+      </div>
+    </section>
+
+    <!-- SECTION: Electro House DJ FX & Drop Tools -->
+    <section class="electro-fx-section">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-size:11px; font-weight:900; color:var(--vu-yellow); letter-spacing:1px;">
+          ⚡ ELECTRO HOUSE DJ EFFECTS & DROP TOOLS
+        </span>
+        <span style="font-size:9px; color:var(--text-dim);">KLUB-EFFEKTE, RISER, DROPS & FLANGER</span>
+      </div>
+
+      <div class="electro-fx-grid">
+        <button id="fx-btn-riser" class="btn-electro-fx fx-riser" title="Ansteigender White-Noise Riser für Drops">
+          <span style="font-size:14px;">🚀</span>
+          <span>NOISE RISER</span>
+        </button>
+
+        <button id="fx-btn-drop" class="btn-electro-fx fx-drop" title="Massiver 808 Sub-Bass Impact Boom">
+          <span style="font-size:14px;">💥</span>
+          <span>SUB-DROP BOOM</span>
+        </button>
+
+        <button id="fx-btn-flanger" class="btn-electro-fx fx-flanger" title="Jet-Engine Flanger an-/ausschalten">
+          <span style="font-size:14px;">✈️</span>
+          <span>JET FLANGER</span>
+        </button>
+
+        <button id="fx-btn-pump" class="btn-electro-fx fx-pump" title="4/4 French House Sidechain Pumping">
+          <span style="font-size:14px;">🎚️</span>
+          <span>4/4 PUMP</span>
+        </button>
+
+        <button id="fx-btn-siren" class="btn-electro-fx fx-siren" title="Electro Rave Laser Sirene">
+          <span style="font-size:14px;">🚨</span>
+          <span>RAVE SIREN</span>
+        </button>
+
+        <button id="fx-btn-airhorn" class="btn-electro-fx fx-airhorn" title="Klassisches Dancehall / House Airhorn">
+          <span style="font-size:14px;">📢</span>
+          <span>CLUB AIRHORN</span>
+        </button>
+      </div>
+    </section>
+
     <!-- SECTION 1: 4-Deck Traktor DJ Studio & Central Mixer -->
     <section class="traktor-stage">
 
@@ -695,6 +768,7 @@
   <script src="js/beat-pads.js"></script>
   <script src="js/master-recorder.js"></script>
   <script src="js/track-library.js"></script>
+  <script src="js/traktor-monitor.js"></script>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -703,6 +777,36 @@
       window.initBeatStudio();
       window.initMasterRecorder();
       window.initTrackLibrary();
+      window.initTraktorMonitor();
+
+      // Electro House DJ FX Listeners
+      const btnRiser = document.getElementById('fx-btn-riser');
+      if (btnRiser) btnRiser.addEventListener('click', () => window.audioEngine.playNoiseRiser(4.0));
+
+      const btnDrop = document.getElementById('fx-btn-drop');
+      if (btnDrop) btnDrop.addEventListener('click', () => window.audioEngine.playSubDrop());
+
+      const btnFlanger = document.getElementById('fx-btn-flanger');
+      if (btnFlanger) {
+        btnFlanger.addEventListener('click', () => {
+          const act = btnFlanger.classList.toggle('active');
+          window.audioEngine.toggleJetFlanger(act);
+        });
+      }
+
+      const btnPump = document.getElementById('fx-btn-pump');
+      if (btnPump) {
+        btnPump.addEventListener('click', () => {
+          const act = btnPump.classList.toggle('active');
+          window.audioEngine.toggleSidechainPump(act);
+        });
+      }
+
+      const btnSiren = document.getElementById('fx-btn-siren');
+      if (btnSiren) btnSiren.addEventListener('click', () => window.audioEngine.playLaserSiren());
+
+      const btnAirhorn = document.getElementById('fx-btn-airhorn');
+      if (btnAirhorn) btnAirhorn.addEventListener('click', () => window.audioEngine.playAirHorn());
 
       // Master BPM slider listener
       const bpmSlider = document.getElementById('bpm-slider');
