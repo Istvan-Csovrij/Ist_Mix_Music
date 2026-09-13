@@ -1020,6 +1020,219 @@ footer {
 }
 
 /* ==========================================================================
+   Traktor Track Library & Music List Panel
+   ========================================================================== */
+.btn-toggle-library {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-highlight);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-toggle-library:hover, .btn-toggle-library.active {
+  background: #2563eb;
+  border-color: var(--deck-a-color);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+}
+
+.lib-badge {
+  background: var(--deck-a-color);
+  color: #000;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.music-library-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.music-library-section.hidden {
+  display: none !important;
+}
+
+.library-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.library-tools-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-lib-add {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-lib-add input[type="file"] {
+  display: none;
+}
+
+.btn-lib-demos {
+  background: #475569;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.library-search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-inner);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.library-search-box input {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-size: 11px;
+  outline: none;
+  width: 180px;
+}
+
+.btn-close-lib {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.library-table-container {
+  overflow-x: auto;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.library-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+
+.library-table th {
+  background: var(--bg-inner);
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.library-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+
+.library-table tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.btn-lib-preview {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-highlight);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+}
+
+.btn-lib-preview.playing {
+  background: var(--vu-green);
+  color: #000;
+  border-color: var(--vu-green);
+}
+
+.deck-load-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-load-deck {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.btn-load-deck:active {
+  transform: scale(0.92);
+}
+
+.btn-load-deck.load-a { background: rgba(0, 240, 255, 0.2); color: var(--deck-a-color); border: 1px solid var(--deck-a-color); }
+.btn-load-deck.load-b { background: rgba(255, 0, 127, 0.2); color: var(--deck-b-color); border: 1px solid var(--deck-b-color); }
+.btn-load-deck.load-c { background: rgba(255, 107, 53, 0.2); color: var(--deck-c-color); border: 1px solid var(--deck-c-color); }
+.btn-load-deck.load-d { background: rgba(157, 78, 221, 0.2); color: var(--deck-d-color); border: 1px solid var(--deck-d-color); }
+
+.btn-del-track {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 12px;
+}
+
+/* ==========================================================================
    Responsive Breakpoints (Desktop, Tablet, Mobile)
    ========================================================================== */
 @media (max-width: 1200px) {

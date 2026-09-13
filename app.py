@@ -55,7 +55,7 @@ def run_server():
     mobile_url = f"http://{local_ip}:{port}"
 
     print("=" * 60)
-    print("  >>  I S T _ M I X _ M U S I K   S E R V E R  <<")
+    print("  >>  I S T _ M I X _ M U S I C   S E R V E R  <<")
     print("=" * 60)
     print(f"\n[PC BROWSER]      -> {local_url}")
     print(f"[HANDY / MOBILE]  -> {mobile_url}")

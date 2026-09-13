@@ -23,6 +23,10 @@
     </div>
 
     <div class="header-center-tools">
+      <button id="btn-toggle-library" class="btn-toggle-library" title="Musiksammlung ein-/ausblenden">
+        📂 MEINE MUSIKLISTE <span id="lib-count" class="lib-badge">0</span>
+      </button>
+
       <div class="tempo-box">
         <label for="bpm-slider">TEMPO:</label>
         <input type="range" id="bpm-slider" min="70" max="160" value="120">
@@ -517,6 +521,47 @@
 
     </section>
 
+    <!-- SECTION: Traktor Track Library / Musik-Liste -->
+    <section id="music-library-section" class="music-library-section">
+      <div class="library-header">
+        <div class="library-tools-left">
+          <h2 style="font-size:13px; font-weight:800; color:var(--deck-a-color); display:flex; align-items:center; gap:6px;">
+            📑 MEINE MUSIKLISTE & TRACK-SAMMLUNG
+          </h2>
+          <label class="btn-lib-add">
+            ➕ Musikdateien hinzufügen (MP3/WAV)
+            <input type="file" id="library-file-input" accept="audio/*" multiple>
+          </label>
+          <button id="btn-library-demos" class="btn-lib-demos">🎵 Demos laden</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="library-search-box">
+            <span>🔍</span>
+            <input type="text" id="library-search-input" placeholder="Titel suchen...">
+          </div>
+          <button id="btn-close-library" class="btn-close-lib" title="Schließen">✖</button>
+        </div>
+      </div>
+
+      <div class="library-table-container">
+        <table class="library-table">
+          <thead>
+            <tr>
+              <th style="width:40px; text-align:center;">#</th>
+              <th style="width:50px; text-align:center;">HÖREN</th>
+              <th>TITEL / DATEINAME</th>
+              <th style="width:70px;">DAUER</th>
+              <th style="width:260px; text-align:right;">IN DECK LADEN</th>
+            </tr>
+          </thead>
+          <tbody id="library-table-body">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- SECTION 2: Dedicated Vocal & Mic Studio Channel Strip -->
     <section class="voice-studio-area">
       <div class="section-header">
@@ -649,6 +694,7 @@
   <script src="js/mic-recorder.js"></script>
   <script src="js/beat-pads.js"></script>
   <script src="js/master-recorder.js"></script>
+  <script src="js/track-library.js"></script>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -656,6 +702,7 @@
       window.initVocalStudio();
       window.initBeatStudio();
       window.initMasterRecorder();
+      window.initTrackLibrary();
 
       // Master BPM slider listener
       const bpmSlider = document.getElementById('bpm-slider');
