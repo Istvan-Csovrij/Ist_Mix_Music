@@ -3,33 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0c0e14">
+  <meta name="theme-color" content="#07090d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Ist_Mix_Musik 🎧 DJ Studio & Beat Maker</title>
+  <title>Ist_Mix_Musik 🎛️ 4-Deck Traktor DJ Studio</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- Top Header with Master Controls -->
+  <!-- Top Header Navigation & Master Tools -->
   <header>
     <div class="logo-area">
-      <div class="logo-icon">🎧</div>
-      <div class="logo-text">
+      <div class="logo-icon">🎛️</div>
+      <div class="logo-title">
         <h1>IST MIX MUSIK</h1>
-        <p>Mobile DJ Studio, Beatmaker & Vocal Recorder</p>
+        <span>4-DECK TRAKTOR DJ STUDIO & VOCAL RECORDER</span>
       </div>
     </div>
 
-    <div class="master-controls">
+    <div class="header-center-tools">
       <div class="tempo-box">
         <label for="bpm-slider">TEMPO:</label>
         <input type="range" id="bpm-slider" min="70" max="160" value="120">
-        <span id="bpm-display">120 BPM</span>
+        <span id="bpm-display" class="tempo-display">120 BPM</span>
       </div>
 
-      <button id="btn-rec-master" class="btn-rec-master">
+      <button id="btn-rec-master" class="btn-rec-master" title="Nimmt alle 4 Decks + Stimme + Beats auf">
         ⏺ Mix Aufnehmen
       </button>
 
@@ -39,151 +39,554 @@
     </div>
   </header>
 
-  <!-- Main Content Layout -->
+  <!-- Mobile Deck Switcher Tabs (Smartphone Optimized) -->
+  <nav class="mobile-deck-tabs">
+    <button class="deck-tab-btn active" data-target="all">ALLE 4 DECKS</button>
+    <button class="deck-tab-btn" data-target="deck-a" style="color:var(--deck-a-color);">DECK A</button>
+    <button class="deck-tab-btn" data-target="deck-b" style="color:var(--deck-b-color);">DECK B</button>
+    <button class="deck-tab-btn" data-target="deck-c" style="color:var(--deck-c-color);">DECK C</button>
+    <button class="deck-tab-btn" data-target="deck-d" style="color:var(--deck-d-color);">DECK D</button>
+  </nav>
+
+  <!-- Main Workstation Layout -->
   <main>
 
-    <!-- SECTION 1: DJ Decks (Traktor Style) -->
-    <section class="dj-studio-area">
-      <div class="section-header">
-        <h2>💿 DJ Decks & Crossfader</h2>
-      </div>
+    <!-- SECTION 1: 4-Deck Traktor DJ Studio & Central Mixer -->
+    <section class="traktor-stage">
 
-      <div class="decks-wrapper">
-        <!-- Deck A -->
-        <div class="deck deck-a">
-          <div class="deck-title-bar">
+      <!-- LEFT DECKS (Deck A & Deck C) -->
+      <div class="decks-side decks-left">
+        
+        <!-- DECK A (Cyan) -->
+        <article class="deck-card deck-a" id="card-deck-a">
+          <div class="deck-header">
             <span class="deck-badge">DECK A</span>
-            <span id="deck-a-track-name" class="deck-track-info">Keine Datei geladen</span>
+            <span id="deck-a-track-name" class="deck-track-title">Kein Track geladen</span>
+            <span id="deck-a-time-display" class="deck-time-display">00:00.00</span>
           </div>
 
-          <label class="file-uploader-btn">
-            📂 Eigene Musik hochladen (MP3/WAV)
+          <label class="deck-upload-btn">
+            📂 Song in DECK A laden (MP3/WAV)
             <input type="file" id="deck-a-file-input" accept="audio/*">
           </label>
 
-          <div class="waveform-container">
+          <div class="deck-waveform-box">
             <canvas id="deck-a-waveform" class="waveform-canvas"></canvas>
-            <div id="deck-a-cursor" class="playback-cursor"></div>
+            <div id="deck-a-cursor" class="waveform-cursor"></div>
           </div>
 
-          <div class="deck-controls-row">
-            <button id="deck-a-play" class="btn-transport">▶ PLAY</button>
-            <button id="deck-a-cue" class="btn-transport btn-cue">CUE</button>
+          <div class="deck-body-layout">
+            <div class="vinyl-container" id="deck-a-jog-wheel" title="Jog-Wheel zum Scratchen / Nudgen drehen">
+              <div class="vinyl-grooves">
+                <div class="vinyl-center-badge">A</div>
+              </div>
+              <div class="vinyl-needle"></div>
+            </div>
+
+            <div class="pitch-fader-box">
+              <label>TEMPO</label>
+              <input type="range" id="deck-a-pitch-slider" class="pitch-slider" min="-8" max="8" step="0.1" value="0">
+              <span id="deck-a-pitch-display" class="pitch-value">+0.0%</span>
+            </div>
+
+            <div class="deck-performance-area">
+              <div class="transport-row">
+                <button id="deck-a-play" class="btn-deck-play">▶ PLAY</button>
+                <button id="deck-a-cue" class="btn-deck-cue">CUE</button>
+                <button id="deck-a-sync" class="btn-deck-sync">SYNC</button>
+              </div>
+
+              <!-- HotCues 1-4 -->
+              <div class="hotcues-row">
+                <div id="deck-a-cue-1" class="hotcue-pad">CUE 1</div>
+                <div id="deck-a-cue-2" class="hotcue-pad">CUE 2</div>
+                <div id="deck-a-cue-3" class="hotcue-pad">CUE 3</div>
+                <div id="deck-a-cue-4" class="hotcue-pad">CUE 4</div>
+              </div>
+
+              <!-- Loops -->
+              <div class="loops-row">
+                <div id="deck-a-loop-1" class="loop-btn deck-a-loop-btn">1/2 B</div>
+                <div id="deck-a-loop-2" class="loop-btn deck-a-loop-btn">1 B</div>
+                <div id="deck-a-loop-4" class="loop-btn deck-a-loop-btn">2 B</div>
+                <div id="deck-a-loop-8" class="loop-btn deck-a-loop-btn">4 B</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- DECK C (Electric Orange) -->
+        <article class="deck-card deck-c" id="card-deck-c">
+          <div class="deck-header">
+            <span class="deck-badge">DECK C</span>
+            <span id="deck-c-track-name" class="deck-track-title">Kein Track geladen</span>
+            <span id="deck-c-time-display" class="deck-time-display">00:00.00</span>
           </div>
 
-          <div class="deck-eq-controls">
-            <div class="eq-knob-box">
-              <label>BASS</label>
-              <input type="range" id="deck-a-eq-low" min="-18" max="12" value="0">
+          <label class="deck-upload-btn">
+            📂 Song in DECK C laden (MP3/WAV)
+            <input type="file" id="deck-c-file-input" accept="audio/*">
+          </label>
+
+          <div class="deck-waveform-box">
+            <canvas id="deck-c-waveform" class="waveform-canvas"></canvas>
+            <div id="deck-c-cursor" class="waveform-cursor"></div>
+          </div>
+
+          <div class="deck-body-layout">
+            <div class="vinyl-container" id="deck-c-jog-wheel">
+              <div class="vinyl-grooves">
+                <div class="vinyl-center-badge">C</div>
+              </div>
+              <div class="vinyl-needle"></div>
             </div>
-            <div class="eq-knob-box">
-              <label>MITTEN</label>
-              <input type="range" id="deck-a-eq-mid" min="-18" max="12" value="0">
+
+            <div class="pitch-fader-box">
+              <label>TEMPO</label>
+              <input type="range" id="deck-c-pitch-slider" class="pitch-slider" min="-8" max="8" step="0.1" value="0">
+              <span id="deck-c-pitch-display" class="pitch-value">+0.0%</span>
             </div>
-            <div class="eq-knob-box">
-              <label>HÖHEN</label>
-              <input type="range" id="deck-a-eq-high" min="-18" max="12" value="0">
+
+            <div class="deck-performance-area">
+              <div class="transport-row">
+                <button id="deck-c-play" class="btn-deck-play">▶ PLAY</button>
+                <button id="deck-c-cue" class="btn-deck-cue">CUE</button>
+                <button id="deck-c-sync" class="btn-deck-sync">SYNC</button>
+              </div>
+
+              <div class="hotcues-row">
+                <div id="deck-c-cue-1" class="hotcue-pad">CUE 1</div>
+                <div id="deck-c-cue-2" class="hotcue-pad">CUE 2</div>
+                <div id="deck-c-cue-3" class="hotcue-pad">CUE 3</div>
+                <div id="deck-c-cue-4" class="hotcue-pad">CUE 4</div>
+              </div>
+
+              <div class="loops-row">
+                <div id="deck-c-loop-1" class="loop-btn deck-c-loop-btn">1/2 B</div>
+                <div id="deck-c-loop-2" class="loop-btn deck-c-loop-btn">1 B</div>
+                <div id="deck-c-loop-4" class="loop-btn deck-c-loop-btn">2 B</div>
+                <div id="deck-c-loop-8" class="loop-btn deck-c-loop-btn">4 B</div>
+              </div>
             </div>
           </div>
+        </article>
+
+      </div>
+
+      <!-- CENTER 4-CHANNEL MIXER CONSOLE -->
+      <section class="central-mixer-console">
+        <div class="mixer-header">
+          <span class="mixer-title">4-KANAL MIXING CONSOLE</span>
+          <span style="font-size:9px; color:var(--text-dim);">EQUALIZER & FILTERS</span>
         </div>
 
-        <!-- Center Crossfader -->
-        <div class="center-mixer">
-          <span class="crossfader-label">CROSSFADER</span>
-          <div class="crossfader-box">
+        <!-- 4 Vertical Channel Strips (Ch 1 = Deck A, Ch 2 = Deck B, Ch 3 = Deck C, Ch 4 = Deck D) -->
+        <div class="channels-wrapper">
+
+          <!-- Channel 1 (Deck A) -->
+          <div class="channel-strip ch-1">
+            <span class="channel-number">CH 1</span>
+
+            <div class="rotary-knob-box">
+              <label>HIGH</label>
+              <input type="range" id="ch1-eq-high" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch1-kill-high" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box">
+              <label>MID</label>
+              <input type="range" id="ch1-eq-mid" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch1-kill-mid" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box">
+              <label>LOW</label>
+              <input type="range" id="ch1-eq-low" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch1-kill-low" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box" style="margin-top:2px;">
+              <label style="color:var(--deck-a-color);">FILTER</label>
+              <input type="range" id="ch1-filter" class="filter-knob-slider" min="-1" max="1" step="0.05" value="0">
+            </div>
+
+            <div class="strip-button-row">
+              <button id="ch1-solo" class="btn-solo">S</button>
+              <button id="ch1-mute" class="btn-mute">M</button>
+            </div>
+
+            <div class="fader-meter-combo">
+              <input type="range" id="ch1-fader" class="channel-volume-fader" min="0" max="1.2" step="0.02" value="1.0">
+              <div id="ch1-vu" class="vu-meter-bar">
+                <div class="vu-led red"></div>
+                <div class="vu-led yellow"></div>
+                <div class="vu-led green"></div>
+                <div class="vu-led green"></div>
+                <div class="vu-led green"></div>
+              </div>
+            </div>
+
+            <select id="ch1-xf-assign" class="xf-assign-select">
+              <option value="left" selected>Side X (L)</option>
+              <option value="thru">THRU</option>
+              <option value="right">Side Y (R)</option>
+            </select>
+          </div>
+
+          <!-- Channel 2 (Deck B) -->
+          <div class="channel-strip ch-2">
+            <span class="channel-number">CH 2</span>
+
+            <div class="rotary-knob-box">
+              <label>HIGH</label>
+              <input type="range" id="ch2-eq-high" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch2-kill-high" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box">
+              <label>MID</label>
+              <input type="range" id="ch2-eq-mid" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch2-kill-mid" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box">
+              <label>LOW</label>
+              <input type="range" id="ch2-eq-low" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch2-kill-low" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box" style="margin-top:2px;">
+              <label style="color:var(--deck-b-color);">FILTER</label>
+              <input type="range" id="ch2-filter" class="filter-knob-slider" min="-1" max="1" step="0.05" value="0">
+            </div>
+
+            <div class="strip-button-row">
+              <button id="ch2-solo" class="btn-solo">S</button>
+              <button id="ch2-mute" class="btn-mute">M</button>
+            </div>
+
+            <div class="fader-meter-combo">
+              <input type="range" id="ch2-fader" class="channel-volume-fader" min="0" max="1.2" step="0.02" value="1.0">
+              <div id="ch2-vu" class="vu-meter-bar">
+                <div class="vu-led red"></div>
+                <div class="vu-led yellow"></div>
+                <div class="vu-led green"></div>
+                <div class="vu-led green"></div>
+                <div class="vu-led green"></div>
+              </div>
+            </div>
+
+            <select id="ch2-xf-assign" class="xf-assign-select">
+              <option value="left">Side X (L)</option>
+              <option value="thru">THRU</option>
+              <option value="right" selected>Side Y (R)</option>
+            </select>
+          </div>
+
+          <!-- Channel 3 (Deck C) -->
+          <div class="channel-strip ch-3">
+            <span class="channel-number">CH 3</span>
+
+            <div class="rotary-knob-box">
+              <label>HIGH</label>
+              <input type="range" id="ch3-eq-high" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch3-kill-high" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box">
+              <label>MID</label>
+              <input type="range" id="ch3-eq-mid" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch3-kill-mid" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box">
+              <label>LOW</label>
+              <input type="range" id="ch3-eq-low" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch3-kill-low" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box" style="margin-top:2px;">
+              <label style="color:var(--deck-c-color);">FILTER</label>
+              <input type="range" id="ch3-filter" class="filter-knob-slider" min="-1" max="1" step="0.05" value="0">
+            </div>
+
+            <div class="strip-button-row">
+              <button id="ch3-solo" class="btn-solo">S</button>
+              <button id="ch3-mute" class="btn-mute">M</button>
+            </div>
+
+            <div class="fader-meter-combo">
+              <input type="range" id="ch3-fader" class="channel-volume-fader" min="0" max="1.2" step="0.02" value="1.0">
+              <div id="ch3-vu" class="vu-meter-bar">
+                <div class="vu-led red"></div>
+                <div class="vu-led yellow"></div>
+                <div class="vu-led green"></div>
+                <div class="vu-led green"></div>
+                <div class="vu-led green"></div>
+              </div>
+            </div>
+
+            <select id="ch3-xf-assign" class="xf-assign-select">
+              <option value="left" selected>Side X (L)</option>
+              <option value="thru">THRU</option>
+              <option value="right">Side Y (R)</option>
+            </select>
+          </div>
+
+          <!-- Channel 4 (Deck D) -->
+          <div class="channel-strip ch-4">
+            <span class="channel-number">CH 4</span>
+
+            <div class="rotary-knob-box">
+              <label>HIGH</label>
+              <input type="range" id="ch4-eq-high" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch4-kill-high" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box">
+              <label>MID</label>
+              <input type="range" id="ch4-eq-mid" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch4-kill-mid" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box">
+              <label>LOW</label>
+              <input type="range" id="ch4-eq-low" class="mini-knob-slider" min="-24" max="12" value="0">
+              <button id="ch4-kill-low" class="kill-btn">KILL</button>
+            </div>
+
+            <div class="rotary-knob-box" style="margin-top:2px;">
+              <label style="color:var(--deck-d-color);">FILTER</label>
+              <input type="range" id="ch4-filter" class="filter-knob-slider" min="-1" max="1" step="0.05" value="0">
+            </div>
+
+            <div class="strip-button-row">
+              <button id="ch4-solo" class="btn-solo">S</button>
+              <button id="ch4-mute" class="btn-mute">M</button>
+            </div>
+
+            <div class="fader-meter-combo">
+              <input type="range" id="ch4-fader" class="channel-volume-fader" min="0" max="1.2" step="0.02" value="1.0">
+              <div id="ch4-vu" class="vu-meter-bar">
+                <div class="vu-led red"></div>
+                <div class="vu-led yellow"></div>
+                <div class="vu-led green"></div>
+                <div class="vu-led green"></div>
+                <div class="vu-led green"></div>
+              </div>
+            </div>
+
+            <select id="ch4-xf-assign" class="xf-assign-select">
+              <option value="left">Side X (L)</option>
+              <option value="thru">THRU</option>
+              <option value="right" selected>Side Y (R)</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Master Crossfader -->
+        <div class="master-crossfader-area">
+          <div class="crossfader-labels">
+            <span class="lbl-side-a">◄ SIDE X (A / C)</span>
+            <span style="color:var(--text-dim);">CROSSFADER</span>
+            <span class="lbl-side-b">SIDE Y (B / D) ►</span>
+          </div>
+          <div class="crossfader-track">
             <input type="range" id="crossfader-slider" class="crossfader-slider" min="0" max="1" step="0.01" value="0.5">
-            <div class="crossfader-indicators">
-              <span class="indicator-a">◄ DECK A</span>
-              <span class="indicator-b">DECK B ►</span>
-            </div>
           </div>
         </div>
+      </section>
 
-        <!-- Deck B -->
-        <div class="deck deck-b">
-          <div class="deck-title-bar">
+      <!-- RIGHT DECKS (Deck B & Deck D) -->
+      <div class="decks-side decks-right">
+
+        <!-- DECK B (Neon Pink) -->
+        <article class="deck-card deck-b" id="card-deck-b">
+          <div class="deck-header">
             <span class="deck-badge">DECK B</span>
-            <span id="deck-b-track-name" class="deck-track-info">Keine Datei geladen</span>
+            <span id="deck-b-track-name" class="deck-track-title">Kein Track geladen</span>
+            <span id="deck-b-time-display" class="deck-time-display">00:00.00</span>
           </div>
 
-          <label class="file-uploader-btn">
-            📂 Eigene Musik hochladen (MP3/WAV)
+          <label class="deck-upload-btn">
+            📂 Song in DECK B laden (MP3/WAV)
             <input type="file" id="deck-b-file-input" accept="audio/*">
           </label>
 
-          <div class="waveform-container">
+          <div class="deck-waveform-box">
             <canvas id="deck-b-waveform" class="waveform-canvas"></canvas>
-            <div id="deck-b-cursor" class="playback-cursor"></div>
+            <div id="deck-b-cursor" class="waveform-cursor"></div>
           </div>
 
-          <div class="deck-controls-row">
-            <button id="deck-b-play" class="btn-transport">▶ PLAY</button>
-            <button id="deck-b-cue" class="btn-transport btn-cue">CUE</button>
+          <div class="deck-body-layout">
+            <div class="vinyl-container" id="deck-b-jog-wheel">
+              <div class="vinyl-grooves">
+                <div class="vinyl-center-badge">B</div>
+              </div>
+              <div class="vinyl-needle"></div>
+            </div>
+
+            <div class="pitch-fader-box">
+              <label>TEMPO</label>
+              <input type="range" id="deck-b-pitch-slider" class="pitch-slider" min="-8" max="8" step="0.1" value="0">
+              <span id="deck-b-pitch-display" class="pitch-value">+0.0%</span>
+            </div>
+
+            <div class="deck-performance-area">
+              <div class="transport-row">
+                <button id="deck-b-play" class="btn-deck-play">▶ PLAY</button>
+                <button id="deck-b-cue" class="btn-deck-cue">CUE</button>
+                <button id="deck-b-sync" class="btn-deck-sync">SYNC</button>
+              </div>
+
+              <div class="hotcues-row">
+                <div id="deck-b-cue-1" class="hotcue-pad">CUE 1</div>
+                <div id="deck-b-cue-2" class="hotcue-pad">CUE 2</div>
+                <div id="deck-b-cue-3" class="hotcue-pad">CUE 3</div>
+                <div id="deck-b-cue-4" class="hotcue-pad">CUE 4</div>
+              </div>
+
+              <div class="loops-row">
+                <div id="deck-b-loop-1" class="loop-btn deck-b-loop-btn">1/2 B</div>
+                <div id="deck-b-loop-2" class="loop-btn deck-b-loop-btn">1 B</div>
+                <div id="deck-b-loop-4" class="loop-btn deck-b-loop-btn">2 B</div>
+                <div id="deck-b-loop-8" class="loop-btn deck-b-loop-btn">4 B</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- DECK D (Neon Purple) -->
+        <article class="deck-card deck-d" id="card-deck-d">
+          <div class="deck-header">
+            <span class="deck-badge">DECK D</span>
+            <span id="deck-d-track-name" class="deck-track-title">Kein Track geladen</span>
+            <span id="deck-d-time-display" class="deck-time-display">00:00.00</span>
           </div>
 
-          <div class="deck-eq-controls">
-            <div class="eq-knob-box">
-              <label>BASS</label>
-              <input type="range" id="deck-b-eq-low" min="-18" max="12" value="0">
+          <label class="deck-upload-btn">
+            📂 Song in DECK D laden (MP3/WAV)
+            <input type="file" id="deck-d-file-input" accept="audio/*">
+          </label>
+
+          <div class="deck-waveform-box">
+            <canvas id="deck-d-waveform" class="waveform-canvas"></canvas>
+            <div id="deck-d-cursor" class="waveform-cursor"></div>
+          </div>
+
+          <div class="deck-body-layout">
+            <div class="vinyl-container" id="deck-d-jog-wheel">
+              <div class="vinyl-grooves">
+                <div class="vinyl-center-badge">D</div>
+              </div>
+              <div class="vinyl-needle"></div>
             </div>
-            <div class="eq-knob-box">
-              <label>MITTEN</label>
-              <input type="range" id="deck-b-eq-mid" min="-18" max="12" value="0">
+
+            <div class="pitch-fader-box">
+              <label>TEMPO</label>
+              <input type="range" id="deck-d-pitch-slider" class="pitch-slider" min="-8" max="8" step="0.1" value="0">
+              <span id="deck-d-pitch-display" class="pitch-value">+0.0%</span>
             </div>
-            <div class="eq-knob-box">
-              <label>HÖHEN</label>
-              <input type="range" id="deck-b-eq-high" min="-18" max="12" value="0">
+
+            <div class="deck-performance-area">
+              <div class="transport-row">
+                <button id="deck-d-play" class="btn-deck-play">▶ PLAY</button>
+                <button id="deck-d-cue" class="btn-deck-cue">CUE</button>
+                <button id="deck-d-sync" class="btn-deck-sync">SYNC</button>
+              </div>
+
+              <div class="hotcues-row">
+                <div id="deck-d-cue-1" class="hotcue-pad">CUE 1</div>
+                <div id="deck-d-cue-2" class="hotcue-pad">CUE 2</div>
+                <div id="deck-d-cue-3" class="hotcue-pad">CUE 3</div>
+                <div id="deck-d-cue-4" class="hotcue-pad">CUE 4</div>
+              </div>
+
+              <div class="loops-row">
+                <div id="deck-d-loop-1" class="loop-btn deck-d-loop-btn">1/2 B</div>
+                <div id="deck-d-loop-2" class="loop-btn deck-d-loop-btn">1 B</div>
+                <div id="deck-d-loop-4" class="loop-btn deck-d-loop-btn">2 B</div>
+                <div id="deck-d-loop-8" class="loop-btn deck-d-loop-btn">4 B</div>
+              </div>
             </div>
           </div>
-        </div>
+        </article>
+
       </div>
+
     </section>
 
-    <!-- SECTION 2: Voice & Mic Studio ("Eigene Stimme Aufnehmen & Kreieren") -->
+    <!-- SECTION 2: Dedicated Vocal & Mic Studio Channel Strip -->
     <section class="voice-studio-area">
       <div class="section-header">
-        <h2>🎤 Eigene Stimme Aufnehmen & Kreieren</h2>
+        <h2>🎤 Eigene Stimme Aufnehmen & Abmischen</h2>
+        <span style="font-size:10px; color:var(--text-dim);">SEPARATER GESANGS-KANALZUG MIT SOLO, MUTE & EQUALIZER</span>
       </div>
 
       <div class="mic-wrapper">
+        <!-- Mic Recording -->
         <div class="mic-recorder-card">
-          <button id="btn-mic-record" class="btn-mic-record" title="Klicken um Stimme aufzunehmen">
-            🎤
-          </button>
-          <div id="mic-status-text" class="mic-status-text">
-            Tippe auf das Mikrofon, um deine Stimme aufzunehmen
+          <button id="btn-mic-record" class="btn-mic-record" title="Klicken für Stimm-Aufnahme">🎤</button>
+          <div id="mic-status-text" style="font-size:11px; color:var(--text-dim);">
+            Tippe auf das Mikrofon, um Gesang aufzunehmen
           </div>
           <canvas id="mic-visualizer" class="mic-visualizer"></canvas>
         </div>
 
-        <div class="mic-effects-card">
-          <h3 style="font-size:13px; font-weight:bold; color:var(--neon-cyan);">Stimmen-Effekte & Aufnahmen</h3>
-          
-          <div class="vocal-fx-controls">
-            <div class="vocal-fx-box">
-              <label><span>ECHO / DELAY</span></label>
-              <input type="range" id="vocal-echo-slider" min="0" max="0.8" step="0.05" value="0">
-            </div>
-            <div class="vocal-fx-box">
-              <label><span>LAUTSTÄRKE</span></label>
-              <input type="range" id="vocal-vol-slider" min="0" max="1.5" step="0.05" value="1.0">
+        <!-- Mic Channel Strip (Solo, Mute, EQ, Echo, Fader) -->
+        <div class="mic-channel-strip-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:11px; font-weight:bold; color:var(--deck-a-color);">VOCAL STRIP</span>
+            <div style="display:flex; gap:6px;">
+              <button id="mic-solo" class="btn-solo" style="padding:2px 8px;">S</button>
+              <button id="mic-mute" class="btn-mute" style="padding:2px 8px;">M</button>
             </div>
           </div>
 
-          <div id="vocal-takes-list" class="vocal-takes-list">
-            <!-- Recorded vocal takes render here -->
+          <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px;">
+            <div class="rotary-knob-box">
+              <label>V-HIGH</label>
+              <input type="range" id="mic-eq-high" class="mini-knob-slider" min="-20" max="12" value="0">
+            </div>
+            <div class="rotary-knob-box">
+              <label>V-MID</label>
+              <input type="range" id="mic-eq-mid" class="mini-knob-slider" min="-20" max="12" value="0">
+            </div>
+            <div class="rotary-knob-box">
+              <label>V-BASS</label>
+              <input type="range" id="mic-eq-low" class="mini-knob-slider" min="-20" max="12" value="0">
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center; margin-top:4px;">
+            <div style="flex:1;">
+              <label style="font-size:9px; color:var(--text-dim);">ECHO / DELAY</label>
+              <input type="range" id="mic-echo-slider" class="mini-knob-slider" min="0" max="0.75" step="0.05" value="0">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:9px; color:var(--text-dim);">VOCAL LAUTSTÄRKE</label>
+              <input type="range" id="mic-fader" class="mini-knob-slider" min="0" max="1.5" step="0.05" value="1.0">
+            </div>
+          </div>
+        </div>
+
+        <!-- Vocal Takes Library -->
+        <div class="vocal-takes-card">
+          <span style="font-size:11px; font-weight:bold; color:var(--vu-green);">GESANGS-AUFNAHMEN</span>
+          <div id="vocal-takes-list" style="display:flex; flex-direction:column; gap:4px;">
+            <!-- Rendered dynamically -->
           </div>
         </div>
       </div>
     </section>
 
-    <!-- SECTION 3: Beat Maker & Drum Pads ("Selber Musik Machen") -->
+    <!-- SECTION 3: Beatmaker & Drum Pads -->
     <section class="beatmaker-area">
       <div class="section-header">
         <h2>🥁 Selber Musik Machen - Beat Pads & Sequencer</h2>
       </div>
 
-      <!-- 8 Drum & Synth Touch Pads -->
       <div class="pads-grid">
         <div id="pad-kick" class="drum-pad pad-kick">
           <span class="pad-name">808 KICK</span>
@@ -221,17 +624,14 @@
 
       <!-- 16-Step Beat Sequencer -->
       <div class="sequencer-card">
-        <div class="sequencer-header">
-          <h3 style="font-size:13px; font-weight:bold; color:var(--neon-green);">16-Step Rhythmus Sequencer (Loop)</h3>
+        <div class="seq-header">
+          <span style="font-size:11px; font-weight:bold; color:var(--vu-green);">16-STEP BEAT SEQUENCER</span>
           <div style="display:flex; gap:8px;">
-            <button id="seq-btn-play" class="seq-btn-play">▶ BEAT STARTEN</button>
-            <button id="seq-btn-clear" class="seq-btn-clear">Löschen</button>
+            <button id="seq-btn-play" style="background:var(--vu-green); color:#000; border:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">▶ BEAT STARTEN</button>
+            <button id="seq-btn-clear" style="background:var(--bg-card); color:var(--text-dim); border:1px solid var(--border-color); padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;">Löschen</button>
           </div>
         </div>
-
-        <div id="seq-rows-container" class="seq-rows-container">
-          <!-- Sequencer rows render dynamically -->
-        </div>
+        <div id="seq-rows-container" class="seq-rows-container"></div>
       </div>
     </section>
 
@@ -239,8 +639,8 @@
 
   <!-- Footer -->
   <footer>
-    <div>Ist_Mix_Musik &bull; Erstellt für Istvan &bull; Touch & Mobil-Ready</div>
-    <div>Tippe auf den Bildschirm, um Audio zu aktivieren</div>
+    <div>Ist_Mix_Musik 🎛️ &bull; 4-Deck Traktor Pro Studio für Istvan &bull; Touch & Mobil-Ready</div>
+    <div>Tippe auf ein beliebiges Deck, um Audio zu aktivieren</div>
   </footer>
 
   <!-- Scripts -->
@@ -251,7 +651,6 @@
   <script src="js/master-recorder.js"></script>
 
   <script>
-    // Initialize Studios on load
     window.addEventListener('DOMContentLoaded', () => {
       window.initDecks();
       window.initVocalStudio();
@@ -269,7 +668,32 @@
         });
       }
 
-      // Unlock audio on any first touch or click anywhere
+      // Mobile Deck Switcher Tabs
+      const tabBtns = document.querySelectorAll('.deck-tab-btn');
+      tabBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          tabBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const target = btn.dataset.target;
+          const cards = ['card-deck-a', 'card-deck-b', 'card-deck-c', 'card-deck-d'];
+
+          if (target === 'all') {
+            cards.forEach(c => document.getElementById(c).classList.remove('mobile-hidden'));
+          } else {
+            cards.forEach(c => {
+              const el = document.getElementById(c);
+              if (c === `card-${target}`) {
+                el.classList.remove('mobile-hidden');
+              } else {
+                el.classList.add('mobile-hidden');
+              }
+            });
+          }
+        });
+      });
+
+      // Audio unlock on first touch
       const unlockListener = () => {
         window.audioEngine.unlockAudio();
         document.removeEventListener('click', unlockListener);

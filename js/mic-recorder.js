@@ -1,7 +1,6 @@
 /**
- * Ist_Mix_Musik - Microphone & Vocal Recording Studio
- * Records voice from microphone, applies live vocal effects (Echo/Delay, Reverb),
- * and layers vocals into the master mix.
+ * Ist_Mix_Musik - Professional Vocal & Mic Studio
+ * Dedicated microphone channel strip with Solo, Mute, 3-Band EQ, Echo, Reverb, and Fader.
  */
 
 class VocalStudio {
@@ -11,14 +10,23 @@ class VocalStudio {
     this.recordedChunks = [];
     this.isRecording = false;
 
-    this.vocalTakes = []; // Array of { id, blob, buffer, name, isPlaying }
+    this.vocalTakes = [];
     this.sourceNodes = {};
 
-    // Vocal FX Nodes
-    this.micInputGain = null;
+    this.isSolo = false;
+    this.isMute = false;
+    this.faderVolume = 1.0;
+
+    // Audio Graph Nodes
+    this.micPreGain = null;
+    this.eqLow = null;
+    this.eqMid = null;
+    this.eqHigh = null;
     this.delayNode = null;
     this.delayFeedback = null;
     this.delayGain = null;
+    this.channelFader = null;
+    this.analyser = null;
 
     // UI elements
     this.btnRecord = document.getElementById('btn-mic-record');
@@ -27,37 +35,66 @@ class VocalStudio {
     this.canvasCtx = this.canvasVis ? this.canvasVis.getContext('2d') : null;
     this.takesContainer = document.getElementById('vocal-takes-list');
 
-    this.analyser = null;
-    this.animFrameId = null;
-
-    this._setupVocalFX();
+    this._setupVocalGraph();
     this._attachEvents();
   }
 
-  _setupVocalFX() {
+  _setupVocalGraph() {
     const ctx = window.audioEngine.ctx;
     if (!ctx) return;
 
-    this.micInputGain = ctx.createGain();
-    this.micInputGain.gain.value = 1.0;
+    this.micPreGain = ctx.createGain();
+    this.micPreGain.gain.value = 1.0;
 
-    // Delay FX (Echo)
+    // 3-Band Vocal EQ
+    this.eqLow = ctx.createBiquadFilter();
+    this.eqLow.type = 'lowshelf';
+    this.eqLow.frequency.value = 200;
+    this.eqLow.gain.value = 0;
+
+    this.eqMid = ctx.createBiquadFilter();
+    this.eqMid.type = 'peaking';
+    this.eqMid.frequency.value = 1800;
+    this.eqMid.Q.value = 1.2;
+    this.eqMid.gain.value = 0;
+
+    this.eqHigh = ctx.createBiquadFilter();
+    this.eqHigh.type = 'highshelf';
+    this.eqHigh.frequency.value = 5000;
+    this.eqHigh.gain.value = 0;
+
+    // Echo / Delay FX Loop
     this.delayNode = ctx.createDelay();
-    this.delayNode.delayTime.value = 0.3; // 300ms echo
+    this.delayNode.delayTime.value = 0.32;
     this.delayFeedback = ctx.createGain();
-    this.delayFeedback.gain.value = 0.35; // Feedback
+    this.delayFeedback.gain.value = 0.35;
     this.delayGain = ctx.createGain();
-    this.delayGain.gain.value = 0.0; // Echo off by default
+    this.delayGain.gain.value = 0.0; // dry by default
 
-    // Connect Delay loop: input -> delay -> feedback -> delay
     this.delayNode.connect(this.delayFeedback);
     this.delayFeedback.connect(this.delayNode);
     this.delayNode.connect(this.delayGain);
 
-    // Connect to mic bus
-    this.micInputGain.connect(window.audioEngine.micGain);
-    this.micInputGain.connect(this.delayNode);
-    this.delayGain.connect(window.audioEngine.micGain);
+    // Channel Fader
+    this.channelFader = ctx.createGain();
+    this.channelFader.gain.value = 1.0;
+
+    // Analyser for Mic VU
+    this.analyser = ctx.createAnalyser();
+    this.analyser.fftSize = 64;
+
+    // Routing: PreGain -> EQLow -> EQMid -> EQHigh -> Fader -> Analyser -> MicBus
+    this.micPreGain.connect(this.eqLow);
+    this.eqLow.connect(this.eqMid);
+    this.eqMid.connect(this.eqHigh);
+
+    // Send to dry and wet delay
+    this.eqHigh.connect(this.channelFader);
+    this.eqHigh.connect(this.delayNode);
+    this.delayGain.connect(this.channelFader);
+
+    this.channelFader.connect(this.analyser);
+    this.analyser.connect(window.audioEngine.micGain);
   }
 
   _attachEvents() {
@@ -68,8 +105,50 @@ class VocalStudio {
       });
     }
 
-    // Vocal FX controls
-    const echoSlider = document.getElementById('vocal-echo-slider');
+    // Vocal Solo & Mute
+    const btnSolo = document.getElementById('mic-solo');
+    if (btnSolo) {
+      btnSolo.addEventListener('click', () => {
+        this.isSolo = !this.isSolo;
+        btnSolo.classList.toggle('active', this.isSolo);
+        this.updateGain();
+      });
+    }
+
+    const btnMute = document.getElementById('mic-mute');
+    if (btnMute) {
+      btnMute.addEventListener('click', () => {
+        this.isMute = !this.isMute;
+        btnMute.classList.toggle('active', this.isMute);
+        this.updateGain();
+      });
+    }
+
+    // Vocal Fader
+    const fader = document.getElementById('mic-fader');
+    if (fader) {
+      fader.addEventListener('input', (e) => {
+        this.faderVolume = parseFloat(e.target.value);
+        this.updateGain();
+      });
+    }
+
+    // Vocal EQ Knobs
+    ['low', 'mid', 'high'].forEach((band) => {
+      const knob = document.getElementById(`mic-eq-${band}`);
+      if (knob) {
+        knob.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          const t = window.audioEngine.ctx.currentTime;
+          if (band === 'low') this.eqLow.gain.setTargetAtTime(val, t, 0.02);
+          if (band === 'mid') this.eqMid.gain.setTargetAtTime(val, t, 0.02);
+          if (band === 'high') this.eqHigh.gain.setTargetAtTime(val, t, 0.02);
+        });
+      }
+    });
+
+    // Vocal Echo Slider
+    const echoSlider = document.getElementById('mic-echo-slider');
     if (echoSlider) {
       echoSlider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
@@ -78,16 +157,17 @@ class VocalStudio {
         }
       });
     }
+  }
 
-    const volSlider = document.getElementById('vocal-vol-slider');
-    if (volSlider) {
-      volSlider.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        if (window.audioEngine.micGain && window.audioEngine.ctx) {
-          window.audioEngine.micGain.gain.setTargetAtTime(val, window.audioEngine.ctx.currentTime, 0.02);
-        }
-      });
+  updateGain() {
+    const ctx = window.audioEngine.ctx;
+    if (!ctx || !this.channelFader) return;
+
+    let eff = this.faderVolume;
+    if (this.isMute) {
+      eff = 0.0;
     }
+    this.channelFader.gain.setTargetAtTime(eff, ctx.currentTime, 0.02);
   }
 
   async initMicStream() {
@@ -105,15 +185,14 @@ class VocalStudio {
       const ctx = window.audioEngine.ctx;
       const micSource = ctx.createMediaStreamSource(this.mediaStream);
 
-      this.analyser = ctx.createAnalyser();
-      this.analyser.fftSize = 128;
-      micSource.connect(this.analyser);
+      // Connect into vocal audio chain
+      micSource.connect(this.micPreGain);
 
       this._startVisualizer();
       return true;
     } catch (err) {
-      console.error('Microphone access denied or error:', err);
-      alert('Mikrofon-Zugriff fehlgeschlagen: Bitte erlaube den Mikrofon-Zugriff im Browser!');
+      console.error('Microphone error:', err);
+      alert('Mikrofon-Zugriff fehlgeschlagen: Bitte erlaube Mikrofon-Berechtigungen im Browser!');
       return false;
     }
   }
@@ -159,7 +238,7 @@ class VocalStudio {
       this.btnRecord.textContent = '⏹';
     }
     if (this.lblStatus) {
-      this.lblStatus.textContent = 'Aufnahme läuft... Sprich oder singe ins Mikrofon!';
+      this.lblStatus.textContent = 'Aufnahme läuft... Sprich oder singe jetzt!';
       this.lblStatus.style.color = '#ff0055';
     }
   }
@@ -174,7 +253,7 @@ class VocalStudio {
       this.btnRecord.textContent = '🎤';
     }
     if (this.lblStatus) {
-      this.lblStatus.textContent = 'Aufnahme beendet und gespeichert!';
+      this.lblStatus.textContent = 'Aufnahme beendet & zur Gesangs-Bibliothek hinzugefügt!';
       this.lblStatus.style.color = '#00ff88';
     }
   }
@@ -190,7 +269,7 @@ class VocalStudio {
         id: takeId,
         blob: blob,
         buffer: audioBuffer,
-        name: `Stimme Aufnahme #${takeNum}`,
+        name: `Vocal Take #${takeNum}`,
         duration: audioBuffer.duration,
         isPlaying: false
       };
@@ -208,10 +287,10 @@ class VocalStudio {
     this.vocalTakes.forEach((take) => {
       const item = document.createElement('div');
       item.className = 'vocal-take-item';
-
       const durSec = Math.round(take.duration);
+
       item.innerHTML = `
-        <span style="font-weight:bold;">${take.name} (${durSec}s)</span>
+        <span style="font-weight:bold; font-size:12px;">${take.name} (${durSec}s)</span>
         <div style="display:flex; gap:6px;">
           <button id="play-${take.id}" style="background:#10b981; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">
             ${take.isPlaying ? '⏹ STOP' : '▶ PLAY'}
@@ -224,14 +303,12 @@ class VocalStudio {
 
       this.takesContainer.appendChild(item);
 
-      const btnPlay = item.querySelector(`#play-${take.id}`);
-      btnPlay.addEventListener('click', () => {
+      item.querySelector(`#play-${take.id}`).addEventListener('click', () => {
         window.audioEngine.unlockAudio();
         this.togglePlayTake(take);
       });
 
-      const btnDel = item.querySelector(`#del-${take.id}`);
-      btnDel.addEventListener('click', () => {
+      item.querySelector(`#del-${take.id}`).addEventListener('click', () => {
         this.deleteTake(take.id);
       });
     });
@@ -240,7 +317,7 @@ class VocalStudio {
   togglePlayTake(take) {
     if (take.isPlaying) {
       if (this.sourceNodes[take.id]) {
-        try { this.sourceNodes[take.id].stop(); } catch(e){}
+        try { this.sourceNodes[take.id].stop(); } catch (e) {}
         this.sourceNodes[take.id] = null;
       }
       take.isPlaying = false;
@@ -249,10 +326,7 @@ class VocalStudio {
       const ctx = window.audioEngine.ctx;
       const source = ctx.createBufferSource();
       source.buffer = take.buffer;
-      
-      // Connect to vocal FX input so echo/reverb applies to recorded voice!
-      source.connect(this.micInputGain);
-      
+      source.connect(this.micPreGain); // Plays through vocal channel strip with EQ & Echo!
       source.start();
       take.isPlaying = true;
       this.sourceNodes[take.id] = source;
@@ -268,7 +342,7 @@ class VocalStudio {
 
   deleteTake(takeId) {
     if (this.sourceNodes[takeId]) {
-      try { this.sourceNodes[takeId].stop(); } catch(e){}
+      try { this.sourceNodes[takeId].stop(); } catch (e) {}
     }
     this.vocalTakes = this.vocalTakes.filter(t => t.id !== takeId);
     this._renderTakesList();
@@ -278,14 +352,14 @@ class VocalStudio {
     if (!this.canvasVis || !this.analyser) return;
     const c = this.canvasCtx;
     const width = this.canvasVis.width = this.canvasVis.offsetWidth || 300;
-    const height = this.canvasVis.height = 40;
+    const height = this.canvasVis.height = 36;
     const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
 
     const draw = () => {
-      this.animFrameId = requestAnimationFrame(draw);
+      requestAnimationFrame(draw);
       this.analyser.getByteFrequencyData(dataArray);
 
-      c.fillStyle = '#0a0c10';
+      c.fillStyle = '#080a0f';
       c.fillRect(0, 0, width, height);
 
       const barWidth = (width / dataArray.length) * 2;

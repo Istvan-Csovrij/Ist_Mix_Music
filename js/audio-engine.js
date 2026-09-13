@@ -1,6 +1,6 @@
 /**
- * Ist_Mix_Musik - Core Web Audio Engine
- * Handles AudioContext, audio routing, sound synthesis for beatmaker, and master recording stream.
+ * Ist_Mix_Musik - Core 4-Deck Web Audio Engine
+ * Manages Master AudioContext, 4 Deck Busses (A, B, C, D), Mic Bus, Drums Bus, and Master Recording.
  */
 
 class AudioEngine {
@@ -8,19 +8,33 @@ class AudioEngine {
     this.ctx = null;
     this.isUnlocked = false;
     this.bpm = 120;
-    
-    // Routing Nodes
+
+    // Master Nodes
     this.masterGain = null;
-    this.deckAGain = null;
-    this.deckBGain = null;
+    this.masterLimiter = null;
+    this.recordDestination = null;
+
+    // 4 Channel Busses
+    this.deckBusses = {
+      'deck-a': null,
+      'deck-b': null,
+      'deck-c': null,
+      'deck-d': null
+    };
+
     this.micGain = null;
     this.drumsGain = null;
-    
-    // Master recording destination stream
-    this.recordDestination = null;
-    
-    // Synthesizer noise buffer cache
     this.noiseBuffer = null;
+
+    // Solo & Mute State Tracking
+    this.soloDeckId = null; // null if no deck is soloed
+    this.deckMutes = {
+      'deck-a': false,
+      'deck-b': false,
+      'deck-c': false,
+      'deck-d': false,
+      'mic': false
+    };
   }
 
   init() {
@@ -29,28 +43,40 @@ class AudioEngine {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     this.ctx = new AudioContextClass();
 
-    // Master bus
+    // Master Limiter to prevent clipping
+    this.masterLimiter = this.ctx.createDynamicsCompressor();
+    this.masterLimiter.threshold.setValueAtTime(-1.0, this.ctx.currentTime);
+    this.masterLimiter.knee.setValueAtTime(0.0, this.ctx.currentTime);
+    this.masterLimiter.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+    this.masterLimiter.attack.setValueAtTime(0.003, this.ctx.currentTime);
+    this.masterLimiter.release.setValueAtTime(0.25, this.ctx.currentTime);
+
+    // Master Gain
     this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
+    this.masterGain.gain.setValueAtTime(0.9, this.ctx.currentTime);
 
-    // Recording bus: tap master output to MediaStreamDestination
+    // Recording Bus
     this.recordDestination = this.ctx.createMediaStreamDestination();
-    this.masterGain.connect(this.ctx.destination);
-    this.masterGain.connect(this.recordDestination);
 
-    // Channel busses
-    this.deckAGain = this.ctx.createGain();
-    this.deckAGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
-    this.deckAGain.connect(this.masterGain);
+    // Routing: MasterGain -> Limiter -> Destination & Recorder
+    this.masterGain.connect(this.masterLimiter);
+    this.masterLimiter.connect(this.ctx.destination);
+    this.masterLimiter.connect(this.recordDestination);
 
-    this.deckBGain = this.ctx.createGain();
-    this.deckBGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
-    this.deckBGain.connect(this.masterGain);
+    // 4 Deck Channels (A, B, C, D)
+    ['deck-a', 'deck-b', 'deck-c', 'deck-d'].forEach((id) => {
+      const gainNode = this.ctx.createGain();
+      gainNode.gain.setValueAtTime(1.0, this.ctx.currentTime);
+      gainNode.connect(this.masterGain);
+      this.deckBusses[id] = gainNode;
+    });
 
+    // Mic Channel
     this.micGain = this.ctx.createGain();
     this.micGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
     this.micGain.connect(this.masterGain);
 
+    // Drums / Beatmaker Channel
     this.drumsGain = this.ctx.createGain();
     this.drumsGain.gain.setValueAtTime(0.9, this.ctx.currentTime);
     this.drumsGain.connect(this.masterGain);
@@ -70,7 +96,7 @@ class AudioEngine {
 
   _createNoiseBuffer() {
     if (!this.ctx) return;
-    const bufferSize = this.ctx.sampleRate * 2; // 2 seconds of noise
+    const bufferSize = this.ctx.sampleRate * 2;
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
@@ -83,6 +109,46 @@ class AudioEngine {
     this.bpm = Math.max(60, Math.min(200, bpm));
   }
 
+  // Solo & Mute Manager
+  setDeckSolo(deckId, active) {
+    if (active) {
+      this.soloDeckId = deckId;
+    } else if (this.soloDeckId === deckId) {
+      this.soloDeckId = null;
+    }
+    this.updateAllDeckGains();
+  }
+
+  setDeckMute(deckId, isMuted) {
+    this.deckMutes[deckId] = isMuted;
+    this.updateAllDeckGains();
+  }
+
+  updateAllDeckGains() {
+    if (!window.decks) return;
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    Object.keys(window.decks).forEach((deckId) => {
+      const deck = window.decks[deckId];
+      if (!deck || !deck.channelFaderGain) return;
+
+      const isSoloed = (this.soloDeckId === deckId);
+      const anySoloActive = (this.soloDeckId !== null);
+      const isMuted = this.deckMutes[deckId];
+
+      let effectiveGain = deck.userFaderVolume;
+
+      if (isMuted) {
+        effectiveGain = 0.0;
+      } else if (anySoloActive && !isSoloed) {
+        effectiveGain = 0.0; // Another deck is in Solo mode
+      }
+
+      deck.channelFaderGain.gain.setTargetAtTime(effectiveGain, ctx.currentTime, 0.02);
+    });
+  }
+
   // --- Realtime Synthesizers for Beatmaker / Drum Pads ---
 
   playKick(time = 0) {
@@ -91,11 +157,9 @@ class AudioEngine {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    // 808 Pitch drop
-    osc.frequency.setValueAtTime(150, t);
-    osc.frequency.exponentialRampToValueAtTime(32, t + 0.35);
+    osc.frequency.setValueAtTime(160, t);
+    osc.frequency.exponentialRampToValueAtTime(30, t + 0.35);
 
-    // Volume envelope
     gain.gain.setValueAtTime(1.2, t);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
 
@@ -110,7 +174,6 @@ class AudioEngine {
     this.unlockAudio();
     const t = time || this.ctx.currentTime;
 
-    // Body tone
     const osc = this.ctx.createOscillator();
     const oscGain = this.ctx.createGain();
     osc.type = 'triangle';
@@ -123,7 +186,6 @@ class AudioEngine {
     osc.start(t);
     osc.stop(t + 0.15);
 
-    // Noise snap
     if (this.noiseBuffer) {
       const noise = this.ctx.createBufferSource();
       noise.buffer = this.noiseBuffer;
@@ -174,7 +236,6 @@ class AudioEngine {
     if (!this.noiseBuffer) return;
     const t = time || this.ctx.currentTime;
 
-    // Multi-burst clap triggers
     [0, 0.012, 0.024, 0.036].forEach((offset) => {
       const noise = this.ctx.createBufferSource();
       noise.buffer = this.noiseBuffer;
@@ -206,7 +267,6 @@ class AudioEngine {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(noteFreq, t);
 
-    // Filter to make it deep sub bass
     const filter = this.ctx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(320, t);
@@ -291,6 +351,5 @@ class AudioEngine {
   }
 }
 
-// Global Audio Engine Instance
-const engine = new AudioEngine();
-window.audioEngine = engine;
+// Global instance
+window.audioEngine = new AudioEngine();
