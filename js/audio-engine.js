@@ -35,6 +35,12 @@ class AudioEngine {
       'deck-d': false,
       'mic': false
     };
+
+    if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+      navigator.mediaDevices.addEventListener('devicechange', () => {
+        this.rebindAudioDevice();
+      });
+    }
   }
 
   init() {
@@ -42,6 +48,12 @@ class AudioEngine {
 
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     this.ctx = new AudioContextClass();
+
+    this.ctx.onstatechange = () => {
+      if (this.ctx && (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted')) {
+        this.ctx.resume();
+      }
+    };
 
     // Master Limiter to prevent clipping
     this.masterLimiter = this.ctx.createDynamicsCompressor();
@@ -100,20 +112,80 @@ class AudioEngine {
     this.masterGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
   }
 
-  playTestTone() {
+  async rebindAudioDevice() {
+    if (!this.ctx) return;
+    try {
+      if (typeof this.ctx.setSinkId === 'function') {
+        await this.ctx.setSinkId('');
+      }
+      if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+        await this.ctx.resume();
+      }
+    } catch (e) {
+      console.warn('rebindAudioDevice notice:', e);
+    }
+  }
+
+  async playTestTone() {
     this.unlockAudio();
+    await this.rebindAudioDevice();
+
+    // 1. Web Audio API Beep (Standard 440 Hz)
     const ctx = this.ctx;
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(440, ctx.currentTime);
-    gain.gain.setValueAtTime(0.6, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.6);
+    if (ctx) {
+      try {
+        if (ctx.state === 'suspended') await ctx.resume();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        gain.gain.setValueAtTime(0.7, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.6);
+      } catch (e) {
+        console.warn('Web Audio test tone error:', e);
+      }
+    }
+
+    // 2. Direct HTML5 Audio Beep (Bypasses any Web Audio sink stalls!)
+    try {
+      this.playHtmlAudioBeep();
+    } catch (e) {}
+  }
+
+  playHtmlAudioBeep() {
+    const sampleRate = 44100;
+    const numSamples = Math.floor(sampleRate * 0.45);
+    const buffer = new ArrayBuffer(44 + numSamples * 2);
+    const view = new DataView(buffer);
+    const writeString = (offset, str) => {
+      for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+    };
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + numSamples * 2, true);
+    writeString(8, 'WAVEfmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, 1, true); // Mono
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, numSamples * 2, true);
+    for (let i = 0; i < numSamples; i++) {
+      const t = i / sampleRate;
+      const env = Math.max(0, 1.0 - i / numSamples);
+      const s = Math.sin(2 * Math.PI * 440 * t) * env * 0.7;
+      view.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    }
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.play().catch(() => {});
   }
 
   _createNoiseBuffer() {
