@@ -39,8 +39,15 @@
         <span id="master-volume-display" class="tempo-display" style="color:#10b981; font-weight:700;">100%</span>
       </div>
 
-      <button id="btn-sound-test" class="btn-rec-master" style="border-color:#10b981; color:#10b981; background:rgba(16,185,129,0.15);" title="Spielt einen Testton ab, um zu prüfen ob der Ton am PC / Kopfhörer ankommt">
-        🔊 Sound-Test
+      <div class="tempo-box" style="display:inline-flex; align-items:center; gap:5px;" title="Wähle dein Audiogerät (z.B. Logitech Headset oder Lautsprecher)">
+        <label for="audio-output-select" style="color:#38bdf8; font-weight:800; font-size:10px;">🎧 AUSGANG:</label>
+        <select id="audio-output-select" style="background:#0f172a; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:10px; font-weight:700; padding:2px 5px; max-width:140px; cursor:pointer;">
+          <option value="">Standard (Windows)</option>
+        </select>
+      </div>
+
+      <button id="btn-sound-test" class="btn-rec-master" style="border-color:#10b981; color:#10b981; background:rgba(16,185,129,0.15); font-weight:800;" title="Startet/Stoppt einen Dauerton (440Hz), um Lautsprecher & Headset ohne Unterbrechung zu testen">
+        🔊 Sound-Test (Dauerton)
       </button>
 
       <button id="btn-rec-master" class="btn-rec-master" title="Nimmt alle 4 Decks + Stimme + Beats auf">
@@ -840,11 +847,65 @@
         });
       }
 
-      // Sound Test Beep button
+      // Audio Output Selector & Device Enumeration
+      const audioOutputSelect = document.getElementById('audio-output-select');
+      async function populateAudioOutputs() {
+        if (!audioOutputSelect || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const outputs = devices.filter(d => d.kind === 'audiooutput');
+          if (outputs.length === 0) return;
+
+          const currentVal = audioOutputSelect.value;
+          audioOutputSelect.innerHTML = '<option value="">Standard (Windows)</option>';
+          outputs.forEach((dev, idx) => {
+            const opt = document.createElement('option');
+            opt.value = dev.deviceId;
+            opt.textContent = dev.label || `Ausgang ${idx + 1} (${dev.deviceId.slice(0, 8)}...)`;
+            if (dev.deviceId === currentVal) opt.selected = true;
+            audioOutputSelect.appendChild(opt);
+          });
+        } catch (err) {
+          console.warn('Fehler bei Audio-Geräte-Erkennung:', err);
+        }
+      }
+
+      if (audioOutputSelect) {
+        populateAudioOutputs();
+        audioOutputSelect.addEventListener('focus', populateAudioOutputs);
+        audioOutputSelect.addEventListener('change', async (e) => {
+          if (window.audioEngine) {
+            await window.audioEngine.setAudioOutputDevice(e.target.value);
+          }
+        });
+      }
+
+      if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+        navigator.mediaDevices.addEventListener('devicechange', () => {
+          populateAudioOutputs();
+        });
+      }
+
+      // Sound Test Continuous Tone Toggle Button
       const btnSoundTest = document.getElementById('btn-sound-test');
       if (btnSoundTest) {
         btnSoundTest.addEventListener('click', () => {
-          window.audioEngine.playTestTone();
+          if (window.audioEngine) {
+            const isPlaying = window.audioEngine.toggleContinuousTestTone();
+            if (isPlaying) {
+              btnSoundTest.innerHTML = '⏹ TESTTON STOPPEN <span style="font-size:10px;">(LÄUFT...)</span>';
+              btnSoundTest.style.background = '#dc2626';
+              btnSoundTest.style.color = '#ffffff';
+              btnSoundTest.style.borderColor = '#ef4444';
+              btnSoundTest.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.6)';
+            } else {
+              btnSoundTest.innerHTML = '🔊 Sound-Test (Dauerton)';
+              btnSoundTest.style.background = 'rgba(16,185,129,0.15)';
+              btnSoundTest.style.color = '#10b981';
+              btnSoundTest.style.borderColor = '#10b981';
+              btnSoundTest.style.boxShadow = 'none';
+            }
+          }
         });
       }
 

@@ -112,48 +112,65 @@ class AudioEngine {
     this.masterGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
   }
 
-  async rebindAudioDevice() {
+  async rebindAudioDevice(deviceId = '') {
     if (!this.ctx) return;
     try {
       if (typeof this.ctx.setSinkId === 'function') {
-        await this.ctx.setSinkId('');
+        await this.ctx.setSinkId(deviceId);
+        console.log('Audio Sink erfolgreich geändert zu:', deviceId || 'Standard');
       }
-      if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
-        await this.ctx.resume();
+      if (this.ctx.state === 'running') {
+        try { await this.ctx.suspend(); } catch (e) {}
       }
+      await this.ctx.resume();
     } catch (e) {
       console.warn('rebindAudioDevice notice:', e);
     }
   }
 
-  async playTestTone() {
-    this.unlockAudio();
-    await this.rebindAudioDevice();
+  async setAudioOutputDevice(deviceId = '') {
+    return this.rebindAudioDevice(deviceId);
+  }
 
-    // 1. Web Audio API Beep (Standard 440 Hz)
+  toggleContinuousTestTone() {
+    this.unlockAudio();
     const ctx = this.ctx;
-    if (ctx) {
+    if (!ctx) return false;
+
+    if (this.testOsc) {
       try {
-        if (ctx.state === 'suspended') await ctx.resume();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, ctx.currentTime);
-        gain.gain.setValueAtTime(0.7, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.6);
-      } catch (e) {
-        console.warn('Web Audio test tone error:', e);
+        this.testOsc.stop();
+        this.testOsc.disconnect();
+      } catch (e) {}
+      this.testOsc = null;
+      if (this.testGain) {
+        try { this.testGain.disconnect(); } catch (e) {}
+        this.testGain = null;
       }
+      return false; // Stopped
     }
 
-    // 2. Direct HTML5 Audio Beep (Bypasses any Web Audio sink stalls!)
     try {
-      this.playHtmlAudioBeep();
-    } catch (e) {}
+      if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+        ctx.resume();
+      }
+      this.testOsc = ctx.createOscillator();
+      this.testGain = ctx.createGain();
+      this.testOsc.type = 'sine';
+      this.testOsc.frequency.setValueAtTime(440, ctx.currentTime);
+      this.testGain.gain.setValueAtTime(0.4, ctx.currentTime);
+      this.testOsc.connect(this.testGain);
+      this.testGain.connect(ctx.destination);
+      this.testOsc.start();
+      return true; // Playing continuously
+    } catch (e) {
+      console.warn('Test tone error:', e);
+      return false;
+    }
+  }
+
+  async playTestTone() {
+    return this.toggleContinuousTestTone();
   }
 
   playHtmlAudioBeep() {

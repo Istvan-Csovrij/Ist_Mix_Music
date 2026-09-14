@@ -8,6 +8,8 @@ __pycache__/
 *.mp3
 *.webm
 *.ogg
+!demo_tracks/*.mp3
+!demo_tracks/*.wav
 
 # OS Files
 Thumbs.db

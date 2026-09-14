@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Ist_Mix_Music - Track Library & Permanent Music Storage
  * Stores all user songs permanently in browser IndexedDB so they NEVER disappear on F5!
  */
@@ -110,6 +110,9 @@ class TrackLibrary {
       }));
       this.updateUI();
       console.log(`Restored ${saved.length} tracks from permanent storage.`);
+    } else {
+      // Beim ersten Start echte Demo-Tracks automatisch laden
+      this.loadDemoTracks(true);
     }
   }
 
@@ -237,56 +240,97 @@ class TrackLibrary {
     }
   }
 
-  async loadDemoTracks() {
+  async loadDemoTracks(silent = false) {
     window.audioEngine.unlockAudio();
     const ctx = window.audioEngine.ctx;
 
-    const demos = [
-      { name: "Demo_01_House_Groove.wav", bpm: 124, type: "groove" },
-      { name: "Demo_02_Deep_808_Bass.wav", bpm: 128, type: "bass" },
-      { name: "Demo_03_Melodic_Arp.wav", bpm: 120, type: "synth" }
+    const realDemos = [
+      { name: "Sample_Istvan_Mix.mp3", path: "demo_tracks/Sample_Istvan_Mix.mp3" },
+      { name: "Track_01_Ambient_Intro.wav", path: "demo_tracks/Track_01_Ambient_Intro.wav" },
+      { name: "Track_02_Bassline_Groove.wav", path: "demo_tracks/Track_02_Bassline_Groove.wav" },
+      { name: "Track_03_Melodic_Outro.wav", path: "demo_tracks/Track_03_Melodic_Outro.wav" }
     ];
 
-    for (const demo of demos) {
+    let loadedCount = 0;
+    for (const demo of realDemos) {
       if (this.tracks.some(t => t.name === demo.name)) continue;
+      try {
+        const resp = await fetch(demo.path);
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const ab = await blob.clone().arrayBuffer();
+          const decoded = await ctx.decodeAudioData(ab);
+          const duration = decoded.duration;
+          const mins = Math.floor(duration / 60);
+          const secs = Math.floor(duration % 60);
+          const durationStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+          const trackId = 'demo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
 
-      const duration = 8.0;
-      const sampleRate = ctx.sampleRate;
-      const buffer = ctx.createBuffer(2, sampleRate * duration, sampleRate);
-      const left = buffer.getChannelData(0);
-      const right = buffer.getChannelData(1);
-
-      for (let i = 0; i < left.length; i++) {
-        const t = i / sampleRate;
-        let s = 0;
-        if (demo.type === "groove") {
-          const beatTime = (t * (demo.bpm / 60)) % 1.0;
-          s = Math.sin(2 * Math.PI * (50 + (1.0 - beatTime) * 100) * t) * Math.exp(-beatTime * 6);
-          s += (Math.random() * 2 - 1) * 0.1 * (beatTime > 0.5 ? Math.exp(-(beatTime - 0.5) * 10) : 0);
-        } else if (demo.type === "bass") {
-          const bassNote = 45 + (Math.floor(t * 2) % 4) * 8;
-          s = Math.sin(2 * Math.PI * bassNote * t) * 0.7;
-        } else {
-          const noteFreq = [261, 329, 392, 523][Math.floor(t * 4) % 4];
-          s = Math.sin(2 * Math.PI * noteFreq * t) * 0.4;
+          const trackObj = {
+            id: trackId,
+            name: demo.name,
+            blob: blob,
+            buffer: decoded,
+            duration: duration,
+            durationStr: durationStr
+          };
+          this.tracks.push(trackObj);
+          await this.storage.save(trackObj);
+          loadedCount++;
         }
-        left[i] = s;
-        right[i] = s;
+      } catch (e) {
+        console.warn('Konnte Demo-Datei nicht laden:', demo.name, e);
       }
+    }
 
-      const trackId = 'demo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
-      this.tracks.push({
-        id: trackId,
-        name: demo.name,
-        buffer: buffer,
-        duration: duration,
-        durationStr: "00:08"
-      });
+    if (loadedCount === 0 && this.tracks.length === 0) {
+      const demos = [
+        { name: "Demo_01_House_Groove.wav", bpm: 124, type: "groove" },
+        { name: "Demo_02_Deep_808_Bass.wav", bpm: 128, type: "bass" },
+        { name: "Demo_03_Melodic_Arp.wav", bpm: 120, type: "synth" }
+      ];
+
+      for (const demo of demos) {
+        if (this.tracks.some(t => t.name === demo.name)) continue;
+
+        const duration = 8.0;
+        const sampleRate = ctx.sampleRate;
+        const buffer = ctx.createBuffer(2, sampleRate * duration, sampleRate);
+        const left = buffer.getChannelData(0);
+        const right = buffer.getChannelData(1);
+
+        for (let i = 0; i < left.length; i++) {
+          const t = i / sampleRate;
+          let s = 0;
+          if (demo.type === "groove") {
+            const beatTime = (t * (demo.bpm / 60)) % 1.0;
+            s = Math.sin(2 * Math.PI * (50 + (1.0 - beatTime) * 100) * t) * Math.exp(-beatTime * 6);
+            s += (Math.random() * 2 - 1) * 0.1 * (beatTime > 0.5 ? Math.exp(-(beatTime - 0.5) * 10) : 0);
+          } else if (demo.type === "bass") {
+            const bassNote = 45 + (Math.floor(t * 2) % 4) * 8;
+            s = Math.sin(2 * Math.PI * bassNote * t) * 0.7;
+          } else {
+            const noteFreq = [261, 329, 392, 523][Math.floor(t * 4) % 4];
+            s = Math.sin(2 * Math.PI * noteFreq * t) * 0.4;
+          }
+          left[i] = s;
+          right[i] = s;
+        }
+
+        const trackId = 'demo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+        this.tracks.push({
+          id: trackId,
+          name: demo.name,
+          buffer: buffer,
+          duration: duration,
+          durationStr: "00:08"
+        });
+      }
     }
 
     this.updateUI();
 
-    if (this.section && this.section.classList.contains('hidden')) {
+    if (!silent && this.section && this.section.classList.contains('hidden')) {
       this.section.classList.remove('hidden');
       if (this.btnToggle) this.btnToggle.classList.add('active');
     }
