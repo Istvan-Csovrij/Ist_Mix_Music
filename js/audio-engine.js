@@ -58,9 +58,9 @@ class AudioEngine {
     // Recording Bus
     this.recordDestination = this.ctx.createMediaStreamDestination();
 
-    // Routing: MasterGain -> Limiter -> Destination & Recorder
+    // Direct uncompressed routing to speakers + routing to limiter/recorder
+    this.masterGain.connect(this.ctx.destination);
     this.masterGain.connect(this.masterLimiter);
-    this.masterLimiter.connect(this.ctx.destination);
     this.masterLimiter.connect(this.recordDestination);
 
     // 4 Deck Channels (A, B, C, D)
@@ -92,6 +92,28 @@ class AudioEngine {
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
+  }
+
+  setMasterVolume(val) {
+    if (!this.masterGain || !this.ctx) return;
+    const v = Math.max(0, Math.min(1.5, parseFloat(val)));
+    this.masterGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
+  }
+
+  playTestTone() {
+    this.unlockAudio();
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    gain.gain.setValueAtTime(0.6, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.6);
   }
 
   _createNoiseBuffer() {

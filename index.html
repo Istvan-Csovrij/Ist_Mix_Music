@@ -33,6 +33,16 @@
         <span id="bpm-display" class="tempo-display">120 BPM</span>
       </div>
 
+      <div class="tempo-box">
+        <label for="master-volume-slider" style="color:#10b981; font-weight:800;">VOL:</label>
+        <input type="range" id="master-volume-slider" min="0" max="1.5" step="0.05" value="1.0" style="width:65px; accent-color:#10b981;">
+        <span id="master-volume-display" class="tempo-display" style="color:#10b981; font-weight:700;">100%</span>
+      </div>
+
+      <button id="btn-sound-test" class="btn-rec-master" style="border-color:#10b981; color:#10b981; background:rgba(16,185,129,0.15);" title="Spielt einen Testton ab, um zu prüfen ob der Ton am PC / Kopfhörer ankommt">
+        🔊 Sound-Test
+      </button>
+
       <button id="btn-rec-master" class="btn-rec-master" title="Nimmt alle 4 Decks + Stimme + Beats auf">
         ⏺ Mix Aufnehmen
       </button>
@@ -816,6 +826,25 @@
           const bpm = parseInt(e.target.value, 10);
           bpmDisplay.textContent = `${bpm} BPM`;
           window.audioEngine.setBpm(bpm);
+        });
+      }
+
+      // Master Volume slider listener
+      const masterVolSlider = document.getElementById('master-volume-slider');
+      const masterVolDisplay = document.getElementById('master-volume-display');
+      if (masterVolSlider && masterVolDisplay) {
+        masterVolSlider.addEventListener('input', (e) => {
+          const v = parseFloat(e.target.value);
+          masterVolDisplay.textContent = `${Math.round(v * 100)}%`;
+          window.audioEngine.setMasterVolume(v);
+        });
+      }
+
+      // Sound Test Beep button
+      const btnSoundTest = document.getElementById('btn-sound-test');
+      if (btnSoundTest) {
+        btnSoundTest.addEventListener('click', () => {
+          window.audioEngine.playTestTone();
         });
       }
 
