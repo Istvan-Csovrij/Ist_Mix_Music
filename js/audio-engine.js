@@ -113,6 +113,7 @@ class AudioEngine {
   }
 
   async rebindAudioDevice(deviceId = '') {
+    this.currentSinkId = deviceId;
     if (!this.ctx) return;
     try {
       if (typeof this.ctx.setSinkId === 'function') {
@@ -132,41 +133,68 @@ class AudioEngine {
     return this.rebindAudioDevice(deviceId);
   }
 
-  toggleContinuousTestTone() {
+  async toggleContinuousTestTone() {
     this.unlockAudio();
     const ctx = this.ctx;
-    if (!ctx) return false;
 
-    if (this.testOsc) {
-      try {
-        this.testOsc.stop();
-        this.testOsc.disconnect();
-      } catch (e) {}
-      this.testOsc = null;
+    // Toggle OFF if already active
+    if (this.testIsActive) {
+      this.testIsActive = false;
+      if (this.testOsc) {
+        try { this.testOsc.stop(); this.testOsc.disconnect(); } catch (e) {}
+        this.testOsc = null;
+      }
       if (this.testGain) {
         try { this.testGain.disconnect(); } catch (e) {}
         this.testGain = null;
       }
+      if (this.testAudioEl) {
+        try {
+          this.testAudioEl.pause();
+          this.testAudioEl.currentTime = 0;
+        } catch (e) {}
+        this.testAudioEl = null;
+      }
       return false; // Stopped
     }
 
+    this.testIsActive = true;
+
+    // 1. Web Audio API continuous 440 Hz Sine Tone
     try {
-      if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
-        ctx.resume();
+      if (ctx) {
+        if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+          await ctx.resume();
+        }
+        this.testOsc = ctx.createOscillator();
+        this.testGain = ctx.createGain();
+        this.testOsc.type = 'sine';
+        this.testOsc.frequency.setValueAtTime(440, ctx.currentTime);
+        this.testGain.gain.setValueAtTime(0.5, ctx.currentTime);
+        this.testOsc.connect(this.testGain);
+        this.testGain.connect(ctx.destination);
+        this.testOsc.start();
       }
-      this.testOsc = ctx.createOscillator();
-      this.testGain = ctx.createGain();
-      this.testOsc.type = 'sine';
-      this.testOsc.frequency.setValueAtTime(440, ctx.currentTime);
-      this.testGain.gain.setValueAtTime(0.4, ctx.currentTime);
-      this.testOsc.connect(this.testGain);
-      this.testGain.connect(ctx.destination);
-      this.testOsc.start();
-      return true; // Playing continuously
     } catch (e) {
-      console.warn('Test tone error:', e);
-      return false;
+      console.warn('Web Audio test tone notice:', e);
     }
+
+    // 2. Direct HTML5 Audio Element playback (bypasses any Web Audio context block)
+    try {
+      if (!this.testAudioEl) {
+        this.testAudioEl = new Audio('demo_tracks/Sample_Istvan_Mix.mp3');
+        this.testAudioEl.loop = true;
+        this.testAudioEl.volume = 0.9;
+        if (this.currentSinkId && typeof this.testAudioEl.setSinkId === 'function') {
+          try { await this.testAudioEl.setSinkId(this.currentSinkId); } catch(e){}
+        }
+      }
+      await this.testAudioEl.play();
+    } catch (err) {
+      console.warn('HTML5 Audio fallback notice:', err);
+    }
+
+    return true; // Playing continuously
   }
 
   async playTestTone() {
