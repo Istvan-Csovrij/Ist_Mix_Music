@@ -339,6 +339,10 @@ class DJDeck {
 
       this._drawWaveform();
       this.updateTimeDisplay();
+
+      if (window.trackLibrary && typeof window.trackLibrary.saveExternalFile === 'function') {
+        window.trackLibrary.saveExternalFile(file, decoded);
+      }
     } catch (err) {
       console.error('Error decoding audio file:', err);
       if (this.trackNameEl) {

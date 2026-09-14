@@ -1,12 +1,88 @@
-/**
- * Ist_Mix_Music - Track Library & Music List Manager
- * Manages the central music collection, file uploads, track previews,
- * and 1-click loading into Deck A, B, C, or D.
+﻿/**
+ * Ist_Mix_Music - Track Library & Permanent Music Storage
+ * Stores all user songs permanently in browser IndexedDB so they NEVER disappear on F5!
  */
+
+class TrackStorage {
+  constructor() {
+    this.dbName = 'IstMixMusicDB';
+    this.dbVersion = 1;
+    this.storeName = 'tracks';
+    this.db = null;
+  }
+
+  async open() {
+    if (this.db) return this.db;
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, this.dbVersion);
+      request.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(this.storeName)) {
+          db.createObjectStore(this.storeName, { keyPath: 'id' });
+        }
+      };
+      request.onsuccess = (e) => {
+        this.db = e.target.result;
+        resolve(this.db);
+      };
+      request.onerror = (e) => {
+        console.warn('IndexedDB open error:', e);
+        reject(e);
+      };
+    });
+  }
+
+  async getAll() {
+    try {
+      const db = await this.open();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(this.storeName, 'readonly');
+        const store = tx.objectStore(this.storeName);
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('Could not load from IndexedDB:', e);
+      return [];
+    }
+  }
+
+  async save(trackData) {
+    try {
+      const db = await this.open();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(this.storeName, 'readwrite');
+        const store = tx.objectStore(this.storeName);
+        const req = store.put(trackData);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('Could not save to IndexedDB:', e);
+    }
+  }
+
+  async delete(trackId) {
+    try {
+      const db = await this.open();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(this.storeName, 'readwrite');
+        const store = tx.objectStore(this.storeName);
+        const req = store.delete(trackId);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('Could not delete from IndexedDB:', e);
+    }
+  }
+}
 
 class TrackLibrary {
   constructor() {
-    this.tracks = []; // Array of { id, name, file, buffer, duration, durationStr, isPreviewing }
+    this.storage = new TrackStorage();
+    this.tracks = []; // Array of { id, name, file, blob, buffer, duration, durationStr, isPreviewing }
     this.previewSource = null;
     this.currentPreviewId = null;
 
@@ -18,6 +94,23 @@ class TrackLibrary {
     this.fileInput = document.getElementById('library-file-input');
 
     this._attachEvents();
+    this.initStorage();
+  }
+
+  async initStorage() {
+    const saved = await this.storage.getAll();
+    if (saved && saved.length > 0) {
+      this.tracks = saved.map(item => ({
+        id: item.id,
+        name: item.name,
+        blob: item.blob,
+        duration: item.duration,
+        durationStr: item.durationStr,
+        buffer: null // decoded on demand when loaded into deck or previewed
+      }));
+      this.updateUI();
+      console.log(`Restored ${saved.length} tracks from permanent storage.`);
+    }
   }
 
   _attachEvents() {
@@ -65,11 +158,44 @@ class TrackLibrary {
     }
   }
 
+  async saveExternalFile(file, decodedBuffer) {
+    const exists = this.tracks.some(t => t.name === file.name);
+    if (exists) return;
+
+    const trackId = 'track_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+    const mins = Math.floor(decodedBuffer.duration / 60);
+    const secs = Math.floor(decodedBuffer.duration % 60);
+    const durationStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+    const trackObj = {
+      id: trackId,
+      name: file.name,
+      blob: file,
+      buffer: decodedBuffer,
+      duration: decodedBuffer.duration,
+      durationStr: durationStr
+    };
+
+    this.tracks.push(trackObj);
+    this.updateUI();
+
+    await this.storage.save({
+      id: trackId,
+      name: file.name,
+      blob: file,
+      duration: decodedBuffer.duration,
+      durationStr: durationStr,
+      savedAt: Date.now()
+    });
+  }
+
   async addFiles(files) {
     window.audioEngine.unlockAudio();
     const ctx = window.audioEngine.ctx;
 
     for (const file of files) {
+      if (this.tracks.some(t => t.name === file.name)) continue;
+
       const trackId = 'track_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
       try {
         const arrayBuffer = await file.arrayBuffer();
@@ -82,10 +208,20 @@ class TrackLibrary {
         this.tracks.push({
           id: trackId,
           name: file.name,
-          file: file,
+          blob: file,
           buffer: decoded,
           duration: decoded.duration,
           durationStr: durationStr
+        });
+
+        // Save permanently to IndexedDB
+        await this.storage.save({
+          id: trackId,
+          name: file.name,
+          blob: file,
+          duration: decoded.duration,
+          durationStr: durationStr,
+          savedAt: Date.now()
         });
       } catch (err) {
         console.error('Error adding track:', file.name, err);
@@ -105,10 +241,6 @@ class TrackLibrary {
     window.audioEngine.unlockAudio();
     const ctx = window.audioEngine.ctx;
 
-    // Synthesize 3 demo tracks directly in Web Audio:
-    // 1. House Groove 124 BPM (8s)
-    // 2. Techno Bassline 128 BPM (8s)
-    // 3. Synth Arp Melody 120 BPM (8s)
     const demos = [
       { name: "Demo_01_House_Groove.wav", bpm: 124, type: "groove" },
       { name: "Demo_02_Deep_808_Bass.wav", bpm: 128, type: "bass" },
@@ -116,6 +248,8 @@ class TrackLibrary {
     ];
 
     for (const demo of demos) {
+      if (this.tracks.some(t => t.name === demo.name)) continue;
+
       const duration = 8.0;
       const sampleRate = ctx.sampleRate;
       const buffer = ctx.createBuffer(2, sampleRate * duration, sampleRate);
@@ -126,7 +260,6 @@ class TrackLibrary {
         const t = i / sampleRate;
         let s = 0;
         if (demo.type === "groove") {
-          // 4-on-the-floor beat
           const beatTime = (t * (demo.bpm / 60)) % 1.0;
           s = Math.sin(2 * Math.PI * (50 + (1.0 - beatTime) * 100) * t) * Math.exp(-beatTime * 6);
           s += (Math.random() * 2 - 1) * 0.1 * (beatTime > 0.5 ? Math.exp(-(beatTime - 0.5) * 10) : 0);
@@ -159,11 +292,31 @@ class TrackLibrary {
     }
   }
 
-  loadToDeck(trackId, deckId) {
+  async loadToDeck(trackId, deckId) {
     const track = this.tracks.find(t => t.id === trackId);
     if (!track || !window.decks || !window.decks[deckId]) return;
 
     const deck = window.decks[deckId];
+    if (deck.trackNameEl) {
+      deck.trackNameEl.textContent = `Lade: ${track.name}...`;
+    }
+
+    // Decode on demand if buffer is not yet in RAM
+    if (!track.buffer && (track.blob || track.file)) {
+      window.audioEngine.unlockAudio();
+      const ctx = window.audioEngine.ctx;
+      try {
+        const data = track.blob || track.file;
+        const arrayBuffer = await data.arrayBuffer();
+        track.buffer = await ctx.decodeAudioData(arrayBuffer);
+      } catch (err) {
+        console.error('Error decoding track buffer:', err);
+        if (deck.trackNameEl) deck.trackNameEl.textContent = 'Fehler beim Laden!';
+        alert(`Song konnte nicht dekodiert werden: ${err.message}`);
+        return;
+      }
+    }
+
     deck.audioBuffer = track.buffer;
     deck.pauseOffset = 0;
     deck.stop();
@@ -175,7 +328,7 @@ class TrackLibrary {
     deck._drawWaveform();
     deck.updateTimeDisplay();
 
-    // Visual feedback
+    // Visual feedback on deck badge
     const badge = document.querySelector(`.deck-${deckId.split('-')[1]} .deck-badge`);
     if (badge) {
       badge.style.transform = 'scale(1.25)';
@@ -183,7 +336,7 @@ class TrackLibrary {
     }
   }
 
-  togglePreview(trackId) {
+  async togglePreview(trackId) {
     if (this.currentPreviewId === trackId) {
       this.stopPreview();
       return;
@@ -192,9 +345,25 @@ class TrackLibrary {
     this.stopPreview();
 
     const track = this.tracks.find(t => t.id === trackId);
-    if (!track || !track.buffer) return;
+    if (!track) return;
 
+    window.audioEngine.unlockAudio();
     const ctx = window.audioEngine.ctx;
+
+    // Decode on demand if needed
+    if (!track.buffer && (track.blob || track.file)) {
+      try {
+        const data = track.blob || track.file;
+        const arrayBuffer = await data.arrayBuffer();
+        track.buffer = await ctx.decodeAudioData(arrayBuffer);
+      } catch (err) {
+        console.error('Error decoding preview:', err);
+        return;
+      }
+    }
+
+    if (!track.buffer) return;
+
     this.previewSource = ctx.createBufferSource();
     this.previewSource.buffer = track.buffer;
 
@@ -223,11 +392,12 @@ class TrackLibrary {
     this.renderTable();
   }
 
-  removeTrack(trackId) {
+  async removeTrack(trackId) {
     if (this.currentPreviewId === trackId) {
       this.stopPreview();
     }
     this.tracks = this.tracks.filter(t => t.id !== trackId);
+    await this.storage.delete(trackId);
     this.updateUI();
   }
 
@@ -246,7 +416,7 @@ class TrackLibrary {
       this.tableBody.innerHTML = `
         <tr>
           <td colspan="5" style="text-align:center; padding:24px; color:var(--text-dim);">
-            Keine Songs in der Liste. Klicke auf <strong>"📂 Musik hinzufügen"</strong> oder <strong>"🎵 Demos laden"</strong>!
+            Keine Songs in der Liste. Klicke auf <strong>"➕ Musikdateien hinzufügen"</strong> oder <strong>"🎵 Demos laden"</strong>!
           </td>
         </tr>
       `;
