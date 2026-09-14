@@ -245,6 +245,7 @@ class TrackLibrary {
     const ctx = window.audioEngine.ctx;
 
     const realDemos = [
+      { name: "Fisherman - Lockdown Club Mix.mp3", path: "demo_tracks/Fisherman_Club_Mix_Sample.mp3" },
       { name: "Sample_Istvan_Mix.mp3", path: "demo_tracks/Sample_Istvan_Mix.mp3" },
       { name: "Track_01_Ambient_Intro.wav", path: "demo_tracks/Track_01_Ambient_Intro.wav" },
       { name: "Track_02_Bassline_Groove.wav", path: "demo_tracks/Track_02_Bassline_Groove.wav" },

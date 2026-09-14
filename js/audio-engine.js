@@ -160,38 +160,33 @@ class AudioEngine {
 
     this.testIsActive = true;
 
-    // 1. Web Audio API continuous 440 Hz Sine Tone
-    try {
-      if (ctx) {
-        if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
-          await ctx.resume();
-        }
-        this.testOsc = ctx.createOscillator();
-        this.testGain = ctx.createGain();
-        this.testOsc.type = 'sine';
-        this.testOsc.frequency.setValueAtTime(440, ctx.currentTime);
-        this.testGain.gain.setValueAtTime(0.5, ctx.currentTime);
-        this.testOsc.connect(this.testGain);
-        this.testGain.connect(ctx.destination);
-        this.testOsc.start();
-      }
-    } catch (e) {
-      console.warn('Web Audio test tone notice:', e);
-    }
-
-    // 2. Direct HTML5 Audio Element playback (bypasses any Web Audio context block)
+    // Direct High-Fidelity Audio Playback (Clean EDM Club Beat, no screechy sine tone!)
     try {
       if (!this.testAudioEl) {
-        this.testAudioEl = new Audio('demo_tracks/Sample_Istvan_Mix.mp3');
+        this.testAudioEl = new Audio('demo_tracks/Fisherman_Club_Mix_Sample.mp3');
         this.testAudioEl.loop = true;
-        this.testAudioEl.volume = 0.9;
+        this.testAudioEl.volume = 0.85;
         if (this.currentSinkId && typeof this.testAudioEl.setSinkId === 'function') {
           try { await this.testAudioEl.setSinkId(this.currentSinkId); } catch(e){}
         }
       }
       await this.testAudioEl.play();
     } catch (err) {
-      console.warn('HTML5 Audio fallback notice:', err);
+      console.warn('Audio test playback notice:', err);
+      // Fallback to Web Audio if audio element was blocked
+      try {
+        if (ctx) {
+          if (ctx.state === 'suspended' || ctx.state === 'interrupted') await ctx.resume();
+          this.testOsc = ctx.createOscillator();
+          this.testGain = ctx.createGain();
+          this.testOsc.type = 'triangle';
+          this.testOsc.frequency.setValueAtTime(440, ctx.currentTime);
+          this.testGain.gain.setValueAtTime(0.3, ctx.currentTime);
+          this.testOsc.connect(this.testGain);
+          this.testGain.connect(ctx.destination);
+          this.testOsc.start();
+        }
+      } catch (e2) {}
     }
 
     return true; // Playing continuously
