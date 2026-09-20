@@ -37,6 +37,10 @@ class DJDeck {
     this.isScratching = false;
     this.lastTouchX = 0;
 
+    // Waveform Scrubbing / Mouse Dragging
+    this.isWaveformDragging = false;
+    this.wasPlayingBeforeDrag = false;
+
     // Audio Graph Nodes
     this.eqLow = null;
     this.eqMid = null;
@@ -174,17 +178,60 @@ class DJDeck {
       });
     }
 
-    // Waveform Scrubbing / Seeking
-    if (this.canvas) {
-      const seekHandler = (e) => {
-        if (!this.audioBuffer) return;
-        const rect = this.canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        this.seek(ratio);
+    // Waveform Scrubbing / Seeking & Mouse/Touch Dragging
+    const waveformBox = this.canvas ? this.canvas.parentElement : null;
+    const targetElement = waveformBox || this.canvas;
+
+    if (targetElement) {
+      const getRatio = (e) => {
+        const rect = targetElement.getBoundingClientRect();
+        const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+        return Math.max(0, Math.min(0.999, (clientX - rect.left) / rect.width));
       };
-      this.canvas.addEventListener('click', seekHandler);
-      this.canvas.addEventListener('touchstart', seekHandler, { passive: true });
+
+      const startDrag = (e) => {
+        if (!this.audioBuffer) return;
+        this.isWaveformDragging = true;
+        this.wasPlayingBeforeDrag = this.isPlaying;
+
+        // Stop playback cleanly while dragging so audio does not duplicate or glitch
+        if (this.isPlaying) {
+          this.stop();
+        }
+
+        const ratio = getRatio(e);
+        this.pauseOffset = ratio * this.audioBuffer.duration;
+        if (this.cursor) this.cursor.style.left = `${ratio * 100}%`;
+        this.updateTimeDisplay();
+      };
+
+      const moveDrag = (e) => {
+        if (!this.isWaveformDragging || !this.audioBuffer) return;
+        const ratio = getRatio(e);
+        this.pauseOffset = ratio * this.audioBuffer.duration;
+        if (this.cursor) this.cursor.style.left = `${ratio * 100}%`;
+        this.updateTimeDisplay();
+      };
+
+      const endDrag = () => {
+        if (!this.isWaveformDragging || !this.audioBuffer) return;
+        this.isWaveformDragging = false;
+
+        // If it was playing before dragging began, resume playback immediately from new position
+        if (this.wasPlayingBeforeDrag) {
+          this.play();
+        }
+      };
+
+      // Mouse drag listeners
+      targetElement.addEventListener('mousedown', startDrag);
+      window.addEventListener('mousemove', moveDrag);
+      window.addEventListener('mouseup', endDrag);
+
+      // Touch drag listeners (phones, tablets, touch laptops)
+      targetElement.addEventListener('touchstart', startDrag, { passive: true });
+      window.addEventListener('touchmove', moveDrag, { passive: true });
+      window.addEventListener('touchend', endDrag);
     }
 
     // Rotating Vinyl Jog Wheel Drag & Scratch
@@ -365,9 +412,19 @@ class DJDeck {
   }
 
   play() {
-    if (this.isPlaying || !this.audioBuffer) return;
+    if (!this.audioBuffer) return;
     window.audioEngine.unlockAudio();
     const ctx = window.audioEngine.ctx;
+
+    // Clean up any existing sourceNode before creating a new one to prevent duplicate/layered playback
+    if (this.sourceNode) {
+      this.sourceNode.onended = null;
+      try {
+        this.sourceNode.stop();
+        this.sourceNode.disconnect();
+      } catch (e) {}
+      this.sourceNode = null;
+    }
 
     this.sourceNode = ctx.createBufferSource();
     this.sourceNode.buffer = this.audioBuffer;
@@ -385,8 +442,10 @@ class DJDeck {
       this.btnPlay.classList.add('playing');
     }
 
+    const nodeRef = this.sourceNode;
     this.sourceNode.onended = () => {
-      if (this.isPlaying && !this.isLooping) {
+      // Only handle onended if this is still the active node!
+      if (this.sourceNode === nodeRef && this.isPlaying && !this.isLooping) {
         this.pauseOffset = 0;
         this.isPlaying = false;
         if (this.btnPlay) {
@@ -416,6 +475,8 @@ class DJDeck {
 
   stop() {
     if (this.sourceNode) {
+      // Detach onended before stopping so dying node cannot overwrite state
+      this.sourceNode.onended = null;
       try {
         this.sourceNode.stop();
         this.sourceNode.disconnect();
@@ -431,11 +492,12 @@ class DJDeck {
 
   seek(ratio) {
     if (!this.audioBuffer) return;
-    const targetOffset = ratio * this.audioBuffer.duration;
+    const clampedRatio = Math.max(0, Math.min(0.999, ratio));
+    const targetOffset = clampedRatio * this.audioBuffer.duration;
     const wasPlaying = this.isPlaying;
     if (wasPlaying) this.stop();
     this.pauseOffset = targetOffset;
-    if (this.cursor) this.cursor.style.left = `${ratio * 100}%`;
+    if (this.cursor) this.cursor.style.left = `${clampedRatio * 100}%`;
     this.updateTimeDisplay();
     if (wasPlaying) this.play();
   }
@@ -589,12 +651,14 @@ class DJDeck {
         this.seek(this.loopStart / this.audioBuffer.duration);
       }
 
-      // Update Cursor
-      const ratio = cur / this.audioBuffer.duration;
-      if (this.cursor) {
-        this.cursor.style.left = `${Math.min(100, ratio * 100)}%`;
+      // Update Cursor & Time Display (only if not currently dragging)
+      if (!this.isWaveformDragging) {
+        const ratio = cur / this.audioBuffer.duration;
+        if (this.cursor) {
+          this.cursor.style.left = `${Math.min(100, ratio * 100)}%`;
+        }
+        this.updateTimeDisplay();
       }
-      this.updateTimeDisplay();
 
       // Spin Jog Wheel while playing
       if (!this.isScratching && this.jogWheel) {
