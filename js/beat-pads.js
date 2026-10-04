@@ -116,6 +116,14 @@ class BeatStudio {
       });
     }
 
+    // Sequencer Reset Default Tracks
+    const btnResetTracks = document.getElementById('seq-btn-reset-tracks');
+    if (btnResetTracks) {
+      btnResetTracks.addEventListener('click', () => {
+        this.resetDefaultTracks();
+      });
+    }
+
     // Toggle Add-Track Panel
     if (this.btnAddTrack && this.panelAddTrack) {
       this.btnAddTrack.addEventListener('click', () => {
@@ -375,6 +383,28 @@ class BeatStudio {
     this._renderSequencer();
   }
 
+  resetDefaultTracks() {
+    this.seqTracks = [
+      { id: 'track-kick',  name: 'KICK',  type: 'drum', color: '#00f0ff', isMuted: false, isCustom: false, sound: () => window.audioEngine.playKick(), steps: new Array(16).fill(false) },
+      { id: 'track-snare', name: 'SNARE', type: 'drum', color: '#f43f5e', isMuted: false, isCustom: false, sound: () => window.audioEngine.playSnare(), steps: new Array(16).fill(false) },
+      { id: 'track-hihat', name: 'HIHAT', type: 'drum', color: '#eab308', isMuted: false, isCustom: false, sound: () => window.audioEngine.playHiHat(0, false), steps: new Array(16).fill(false) },
+      { id: 'track-clap',  name: 'CLAP',  type: 'drum', color: '#10b981', isMuted: false, isCustom: false, sound: () => window.audioEngine.playClap(), steps: new Array(16).fill(false) }
+    ];
+
+    // Default beat pattern (Classic Groove)
+    this.seqTracks[0].steps[0] = true;  // Kick on 1
+    this.seqTracks[0].steps[8] = true;  // Kick on 3
+    this.seqTracks[0].steps[10] = true; // Kick syncopation
+    this.seqTracks[1].steps[4] = true;  // Snare on 2
+    this.seqTracks[1].steps[12] = true; // Snare on 4
+    for (let i = 0; i < 16; i += 2) {
+      this.seqTracks[2].steps[i] = true; // 8th note Hi-Hats
+    }
+    this.seqTracks[3].steps[12] = true; // Clap on 4
+
+    this._renderSequencer();
+  }
+
   // ==========================================
   // SEQUENCER RENDERING
   // ==========================================
@@ -382,6 +412,38 @@ class BeatStudio {
     const container = document.getElementById('seq-rows-container');
     if (!container) return;
     container.innerHTML = '';
+
+    // Empty state if all tracks removed
+    if (this.seqTracks.length === 0) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'seq-empty-message';
+      emptyDiv.innerHTML = `
+        <div style="text-align:center; padding: 22px 10px; color: var(--text-dim); font-size: 12px;">
+          <p style="margin-bottom:10px;">Alle Spuren wurden entfernt.</p>
+          <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+            <button id="btn-seq-empty-restore" class="btn-seq-add" style="border-color:#10b981; color:#10b981; background:rgba(16,185,129,0.15);">
+              🔄 Standard-Drums wiederherstellen
+            </button>
+            <button id="btn-seq-empty-add" class="btn-seq-add">
+              ➕ Neue Spur hinzufügen
+            </button>
+          </div>
+        </div>
+      `;
+      container.appendChild(emptyDiv);
+      const btnRestore = emptyDiv.querySelector('#btn-seq-empty-restore');
+      if (btnRestore) btnRestore.addEventListener('click', () => this.resetDefaultTracks());
+      const btnAdd = emptyDiv.querySelector('#btn-seq-empty-add');
+      if (btnAdd) {
+        btnAdd.addEventListener('click', () => {
+          if (this.panelAddTrack) {
+            this.panelAddTrack.classList.remove('hidden');
+            this.populateSampleDropdown();
+          }
+        });
+      }
+      return;
+    }
 
     this.seqTracks.forEach((track, tIdx) => {
       const row = document.createElement('div');
@@ -414,18 +476,16 @@ class BeatStudio {
       });
       infoBox.appendChild(btnMute);
 
-      // Delete Button for custom tracks
-      if (track.isCustom) {
-        const btnDel = document.createElement('button');
-        btnDel.className = 'btn-track-del';
-        btnDel.textContent = '🗑️';
-        btnDel.title = 'Spur entfernen';
-        btnDel.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.removeTrack(track.id);
-        });
-        infoBox.appendChild(btnDel);
-      }
+      // Delete Button for ANY track with an "✖"
+      const btnDel = document.createElement('button');
+      btnDel.className = 'btn-track-del';
+      btnDel.textContent = '✖';
+      btnDel.title = `Spur "${track.name}" entfernen`;
+      btnDel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.removeTrack(track.id);
+      });
+      infoBox.appendChild(btnDel);
 
       row.appendChild(infoBox);
 

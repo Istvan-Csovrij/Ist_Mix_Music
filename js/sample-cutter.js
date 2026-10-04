@@ -901,7 +901,7 @@ class SampleVault {
           <button class="btn-load-sample load-d" data-id="${sample.id}" data-deck="deck-d" title="In Deck D laden">D</button>
           
           <button class="btn-sample-download" data-id="${sample.id}" title="Als WAV herunterladen">💾</button>
-          <button class="btn-sample-del" data-id="${sample.id}" title="Löschen">🗑️</button>
+          <button class="btn-sample-del" data-id="${sample.id}" title="Sample löschen">✖</button>
         </div>
       `;
 

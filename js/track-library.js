@@ -510,7 +510,7 @@ class TrackLibrary {
             <button class="btn-load-deck load-b" data-id="${track.id}" data-deck="deck-b">LOAD B</button>
             <button class="btn-load-deck load-c" data-id="${track.id}" data-deck="deck-c">LOAD C</button>
             <button class="btn-load-deck load-d" data-id="${track.id}" data-deck="deck-d">LOAD D</button>
-            <button class="btn-del-track" data-id="${track.id}" title="Aus Liste entfernen">🗑️</button>
+            <button class="btn-del-track" data-id="${track.id}" title="Aus Liste entfernen">✖</button>
           </div>
         </td>
       `;

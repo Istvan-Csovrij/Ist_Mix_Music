@@ -182,6 +182,7 @@
             <span id="deck-a-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-a-time-display" class="deck-time-display">00:00.00</span>
             <button class="btn-deck-cut" data-deck="deck-a" title="Sample aus Deck A ausschneiden">✂️</button>
+            <button id="deck-a-eject" class="btn-deck-eject" title="Song / Spur aus Deck A entfernen">✖</button>
           </div>
 
           <label class="deck-upload-btn">
@@ -242,6 +243,7 @@
             <span id="deck-c-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-c-time-display" class="deck-time-display">00:00.00</span>
             <button class="btn-deck-cut" data-deck="deck-c" title="Sample aus Deck C ausschneiden">✂️</button>
+            <button id="deck-c-eject" class="btn-deck-eject" title="Song / Spur aus Deck C entfernen">✖</button>
           </div>
 
           <label class="deck-upload-btn">
@@ -556,6 +558,7 @@
             <span id="deck-b-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-b-time-display" class="deck-time-display">00:00.00</span>
             <button class="btn-deck-cut" data-deck="deck-b" title="Sample aus Deck B ausschneiden">✂️</button>
+            <button id="deck-b-eject" class="btn-deck-eject" title="Song / Spur aus Deck B entfernen">✖</button>
           </div>
 
           <label class="deck-upload-btn">
@@ -614,6 +617,7 @@
             <span id="deck-d-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-d-time-display" class="deck-time-display">00:00.00</span>
             <button class="btn-deck-cut" data-deck="deck-d" title="Sample aus Deck D ausschneiden">✂️</button>
+            <button id="deck-d-eject" class="btn-deck-eject" title="Song / Spur aus Deck D entfernen">✖</button>
           </div>
 
           <label class="deck-upload-btn">
@@ -1166,7 +1170,8 @@
               ➕ SPUR HINZUFÜGEN
             </button>
             <button id="seq-btn-play" style="background:#00e676; color:#000000; border:none; padding:5px 14px; border-radius:4px; font-weight:800; font-size:11px; cursor:pointer; box-shadow:0 0 10px rgba(0,230,118,0.4);">▶ BEAT STARTEN</button>
-            <button id="seq-btn-clear" style="background:var(--bg-card); color:var(--text-dim); border:1px solid var(--border-color); padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;">Löschen</button>
+            <button id="seq-btn-clear" style="background:var(--bg-card); color:var(--text-dim); border:1px solid var(--border-color); padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;" title="Alle gesetzten Takt-Kästchen leeren">Pattern leeren</button>
+            <button id="seq-btn-reset-tracks" style="background:var(--bg-card); color:var(--text-dim); border:1px solid var(--border-color); padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;" title="Standard-Spuren (Kick, Snare, Hi-Hat, Clap) wiederherstellen">🔄 Standard-Spuren</button>
           </div>
         </div>
 

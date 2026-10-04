@@ -179,6 +179,14 @@ class DJDeck {
       });
     }
 
+    // Eject / Remove Track Button (✖)
+    const btnEject = document.getElementById(`${id}-eject`);
+    if (btnEject) {
+      btnEject.addEventListener('click', () => {
+        this.ejectTrack();
+      });
+    }
+
     // Play button
     if (this.btnPlay) {
       this.btnPlay.addEventListener('click', () => {
@@ -484,6 +492,36 @@ class DJDeck {
         this.trackNameEl.textContent = 'Fehler beim Laden!';
       }
       alert(`Audiodatei konnte nicht dekodiert werden: ${err.message}`);
+    }
+  }
+
+  ejectTrack() {
+    this.stop();
+    this.audioBuffer = null;
+    this.sourceNode = null;
+    this.pauseOffset = 0;
+    this.trackBpm = null;
+
+    if (this.trackNameEl) {
+      this.trackNameEl.textContent = 'Kein Track geladen';
+    }
+    if (this.bpmDisplayEl) {
+      this.bpmDisplayEl.textContent = '-- BPM';
+      this.bpmDisplayEl.classList.remove('detected', 'synced');
+    }
+    if (this.timeDisplay) {
+      this.timeDisplay.textContent = '00:00.00';
+    }
+    if (this.cursor) {
+      this.cursor.style.left = '0%';
+    }
+    if (this.canvasCtx && this.canvas) {
+      this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    const fileInput = document.getElementById(`${this.deckId}-file-input`);
+    if (fileInput) {
+      fileInput.value = '';
     }
   }
 
