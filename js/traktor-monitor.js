@@ -9,10 +9,6 @@ class TraktorMasterMonitor {
     this.canvas = document.getElementById('traktor-scrolling-canvas');
     this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
 
-    // Track info elements
-    this.topDeckA = document.getElementById('monitor-deck-top');
-    this.topDeckB = document.getElementById('monitor-deck-bottom');
-
     this.activeTopDeck = 'deck-a';
     this.activeBottomDeck = 'deck-b';
 
@@ -38,7 +34,14 @@ class TraktorMasterMonitor {
 
     // Touch / Click seeking on the scrolling waveform
     if (this.canvas) {
+      let lastTouchTime = 0;
       const seek = (e) => {
+        if (e.type === 'touchstart') {
+          lastTouchTime = performance.now();
+        } else if (e.type === 'click') {
+          if (performance.now() - lastTouchTime < 600) return;
+        }
+
         const rect = this.canvas.getBoundingClientRect();
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;

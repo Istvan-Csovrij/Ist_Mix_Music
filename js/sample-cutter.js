@@ -930,6 +930,10 @@ class SampleVault {
 
       this.grid.appendChild(card);
     });
+
+    if (window.updateDeckLoadButtonsVisuals) {
+      window.updateDeckLoadButtonsVisuals();
+    }
   }
 
   async triggerSample(sample, padEl) {
@@ -973,6 +977,16 @@ class SampleVault {
   }
 
   async loadSampleToDeck(sample, deckId) {
+    if (window.isDeckHidden && window.isDeckHidden(deckId)) {
+      const deckLetter = deckId.split('-')[1].toUpperCase();
+      const confirmUnhide = confirm(`⚠️ DECK ${deckLetter} ist momentan ausgeblendet!\n\nUm ein Sample in DECK ${deckLetter} zu laden, muss der Player zuerst eingeblendet werden.\n\nMöchtest du DECK ${deckLetter} jetzt einblenden und das Sample laden?`);
+      if (confirmUnhide) {
+        window.setDeckVisibility(deckId, true);
+      } else {
+        return;
+      }
+    }
+
     if (!window.decks || !window.decks[deckId]) return;
     const deck = window.decks[deckId];
 

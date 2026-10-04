@@ -341,6 +341,16 @@ class TrackLibrary {
   }
 
   async loadToDeck(trackId, deckId) {
+    if (window.isDeckHidden && window.isDeckHidden(deckId)) {
+      const deckLetter = deckId.split('-')[1].toUpperCase();
+      const confirmUnhide = confirm(`⚠️ DECK ${deckLetter} ist momentan ausgeblendet!\n\nUm Musik in DECK ${deckLetter} zu laden, muss der Player zuerst eingeblendet werden.\n\nMöchtest du DECK ${deckLetter} jetzt einblenden und den Song laden?`);
+      if (confirmUnhide) {
+        window.setDeckVisibility(deckId, true);
+      } else {
+        return;
+      }
+    }
+
     const track = this.tracks.find(t => t.id === trackId);
     if (!track || !window.decks || !window.decks[deckId]) return;
 
@@ -385,6 +395,8 @@ class TrackLibrary {
   }
 
   async togglePreview(trackId) {
+    if (this._isLoadingPreview) return;
+
     if (this.currentPreviewId === trackId) {
       this.stopPreview();
       return;
@@ -400,6 +412,7 @@ class TrackLibrary {
 
     // Decode on demand if needed
     if (!track.buffer && (track.blob || track.file)) {
+      this._isLoadingPreview = true;
       try {
         const data = track.blob || track.file;
         const arrayBuffer = await data.arrayBuffer();
@@ -407,6 +420,8 @@ class TrackLibrary {
       } catch (err) {
         console.error('Error decoding preview:', err);
         return;
+      } finally {
+        this._isLoadingPreview = false;
       }
     }
 
@@ -526,6 +541,10 @@ class TrackLibrary {
 
       this.tableBody.appendChild(tr);
     });
+
+    if (window.updateDeckLoadButtonsVisuals) {
+      window.updateDeckLoadButtonsVisuals();
+    }
   }
 
   filterTable(query) {

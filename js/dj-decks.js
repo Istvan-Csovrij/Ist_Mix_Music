@@ -223,15 +223,42 @@ class DJDeck {
         }
       };
 
+      let lastTouchTime = 0;
+      const handleMouseDown = (e) => {
+        if (performance.now() - lastTouchTime < 600) return;
+        startDrag(e);
+      };
+      const handleMouseMove = (e) => {
+        if (performance.now() - lastTouchTime < 600) return;
+        moveDrag(e);
+      };
+      const handleMouseUp = (e) => {
+        if (performance.now() - lastTouchTime < 600) return;
+        endDrag(e);
+      };
+
+      const handleTouchStart = (e) => {
+        lastTouchTime = performance.now();
+        startDrag(e);
+      };
+      const handleTouchMove = (e) => {
+        lastTouchTime = performance.now();
+        moveDrag(e);
+      };
+      const handleTouchEnd = (e) => {
+        lastTouchTime = performance.now();
+        endDrag(e);
+      };
+
       // Mouse drag listeners
-      targetElement.addEventListener('mousedown', startDrag);
-      window.addEventListener('mousemove', moveDrag);
-      window.addEventListener('mouseup', endDrag);
+      targetElement.addEventListener('mousedown', handleMouseDown);
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
 
       // Touch drag listeners (phones, tablets, touch laptops)
-      targetElement.addEventListener('touchstart', startDrag, { passive: true });
-      window.addEventListener('touchmove', moveDrag, { passive: true });
-      window.addEventListener('touchend', endDrag);
+      targetElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+      window.addEventListener('touchmove', handleTouchMove, { passive: true });
+      window.addEventListener('touchend', handleTouchEnd);
     }
 
     // Rotating Vinyl Jog Wheel Drag & Scratch
@@ -404,6 +431,12 @@ class DJDeck {
       alert(`Bitte lade zuerst eine Audiodatei in ${this.deckId.toUpperCase()}!`);
       return;
     }
+    const now = performance.now();
+    if (this._lastToggleTime && (now - this._lastToggleTime < 150)) {
+      return;
+    }
+    this._lastToggleTime = now;
+
     if (this.isPlaying) {
       this.pause();
     } else {
@@ -413,18 +446,23 @@ class DJDeck {
 
   play() {
     if (!this.audioBuffer) return;
+
+    // Strict duplicate protection: if already playing with an active node, do not create another!
+    if (this.isPlaying && this.sourceNode) {
+      return;
+    }
+
+    const now = performance.now();
+    if (this._lastPlayTime && (now - this._lastPlayTime < 120)) {
+      return;
+    }
+    this._lastPlayTime = now;
+
     window.audioEngine.unlockAudio();
     const ctx = window.audioEngine.ctx;
 
-    // Clean up any existing sourceNode before creating a new one to prevent duplicate/layered playback
-    if (this.sourceNode) {
-      this.sourceNode.onended = null;
-      try {
-        this.sourceNode.stop();
-        this.sourceNode.disconnect();
-      } catch (e) {}
-      this.sourceNode = null;
-    }
+    // Force-stop and disconnect any prior sourceNode before starting new playback
+    this._cleanStopCurrentSource();
 
     this.sourceNode = ctx.createBufferSource();
     this.sourceNode.buffer = this.audioBuffer;
@@ -448,6 +486,7 @@ class DJDeck {
       if (this.sourceNode === nodeRef && this.isPlaying && !this.isLooping) {
         this.pauseOffset = 0;
         this.isPlaying = false;
+        this.sourceNode = null;
         if (this.btnPlay) {
           this.btnPlay.textContent = '▶ PLAY';
           this.btnPlay.classList.remove('playing');
@@ -473,16 +512,22 @@ class DJDeck {
     this.updateTimeDisplay();
   }
 
-  stop() {
+  _cleanStopCurrentSource() {
     if (this.sourceNode) {
-      // Detach onended before stopping so dying node cannot overwrite state
-      this.sourceNode.onended = null;
-      try {
-        this.sourceNode.stop();
-        this.sourceNode.disconnect();
-      } catch (e) {}
+      const node = this.sourceNode;
       this.sourceNode = null;
+      node.onended = null;
+      try {
+        node.stop(0);
+      } catch (e) {}
+      try {
+        node.disconnect();
+      } catch (e) {}
     }
+  }
+
+  stop() {
+    this._cleanStopCurrentSource();
     this.isPlaying = false;
     if (this.btnPlay) {
       this.btnPlay.textContent = '▶ PLAY';
@@ -499,7 +544,11 @@ class DJDeck {
     this.pauseOffset = targetOffset;
     if (this.cursor) this.cursor.style.left = `${clampedRatio * 100}%`;
     this.updateTimeDisplay();
-    if (wasPlaying) this.play();
+    if (wasPlaying) {
+      setTimeout(() => {
+        if (!this.isPlaying) this.play();
+      }, 30);
+    }
   }
 
   seekRelative(seconds) {
@@ -796,54 +845,178 @@ window.initDecks = () => {
   window.initDeckLayoutMode();
 };
 
-window.initDeckLayoutMode = () => {
-  const btnHeader = document.getElementById('btn-toggle-decks-mode');
-  const btnMixer = document.getElementById('btn-mixer-toggle-mode');
-  const lblHeader = document.getElementById('lbl-decks-mode-state');
-  const lblMixerTitle = document.getElementById('lbl-mixer-title');
+window.isDeckHidden = (deckId) => {
+  if (deckId === 'deck-c') {
+    return document.body.classList.contains('deck-c-hidden');
+  }
+  if (deckId === 'deck-d') {
+    return document.body.classList.contains('deck-d-hidden');
+  }
+  return false;
+};
+
+window.setDeckVisibility = (deckId, isVisible) => {
+  if (deckId !== 'deck-c' && deckId !== 'deck-d') return;
+  const isC = (deckId === 'deck-c');
+  const className = isC ? 'deck-c-hidden' : 'deck-d-hidden';
+  const storageKey = isC ? 'ist_mix_deck_c_hidden' : 'ist_mix_deck_d_hidden';
+
+  const shouldHide = !isVisible;
+  document.body.classList.toggle(className, shouldHide);
+  localStorage.setItem(storageKey, shouldHide ? '1' : '0');
+
+  // If newly hidden while playing, stop the deck
+  if (shouldHide && window.decks && window.decks[deckId]) {
+    window.decks[deckId].stop();
+  }
+
+  // Update button texts and active states
+  window._updateDeckToggleButtons();
+  window.updateDeckLoadButtonsVisuals();
+
+  // Redraw waveforms
+  setTimeout(() => {
+    if (window.decks) {
+      if (window.decks['deck-a']) window.decks['deck-a']._drawWaveform();
+      if (window.decks['deck-b']) window.decks['deck-b']._drawWaveform();
+      if (isC && isVisible && window.decks['deck-c']) window.decks['deck-c']._drawWaveform();
+      if (!isC && isVisible && window.decks['deck-d']) window.decks['deck-d']._drawWaveform();
+    }
+  }, 100);
+};
+
+window._updateDeckToggleButtons = () => {
+  const isCHidden = document.body.classList.contains('deck-c-hidden');
+  const isDHidden = document.body.classList.contains('deck-d-hidden');
+
+  const btnHdrC = document.getElementById('btn-toggle-deck-c');
+  const btnHdrD = document.getElementById('btn-toggle-deck-d');
+  const btnMixerC = document.getElementById('btn-mixer-toggle-c');
+  const btnMixerD = document.getElementById('btn-mixer-toggle-d');
+
+  if (btnHdrC) {
+    btnHdrC.classList.toggle('off', isCHidden);
+    btnHdrC.classList.toggle('active', !isCHidden);
+    btnHdrC.innerHTML = isCHidden ? '🎛️ DECK C: <span style="color:#ef4444;">AUS</span>' : '🎛️ DECK C: <span style="color:#ff6b35;">AN</span>';
+  }
+  if (btnHdrD) {
+    btnHdrD.classList.toggle('off', isDHidden);
+    btnHdrD.classList.toggle('active', !isDHidden);
+    btnHdrD.innerHTML = isDHidden ? '🎛️ DECK D: <span style="color:#ef4444;">AUS</span>' : '🎛️ DECK D: <span style="color:#a855f7;">AN</span>';
+  }
+
+  if (btnMixerC) {
+    btnMixerC.classList.toggle('off', isCHidden);
+    btnMixerC.textContent = isCHidden ? '➕ C EINBLENDEN' : '➖ C AUSBLENDEN';
+  }
+  if (btnMixerD) {
+    btnMixerD.classList.toggle('off', isDHidden);
+    btnMixerD.textContent = isDHidden ? '➕ D EINBLENDEN' : '➖ D AUSBLENDEN';
+  }
+
+  // Update mixer title / subtitle
   const lblMixerSub = document.getElementById('lbl-mixer-sub');
-
-  let currentMode = localStorage.getItem('ist_mix_decks_mode') || '4deck';
-
-  function applyMode(mode) {
-    currentMode = mode;
-    localStorage.setItem('ist_mix_decks_mode', mode);
-
-    const is2Deck = (mode === '2deck');
-    document.body.classList.toggle('mode-2deck', is2Deck);
-
-    if (btnHeader) {
-      btnHeader.classList.toggle('active-2deck', is2Deck);
+  if (lblMixerSub) {
+    if (isCHidden && isDHidden) {
+      lblMixerSub.textContent = '(2 KANÄLE: A & B)';
+    } else if (isCHidden) {
+      lblMixerSub.textContent = '(3 KANÄLE: A, B, D)';
+    } else if (isDHidden) {
+      lblMixerSub.textContent = '(3 KANÄLE: A, B, C)';
+    } else {
+      lblMixerSub.textContent = '(4 KANÄLE: A/B/C/D)';
     }
-    if (lblHeader) {
-      lblHeader.textContent = is2Deck ? '2 DECKS (A & B)' : '4 DECKS (A/B/C/D)';
-    }
-    if (lblMixerTitle) {
-      lblMixerTitle.textContent = is2Deck ? '2-KANAL MIXER' : '4-KANAL MIXER';
-    }
-    if (lblMixerSub) {
-      lblMixerSub.textContent = is2Deck ? '(A / B)' : '(A/B/C/D)';
-    }
-    if (btnMixer) {
-      btnMixer.textContent = is2Deck ? '➕ DECKS C & D EINBLENDEN' : '➖ DECKS C & D AUSBLENDEN';
-    }
-
-    // Trigger waveform redraws so canvas scales cleanly to new dimensions
-    setTimeout(() => {
-      if (window.decks) {
-        if (window.decks['deck-a']) window.decks['deck-a']._drawWaveform();
-        if (window.decks['deck-b']) window.decks['deck-b']._drawWaveform();
-      }
-    }, 100);
   }
 
-  function toggle() {
-    applyMode(currentMode === '2deck' ? '4deck' : '2deck');
+  // Update master waveform select options
+  const selTop = document.getElementById('monitor-select-top');
+  if (selTop) {
+    const optC = selTop.querySelector('option[value="deck-c"]');
+    if (optC) optC.textContent = isCHidden ? 'DECK C (Ausgeblendet)' : 'DECK C (Orange)';
+    if (isCHidden && selTop.value === 'deck-c') {
+      selTop.value = 'deck-a';
+      if (window.traktorMonitor) window.traktorMonitor.activeTopDeck = 'deck-a';
+    }
   }
 
-  if (btnHeader) btnHeader.addEventListener('click', toggle);
-  if (btnMixer) btnMixer.addEventListener('click', toggle);
+  const selBottom = document.getElementById('monitor-select-bottom');
+  if (selBottom) {
+    const optD = selBottom.querySelector('option[value="deck-d"]');
+    if (optD) optD.textContent = isDHidden ? 'DECK D (Ausgeblendet)' : 'DECK D (Lila)';
+    if (isDHidden && selBottom.value === 'deck-d') {
+      selBottom.value = 'deck-b';
+      if (window.traktorMonitor) window.traktorMonitor.activeBottomDeck = 'deck-b';
+    }
+  }
+};
 
-  // Initialize saved state
-  applyMode(currentMode);
+window.updateDeckLoadButtonsVisuals = () => {
+  const isCHidden = window.isDeckHidden('deck-c');
+  const isDHidden = window.isDeckHidden('deck-d');
+
+  // In Library Table
+  document.querySelectorAll('.btn-load-deck.load-c').forEach(btn => {
+    btn.classList.toggle('deck-hidden-btn', isCHidden);
+    btn.title = isCHidden ? '⚠️ Deck C ist aktuell ausgeblendet! (Klicken zum Einblenden)' : 'In Deck C laden';
+    btn.textContent = isCHidden ? 'LOAD C ✖' : 'LOAD C';
+  });
+  document.querySelectorAll('.btn-load-deck.load-d').forEach(btn => {
+    btn.classList.toggle('deck-hidden-btn', isDHidden);
+    btn.title = isDHidden ? '⚠️ Deck D ist aktuell ausgeblendet! (Klicken zum Einblenden)' : 'In Deck D laden';
+    btn.textContent = isDHidden ? 'LOAD D ✖' : 'LOAD D';
+  });
+
+  // In Sample Vault
+  document.querySelectorAll('.btn-load-sample.load-c').forEach(btn => {
+    btn.classList.toggle('deck-hidden-btn', isCHidden);
+    btn.title = isCHidden ? '⚠️ Deck C ist aktuell ausgeblendet! (Klicken zum Einblenden)' : 'In Deck C laden';
+  });
+  document.querySelectorAll('.btn-load-sample.load-d').forEach(btn => {
+    btn.classList.toggle('deck-hidden-btn', isDHidden);
+    btn.title = isDHidden ? '⚠️ Deck D ist aktuell ausgeblendet! (Klicken zum Einblenden)' : 'In Deck D laden';
+  });
+};
+
+window.initDeckLayoutMode = () => {
+  const isCHidden = localStorage.getItem('ist_mix_deck_c_hidden') === '1';
+  const isDHidden = localStorage.getItem('ist_mix_deck_d_hidden') === '1';
+
+  document.body.classList.toggle('deck-c-hidden', isCHidden);
+  document.body.classList.toggle('deck-d-hidden', isDHidden);
+
+  const btnHdrC = document.getElementById('btn-toggle-deck-c');
+  const btnHdrD = document.getElementById('btn-toggle-deck-d');
+  const btnMixerC = document.getElementById('btn-mixer-toggle-c');
+  const btnMixerD = document.getElementById('btn-mixer-toggle-d');
+
+  if (btnHdrC) {
+    btnHdrC.addEventListener('click', () => {
+      const nowHidden = document.body.classList.contains('deck-c-hidden');
+      window.setDeckVisibility('deck-c', nowHidden);
+    });
+  }
+
+  if (btnHdrD) {
+    btnHdrD.addEventListener('click', () => {
+      const nowHidden = document.body.classList.contains('deck-d-hidden');
+      window.setDeckVisibility('deck-d', nowHidden);
+    });
+  }
+
+  if (btnMixerC) {
+    btnMixerC.addEventListener('click', () => {
+      const nowHidden = document.body.classList.contains('deck-c-hidden');
+      window.setDeckVisibility('deck-c', nowHidden);
+    });
+  }
+
+  if (btnMixerD) {
+    btnMixerD.addEventListener('click', () => {
+      const nowHidden = document.body.classList.contains('deck-d-hidden');
+      window.setDeckVisibility('deck-d', nowHidden);
+    });
+  }
+
+  window._updateDeckToggleButtons();
+  window.updateDeckLoadButtonsVisuals();
 };

@@ -1940,17 +1940,23 @@ footer {
 }
 
 /* ==========================================================================
-   2-Deck / 4-Deck Layout Mode (Decks C & D Ausblenden / Einblenden)
+   Individual Deck C & D Visibility Mode (Einzeln Ausblenden / Einblenden)
    ========================================================================== */
-.btn-toggle-decks-mode {
+.header-deck-toggles {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+}
+
+.btn-deck-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: var(--bg-card);
   border: 1px solid var(--border-highlight);
   color: var(--text-main);
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
@@ -1958,20 +1964,25 @@ footer {
   white-space: nowrap;
 }
 
-.btn-toggle-decks-mode:hover {
+.btn-deck-toggle:hover {
   background: #334155;
   border-color: #64748b;
   color: #fff;
 }
 
-.btn-toggle-decks-mode.active-2deck {
-  border-color: var(--deck-a-color);
-  color: var(--deck-a-color);
-  background: rgba(0, 240, 255, 0.12);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+.btn-deck-toggle.off {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: var(--text-dim);
 }
 
-.btn-mixer-toggle-mode {
+.mixer-deck-toggles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-mixer-pill {
   background: var(--bg-inner);
   border: 1px solid var(--border-color);
   color: var(--text-dim);
@@ -1983,29 +1994,64 @@ footer {
   transition: all 0.15s;
 }
 
-.btn-mixer-toggle-mode:hover {
+.btn-mixer-pill:hover {
   border-color: var(--deck-a-color);
   color: #fff;
 }
 
-/* 2-Deck Mode: Hide Decks C & D and Mixer Channels 3 & 4 */
-body.mode-2deck #card-deck-c,
-body.mode-2deck #card-deck-d,
-body.mode-2deck .channel-strip.ch-3,
-body.mode-2deck .channel-strip.ch-4,
-body.mode-2deck .deck-tab-btn[data-target="deck-c"],
-body.mode-2deck .deck-tab-btn[data-target="deck-d"] {
+.btn-mixer-pill.off {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Individual Deck Hiding Rules */
+body.deck-c-hidden #card-deck-c,
+body.deck-c-hidden .channel-strip.ch-3,
+body.deck-c-hidden .deck-tab-btn[data-target="deck-c"] {
   display: none !important;
 }
 
-body.mode-2deck .channels-wrapper {
+body.deck-d-hidden #card-deck-d,
+body.deck-d-hidden .channel-strip.ch-4,
+body.deck-d-hidden .deck-tab-btn[data-target="deck-d"] {
+  display: none !important;
+}
+
+/* Mixer Grid Layout Adaptations */
+body.deck-c-hidden:not(.deck-d-hidden) .channels-wrapper,
+body.deck-d-hidden:not(.deck-c-hidden) .channels-wrapper {
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 375px;
+  margin: 0 auto;
+}
+
+body.deck-c-hidden.deck-d-hidden .channels-wrapper {
   grid-template-columns: repeat(2, 1fr);
   max-width: 250px;
   margin: 0 auto;
 }
 
-body.mode-2deck .decks-side {
+body.deck-c-hidden .decks-left {
   gap: 0;
 }
+
+body.deck-d-hidden .decks-right {
+  gap: 0;
+}
+
+/* Visual cue for load buttons targeting a hidden deck */
+.deck-hidden-btn {
+  opacity: 0.45 !important;
+  border-style: dashed !important;
+  border-color: #ef4444 !important;
+  position: relative;
+}
+
+.deck-hidden-btn:hover {
+  opacity: 0.8 !important;
+  border-color: #f97316 !important;
+}
+
 
 
