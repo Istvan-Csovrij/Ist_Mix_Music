@@ -1007,16 +1007,19 @@ class SampleVault {
 
     if (!sample.buffer) return;
 
-    deck.audioBuffer = sample.buffer;
-    deck.pauseOffset = 0;
-    deck.stop();
-
-    if (deck.trackNameEl) {
-      deck.trackNameEl.textContent = `[SAMPLE] ${sample.name} (${sample.durationStr})`;
+    const nameWithDur = `[SAMPLE] ${sample.name} (${sample.durationStr})`;
+    if (typeof deck.setAudioBuffer === 'function') {
+      deck.setAudioBuffer(sample.buffer, nameWithDur);
+    } else {
+      deck.audioBuffer = sample.buffer;
+      deck.pauseOffset = 0;
+      deck.stop();
+      if (deck.trackNameEl) {
+        deck.trackNameEl.textContent = nameWithDur;
+      }
+      deck._drawWaveform();
+      deck.updateTimeDisplay();
     }
-
-    deck._drawWaveform();
-    deck.updateTimeDisplay();
 
     // Visual feedback
     const badge = document.querySelector(`.deck-${deckId.split('-')[1]} .deck-badge`);

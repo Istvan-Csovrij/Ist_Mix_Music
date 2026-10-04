@@ -48,12 +48,17 @@
         <label for="bpm-slider">TEMPO:</label>
         <input type="range" id="bpm-slider" min="70" max="160" value="120">
         <span id="bpm-display" class="tempo-display">120 BPM</span>
+        <button id="btn-tap-tempo" class="btn-tap-tempo" title="Tippe mehrfach im Takt, um BPM festzulegen">TAP</button>
       </div>
 
-      <div class="tempo-box">
+      <div class="tempo-box master-vol-box">
         <label for="master-volume-slider" style="color:#10b981; font-weight:800;">VOL:</label>
         <input type="range" id="master-volume-slider" min="0" max="1.5" step="0.05" value="1.0" style="width:65px; accent-color:#10b981;">
         <span id="master-volume-display" class="tempo-display" style="color:#10b981; font-weight:700;">100%</span>
+        <div class="master-stereo-vu" title="Master Stereo Output (L / R)">
+          <div class="vu-channel"><span class="vu-ch-label">L</span><div class="vu-meter-bar master-bar" id="master-vu-l"><div class="vu-led red"></div><div class="vu-led yellow"></div><div class="vu-led green"></div><div class="vu-led green"></div><div class="vu-led green"></div></div></div>
+          <div class="vu-channel"><span class="vu-ch-label">R</span><div class="vu-meter-bar master-bar" id="master-vu-r"><div class="vu-led red"></div><div class="vu-led yellow"></div><div class="vu-led green"></div><div class="vu-led green"></div><div class="vu-led green"></div></div></div>
+        </div>
       </div>
 
       <div class="tempo-box" style="display:inline-flex; align-items:center; gap:5px;" title="Wähle dein Audiogerät (z.B. Logitech Headset oder Lautsprecher)">
@@ -173,6 +178,7 @@
         <article class="deck-card deck-a" id="card-deck-a">
           <div class="deck-header">
             <span class="deck-badge">DECK A</span>
+            <span id="deck-a-bpm-display" class="deck-bpm-tag" title="Erkanntes Tempo (BPM). Klicke hier, um Master-Tempo auf diesen Track zu setzen!">-- BPM</span>
             <span id="deck-a-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-a-time-display" class="deck-time-display">00:00.00</span>
             <button class="btn-deck-cut" data-deck="deck-a" title="Sample aus Deck A ausschneiden">✂️</button>
@@ -232,6 +238,7 @@
         <article class="deck-card deck-c" id="card-deck-c">
           <div class="deck-header">
             <span class="deck-badge">DECK C</span>
+            <span id="deck-c-bpm-display" class="deck-bpm-tag" title="Erkanntes Tempo (BPM). Klicke hier, um Master-Tempo auf diesen Track zu setzen!">-- BPM</span>
             <span id="deck-c-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-c-time-display" class="deck-time-display">00:00.00</span>
             <button class="btn-deck-cut" data-deck="deck-c" title="Sample aus Deck C ausschneiden">✂️</button>
@@ -330,6 +337,11 @@
               <input type="range" id="ch1-filter" class="filter-knob-slider" min="-1" max="1" step="0.05" value="0">
             </div>
 
+            <div class="rotary-knob-box" style="margin-top:2px;">
+              <label style="color:var(--deck-a-color);">ECHO</label>
+              <input type="range" id="ch1-echo" class="filter-knob-slider" min="0" max="1" step="0.02" value="0" title="Deck A Echo / Delay Mix">
+            </div>
+
             <div class="strip-button-row">
               <button id="ch1-solo" class="btn-solo">S</button>
               <button id="ch1-mute" class="btn-mute">M</button>
@@ -378,6 +390,11 @@
             <div class="rotary-knob-box" style="margin-top:2px;">
               <label style="color:var(--deck-b-color);">FILTER</label>
               <input type="range" id="ch2-filter" class="filter-knob-slider" min="-1" max="1" step="0.05" value="0">
+            </div>
+
+            <div class="rotary-knob-box" style="margin-top:2px;">
+              <label style="color:var(--deck-b-color);">ECHO</label>
+              <input type="range" id="ch2-echo" class="filter-knob-slider" min="0" max="1" step="0.02" value="0" title="Deck B Echo / Delay Mix">
             </div>
 
             <div class="strip-button-row">
@@ -430,6 +447,11 @@
               <input type="range" id="ch3-filter" class="filter-knob-slider" min="-1" max="1" step="0.05" value="0">
             </div>
 
+            <div class="rotary-knob-box" style="margin-top:2px;">
+              <label style="color:var(--deck-c-color);">ECHO</label>
+              <input type="range" id="ch3-echo" class="filter-knob-slider" min="0" max="1" step="0.02" value="0" title="Deck C Echo / Delay Mix">
+            </div>
+
             <div class="strip-button-row">
               <button id="ch3-solo" class="btn-solo">S</button>
               <button id="ch3-mute" class="btn-mute">M</button>
@@ -480,6 +502,11 @@
               <input type="range" id="ch4-filter" class="filter-knob-slider" min="-1" max="1" step="0.05" value="0">
             </div>
 
+            <div class="rotary-knob-box" style="margin-top:2px;">
+              <label style="color:var(--deck-d-color);">ECHO</label>
+              <input type="range" id="ch4-echo" class="filter-knob-slider" min="0" max="1" step="0.02" value="0" title="Deck D Echo / Delay Mix">
+            </div>
+
             <div class="strip-button-row">
               <button id="ch4-solo" class="btn-solo">S</button>
               <button id="ch4-mute" class="btn-mute">M</button>
@@ -525,6 +552,7 @@
         <article class="deck-card deck-b" id="card-deck-b">
           <div class="deck-header">
             <span class="deck-badge">DECK B</span>
+            <span id="deck-b-bpm-display" class="deck-bpm-tag" title="Erkanntes Tempo (BPM). Klicke hier, um Master-Tempo auf diesen Track zu setzen!">-- BPM</span>
             <span id="deck-b-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-b-time-display" class="deck-time-display">00:00.00</span>
             <button class="btn-deck-cut" data-deck="deck-b" title="Sample aus Deck B ausschneiden">✂️</button>
@@ -582,6 +610,7 @@
         <article class="deck-card deck-d" id="card-deck-d">
           <div class="deck-header">
             <span class="deck-badge">DECK D</span>
+            <span id="deck-d-bpm-display" class="deck-bpm-tag" title="Erkanntes Tempo (BPM). Klicke hier, um Master-Tempo auf diesen Track zu setzen!">-- BPM</span>
             <span id="deck-d-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-d-time-display" class="deck-time-display">00:00.00</span>
             <button class="btn-deck-cut" data-deck="deck-d" title="Sample aus Deck D ausschneiden">✂️</button>

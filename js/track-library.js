@@ -375,16 +375,19 @@ class TrackLibrary {
       }
     }
 
-    deck.audioBuffer = track.buffer;
-    deck.pauseOffset = 0;
-    deck.stop();
-
-    if (deck.trackNameEl) {
-      deck.trackNameEl.textContent = `${track.name} (${track.durationStr})`;
+    const nameWithDur = `${track.name} (${track.durationStr})`;
+    if (typeof deck.setAudioBuffer === 'function') {
+      deck.setAudioBuffer(track.buffer, nameWithDur);
+    } else {
+      deck.audioBuffer = track.buffer;
+      deck.pauseOffset = 0;
+      deck.stop();
+      if (deck.trackNameEl) {
+        deck.trackNameEl.textContent = nameWithDur;
+      }
+      deck._drawWaveform();
+      deck.updateTimeDisplay();
     }
-
-    deck._drawWaveform();
-    deck.updateTimeDisplay();
 
     // Visual feedback on deck badge
     const badge = document.querySelector(`.deck-${deckId.split('-')[1]} .deck-badge`);

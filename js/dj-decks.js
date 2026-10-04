@@ -121,6 +121,7 @@ class DJDeck {
     this.jogWheel = document.getElementById(`${id}-jog-wheel`);
     this.pitchSlider = document.getElementById(`${id}-pitch-slider`);
     this.pitchDisplay = document.getElementById(`${id}-pitch-display`);
+    this.bpmDisplayEl = document.getElementById(`${id}-bpm-display`);
 
     // Mixer Channel Controls
     this.btnSolo = document.getElementById(`ch${this.channelNumber}-solo`);
@@ -132,6 +133,51 @@ class DJDeck {
   _attachEvents() {
     const id = this.deckId;
     const ch = this.channelNumber;
+
+    // BPM Display Click to Sync Master Tempo
+    if (this.bpmDisplayEl) {
+      this.bpmDisplayEl.addEventListener('click', () => {
+        if (this.trackBpm && window.audioEngine) {
+          window.audioEngine.setBpm(this.trackBpm);
+          const bpmSlider = document.getElementById('bpm-slider');
+          const bpmDisplay = document.getElementById('bpm-display');
+          if (bpmSlider) bpmSlider.value = this.trackBpm;
+          if (bpmDisplay) bpmDisplay.textContent = `${this.trackBpm} BPM`;
+          this.bpmDisplayEl.classList.add('synced');
+          setTimeout(() => this.bpmDisplayEl.classList.remove('synced'), 400);
+        }
+      });
+    }
+
+    // Drag & Drop for songs directly onto Deck Card
+    const cardEl = document.getElementById(`card-${id}`);
+    if (cardEl) {
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        cardEl.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          cardEl.classList.add('drag-over');
+        });
+      });
+      ['dragleave', 'dragend'].forEach((eventName) => {
+        cardEl.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          cardEl.classList.remove('drag-over');
+        });
+      });
+      cardEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        cardEl.classList.remove('drag-over');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          const file = e.dataTransfer.files[0];
+          if (file) {
+            this.loadAudioFile(file);
+          }
+        }
+      });
+    }
 
     // Play button
     if (this.btnPlay) {
@@ -389,6 +435,29 @@ class DJDeck {
     this._startVUAnimation();
   }
 
+  setAudioBuffer(buffer, trackName = '') {
+    this.audioBuffer = buffer;
+    this.pauseOffset = 0;
+    this.stop();
+
+    if (trackName && this.trackNameEl) {
+      this.trackNameEl.textContent = trackName;
+    }
+
+    // Automatic BPM Detection
+    if (window.audioEngine && typeof window.audioEngine.detectBpm === 'function') {
+      const detected = window.audioEngine.detectBpm(buffer);
+      this.trackBpm = detected;
+      if (this.bpmDisplayEl) {
+        this.bpmDisplayEl.textContent = `${detected} BPM`;
+        this.bpmDisplayEl.classList.add('detected');
+      }
+    }
+
+    this._drawWaveform();
+    this.updateTimeDisplay();
+  }
+
   async loadAudioFile(file) {
     window.audioEngine.unlockAudio();
     const ctx = window.audioEngine.ctx;
@@ -400,19 +469,11 @@ class DJDeck {
     try {
       const arrayBuffer = await file.arrayBuffer();
       const decoded = await ctx.decodeAudioData(arrayBuffer);
-      this.audioBuffer = decoded;
+      const mins = Math.floor(decoded.duration / 60);
+      const secs = Math.floor(decoded.duration % 60);
+      const displayName = `${file.name} (${mins}:${secs < 10 ? '0' : ''}${secs})`;
 
-      this.pauseOffset = 0;
-      this.stop();
-
-      if (this.trackNameEl) {
-        const mins = Math.floor(decoded.duration / 60);
-        const secs = Math.floor(decoded.duration % 60);
-        this.trackNameEl.textContent = `${file.name} (${mins}:${secs < 10 ? '0' : ''}${secs})`;
-      }
-
-      this._drawWaveform();
-      this.updateTimeDisplay();
+      this.setAudioBuffer(decoded, displayName);
 
       if (window.trackLibrary && typeof window.trackLibrary.saveExternalFile === 'function') {
         window.trackLibrary.saveExternalFile(file, decoded);
@@ -843,6 +904,65 @@ window.initDecks = () => {
 
   window.fourDeckCrossfader = new FourDeckCrossfader(window.decks);
   window.initDeckLayoutMode();
+
+  // 1. Tap-Tempo & Master BPM control
+  const tapBtn = document.getElementById('btn-tap-tempo');
+  const bpmSlider = document.getElementById('bpm-slider');
+  const bpmDisplay = document.getElementById('bpm-display');
+  if (tapBtn) {
+    tapBtn.addEventListener('click', () => {
+      window.audioEngine.unlockAudio();
+      const bpm = window.audioEngine.recordTap();
+      if (bpmSlider) bpmSlider.value = bpm;
+      if (bpmDisplay) bpmDisplay.textContent = `${bpm} BPM`;
+      tapBtn.classList.add('tapped');
+      setTimeout(() => tapBtn.classList.remove('tapped'), 150);
+    });
+  }
+
+  // 2. Channel Echo Knobs (CH 1 to CH 4)
+  const echoDeckMap = {
+    'ch1-echo': 'deck-a',
+    'ch2-echo': 'deck-b',
+    'ch3-echo': 'deck-c',
+    'ch4-echo': 'deck-d'
+  };
+  Object.entries(echoDeckMap).forEach(([elemId, deckId]) => {
+    const el = document.getElementById(elemId);
+    if (el) {
+      el.addEventListener('input', (e) => {
+        window.audioEngine.setDeckEcho(deckId, parseFloat(e.target.value));
+      });
+      el.addEventListener('dblclick', () => {
+        el.value = 0;
+        window.audioEngine.setDeckEcho(deckId, 0);
+      });
+    }
+  });
+
+  // 3. Master Stereo Dual VU-Meter (L / R)
+  const vuLedsL = document.querySelectorAll('#master-vu-l .vu-led');
+  const vuLedsR = document.querySelectorAll('#master-vu-r .vu-led');
+  if (vuLedsL.length > 0 && vuLedsR.length > 0) {
+    const updateMasterVU = () => {
+      const levels = window.audioEngine.getMasterLevels();
+      const numLeds = vuLedsL.length;
+      const activeL = Math.round(levels.left * numLeds);
+      const activeR = Math.round(levels.right * numLeds);
+
+      vuLedsL.forEach((led, idx) => {
+        const fromBottom = numLeds - 1 - idx;
+        led.classList.toggle('lit', fromBottom < activeL);
+      });
+      vuLedsR.forEach((led, idx) => {
+        const fromBottom = numLeds - 1 - idx;
+        led.classList.toggle('lit', fromBottom < activeR);
+      });
+
+      requestAnimationFrame(updateMasterVU);
+    };
+    requestAnimationFrame(updateMasterVU);
+  }
 };
 
 window.isDeckHidden = (deckId) => {

@@ -30,6 +30,22 @@ class AudioEngine {
     this.synthRecordDest = null;
     this.noiseBuffer = null;
 
+    // Master Stereo Analysers for dual L/R VU-Meter
+    this.masterSplitter = null;
+    this.masterAnalyserL = null;
+    this.masterAnalyserR = null;
+
+    // Channel Echo & Beat-Delay FX
+    this.deckEchoes = {
+      'deck-a': null,
+      'deck-b': null,
+      'deck-c': null,
+      'deck-d': null
+    };
+
+    // Tap-Tempo tracking
+    this.tapTimes = [];
+
     // Solo & Mute State Tracking
     this.soloDeckId = null; // null if no deck is soloed
     this.deckMutes = {
@@ -79,12 +95,60 @@ class AudioEngine {
     this.masterGain.connect(this.masterLimiter);
     this.masterLimiter.connect(this.recordDestination);
 
-    // 4 Deck Channels (A, B, C, D)
+    // Master Stereo Analysers for dual L/R VU-Meter
+    this.masterSplitter = this.ctx.createChannelSplitter(2);
+    this.masterAnalyserL = this.ctx.createAnalyser();
+    this.masterAnalyserR = this.ctx.createAnalyser();
+    this.masterAnalyserL.fftSize = 128;
+    this.masterAnalyserR.fftSize = 128;
+    this.masterAnalyserL.smoothingTimeConstant = 0.7;
+    this.masterAnalyserR.smoothingTimeConstant = 0.7;
+
+    this.masterGain.connect(this.masterSplitter);
+    this.masterSplitter.connect(this.masterAnalyserL, 0);
+    this.masterSplitter.connect(this.masterAnalyserR, 1);
+
+    // 4 Deck Channels (A, B, C, D) with Beat-Synced Echo/Delay Circuit
     ['deck-a', 'deck-b', 'deck-c', 'deck-d'].forEach((id) => {
-      const gainNode = this.ctx.createGain();
-      gainNode.gain.setValueAtTime(1.0, this.ctx.currentTime);
-      gainNode.connect(this.masterGain);
-      this.deckBusses[id] = gainNode;
+      const inGain = this.ctx.createGain();
+      inGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+
+      // Direct Dry Path to master
+      const dryGain = this.ctx.createGain();
+      dryGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+      inGain.connect(dryGain);
+      dryGain.connect(this.masterGain);
+
+      // Wet Delay / Echo Path
+      const delayNode = this.ctx.createDelay(2.5);
+      const bpm = this.bpm || 120;
+      const delayTime = (60 / bpm) * 0.75; // 3/4 beat club delay
+      delayNode.delayTime.setValueAtTime(delayTime, this.ctx.currentTime);
+
+      const feedbackGain = this.ctx.createGain();
+      feedbackGain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+
+      const wetGain = this.ctx.createGain();
+      wetGain.gain.setValueAtTime(0.0, this.ctx.currentTime); // initially 0% wet
+
+      const echoFilter = this.ctx.createBiquadFilter();
+      echoFilter.type = 'lowpass';
+      echoFilter.frequency.setValueAtTime(3200, this.ctx.currentTime);
+
+      inGain.connect(delayNode);
+      delayNode.connect(echoFilter);
+      echoFilter.connect(feedbackGain);
+      feedbackGain.connect(delayNode);
+      echoFilter.connect(wetGain);
+      wetGain.connect(this.masterGain);
+
+      this.deckBusses[id] = inGain;
+      this.deckEchoes[id] = {
+        delay: delayNode,
+        feedback: feedbackGain,
+        wetGain: wetGain,
+        dryGain: dryGain
+      };
     });
 
     // Mic Channel
@@ -976,6 +1040,177 @@ class AudioEngine {
 
     const t = ctx.currentTime;
     this.flangerMix.gain.setTargetAtTime(active ? 0.75 : 0.0, t, 0.05);
+  }
+
+  setBpm(val) {
+    const bpm = Math.max(40, Math.min(240, parseFloat(val) || 120));
+    this.bpm = bpm;
+    // Update all beat-synced echo delays (dotted 8th / 3/4 beat delay)
+    const delayTime = (60 / bpm) * 0.75;
+    if (this.ctx && this.deckEchoes) {
+      const t = this.ctx.currentTime;
+      Object.values(this.deckEchoes).forEach((echo) => {
+        if (echo && echo.delay) {
+          echo.delay.delayTime.setTargetAtTime(delayTime, t, 0.05);
+        }
+      });
+    }
+    // Update sidechain timer if active
+    if (this.isPumping && this.sidechainTimer) {
+      this.toggleSidechainPump(true);
+    }
+    return this.bpm;
+  }
+
+  getMasterLevels() {
+    if (!this.masterAnalyserL || !this.masterAnalyserR) {
+      return { left: 0, right: 0 };
+    }
+    const bufL = new Uint8Array(this.masterAnalyserL.frequencyBinCount);
+    const bufR = new Uint8Array(this.masterAnalyserR.frequencyBinCount);
+    this.masterAnalyserL.getByteTimeDomainData(bufL);
+    this.masterAnalyserR.getByteTimeDomainData(bufR);
+
+    let peakL = 0;
+    let peakR = 0;
+    for (let i = 0; i < bufL.length; i++) {
+      const valL = Math.abs(bufL[i] - 128) / 128;
+      const valR = Math.abs(bufR[i] - 128) / 128;
+      if (valL > peakL) peakL = valL;
+      if (valR > peakR) peakR = valR;
+    }
+    return {
+      left: Math.min(1.0, peakL * 1.5),
+      right: Math.min(1.0, peakR * 1.5)
+    };
+  }
+
+  setDeckEcho(deckId, amount) {
+    if (!this.deckEchoes || !this.deckEchoes[deckId] || !this.ctx) return;
+    const amt = Math.max(0, Math.min(1, parseFloat(amount) || 0));
+    const echo = this.deckEchoes[deckId];
+    const t = this.ctx.currentTime;
+    // Wet gain scales up smoothly
+    echo.wetGain.gain.setTargetAtTime(amt * 0.9, t, 0.02);
+    // Feedback increases with knob: 0.2 up to 0.72 (club style tail)
+    const fb = amt > 0.02 ? 0.25 + amt * 0.47 : 0.0;
+    echo.feedback.gain.setTargetAtTime(fb, t, 0.02);
+  }
+
+  recordTap() {
+    const now = Date.now();
+    // If last tap was > 2.5s ago, reset tap queue
+    if (this.tapTimes.length > 0 && now - this.tapTimes[this.tapTimes.length - 1] > 2500) {
+      this.tapTimes = [];
+    }
+    this.tapTimes.push(now);
+    if (this.tapTimes.length > 6) {
+      this.tapTimes.shift();
+    }
+    if (this.tapTimes.length < 2) {
+      return this.bpm || 120;
+    }
+    // Calculate average interval between consecutive taps
+    let intervals = [];
+    for (let i = 1; i < this.tapTimes.length; i++) {
+      intervals.push(this.tapTimes[i] - this.tapTimes[i - 1]);
+    }
+    const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    let bpm = Math.round(60000 / avgInterval);
+    if (bpm < 50) bpm = 50;
+    if (bpm > 220) bpm = 220;
+    this.setBpm(bpm);
+    return bpm;
+  }
+
+  detectBpm(audioBuffer) {
+    if (!audioBuffer || audioBuffer.length < 44100) return 128;
+    try {
+      const channelData = audioBuffer.getChannelData(0);
+      const sampleRate = audioBuffer.sampleRate;
+
+      // Analyze up to 30 seconds, skipping the first 2 seconds intro
+      const startSample = Math.floor(Math.min(2 * sampleRate, channelData.length * 0.1));
+      const endSample = Math.min(startSample + 30 * sampleRate, channelData.length);
+      const length = endSample - startSample;
+      if (length < sampleRate * 5) return 128;
+
+      // Downsample by factor of 20 (approx 2205 Hz)
+      const step = 20;
+      const downSampledLength = Math.floor(length / step);
+      const envelope = new Float32Array(downSampledLength);
+
+      for (let i = 0; i < downSampledLength; i++) {
+        const rawIdx = startSample + i * step;
+        let v = 0;
+        for (let j = 0; j < step && (rawIdx + j) < endSample; j++) {
+          const val = Math.abs(channelData[rawIdx + j]);
+          if (val > v) v = val;
+        }
+        envelope[i] = v;
+      }
+
+      // Moving average threshold to detect onsets/transients
+      const avgWindow = 120; // ~1 second
+      let runningSum = 0;
+      for (let i = 0; i < Math.min(avgWindow, envelope.length); i++) {
+        runningSum += envelope[i];
+      }
+
+      const peaks = [];
+      const effectiveSampleRate = sampleRate / step;
+      const minPeakDist = effectiveSampleRate * 0.25; // min 0.25s between peaks (max 240 BPM)
+
+      let lastPeak = -minPeakDist;
+      for (let i = avgWindow; i < envelope.length - avgWindow; i++) {
+        runningSum += envelope[i] - envelope[i - avgWindow];
+        const localAvg = runningSum / avgWindow;
+        if (envelope[i] > localAvg * 1.4 &&
+            envelope[i] > envelope[i - 1] &&
+            envelope[i] > envelope[i + 1] &&
+            envelope[i] > envelope[i - 2] &&
+            envelope[i] > envelope[i + 2] &&
+            (i - lastPeak) >= minPeakDist) {
+          peaks.push(i);
+          lastPeak = i;
+        }
+      }
+
+      if (peaks.length < 6) return 128;
+
+      // Calculate intervals between successive peaks
+      const bpmCounts = {};
+      for (let i = 0; i < peaks.length - 1; i++) {
+        for (let j = i + 1; j < Math.min(i + 4, peaks.length); j++) {
+          const intervalSamples = (peaks[j] - peaks[i]) / (j - i);
+          const intervalSec = intervalSamples / effectiveSampleRate;
+          let candidateBpm = Math.round(60 / intervalSec);
+
+          // Normalize to standard DJ range 75 - 160 BPM
+          while (candidateBpm < 75 && candidateBpm > 0) candidateBpm *= 2;
+          while (candidateBpm > 160) candidateBpm = Math.round(candidateBpm / 2);
+
+          if (candidateBpm >= 75 && candidateBpm <= 160) {
+            bpmCounts[candidateBpm] = (bpmCounts[candidateBpm] || 0) + 1;
+            bpmCounts[candidateBpm - 1] = (bpmCounts[candidateBpm - 1] || 0) + 0.3;
+            bpmCounts[candidateBpm + 1] = (bpmCounts[candidateBpm + 1] || 0) + 0.3;
+          }
+        }
+      }
+
+      let bestBpm = 128;
+      let maxCount = -1;
+      for (const [bpmStr, count] of Object.entries(bpmCounts)) {
+        if (count > maxCount) {
+          maxCount = count;
+          bestBpm = parseInt(bpmStr, 10);
+        }
+      }
+      return bestBpm;
+    } catch (e) {
+      console.warn('Auto BPM detection fallback:', e);
+      return 128;
+    }
   }
 }
 
