@@ -22,6 +22,7 @@ function audioBufferToWav(buffer, opt = {}) {
 
   return encodeWAV(result, format, sampleRate, numChannels, bitDepth);
 }
+window.audioBufferToWav = audioBufferToWav;
 
 function encodeWAV(samples, format, sampleRate, numChannels, bitDepth) {
   const bytesPerSample = bitDepth / 8;

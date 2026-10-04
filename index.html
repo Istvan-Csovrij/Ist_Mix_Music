@@ -654,7 +654,9 @@
               </span>
             </div>
             <select id="synth-instrument-select" class="synth-select synth-header-select" style="margin-left:12px; font-size:11px; font-weight:700; background:#0f172a; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; padding:3px 8px; cursor:pointer;">
-              <option value="piano" selected>🎹 Konzert-Klavier</option>
+              <option value="tiesto_bass" selected>💥 Tiësto DZZZ Bass (Club Slap)</option>
+              <option value="future_rave_bass">🚀 Future Rave Bass (MORTEN / Guetta)</option>
+              <option value="piano">🎹 Konzert-Klavier</option>
               <option value="synth_lead">⚡ EDM Club Lead</option>
               <option value="sub_bass">🎸 Deep 808 Sub-Bass</option>
               <option value="acid_bass">🔊 Acid / Slap Bass</option>
@@ -666,8 +668,16 @@
           </div>
         </div>
 
-        <!-- Master Instrument Controls (Volume & Close) -->
-        <div style="display:flex; align-items:center; gap:12px;">
+        <!-- Master Instrument Controls (Recording, Volume & Close) -->
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <!-- Dedicated Instrument Recording Controls -->
+          <div class="synth-rec-group" style="display:flex; align-items:center; gap:6px;">
+            <button id="btn-rec-synth" class="btn-synth-rec" title="Nimmt dein Instrumenten-Spiel / Riffs / Melodien sauber ohne DJ-Musik auf">
+              <span class="rec-dot">🔴</span> <span class="rec-label">RIFF AUFNEHMEN</span>
+            </button>
+            <span id="synth-rec-timer" class="synth-rec-timer" style="display:none;">00:00</span>
+          </div>
+
           <div class="tempo-box" style="padding:3px 8px;" title="Lautstärke des Synthesizers im Gesamt-Mix">
             <label for="synth-volume-slider" style="color:#38bdf8; font-size:10px; font-weight:800;">SYNTH-VOL:</label>
             <input type="range" id="synth-volume-slider" min="0" max="1.5" step="0.05" value="0.85" style="width:65px; accent-color:#38bdf8;">
@@ -678,9 +688,39 @@
         </div>
       </div>
 
-      <!-- Instrument Selection Bar (8 Presets) -->
+      <!-- Recorded Riff Action Bar (Shown after recording finishes) -->
+      <div id="synth-rec-result-bar" class="synth-rec-result-bar hidden">
+        <div class="synth-rec-result-info">
+          <span class="synth-rec-badge">🎙️ RIFF AUFGENOMMEN:</span>
+          <input type="text" id="synth-rec-name" class="synth-rec-name-input" placeholder="Name für Riff / Bassline eingeben..." value="Tiesto_Dzzz_Bass_Drop">
+          <span id="synth-rec-duration-badge" class="synth-rec-duration">⏱️ 0.0s</span>
+        </div>
+        <div class="synth-rec-result-actions">
+          <button id="btn-synth-rec-preview" class="btn-synth-action preview" title="Aufnahme vorhören / stoppen">▶ ANHÖREN</button>
+          <button id="btn-synth-rec-save-vault" class="btn-synth-action primary" title="In eigene Sample-Bank speichern">💾 IN SAMPLE-BANK</button>
+          <div class="synth-deck-load-buttons">
+            <span class="load-label">IN DECK:</span>
+            <button class="btn-load-synth-deck load-a" data-deck="deck-a" title="In Deck A laden">A</button>
+            <button class="btn-load-synth-deck load-b" data-deck="deck-b" title="In Deck B laden">B</button>
+            <button class="btn-load-synth-deck load-c" data-deck="deck-c" title="In Deck C laden">C</button>
+            <button class="btn-load-synth-deck load-d" data-deck="deck-d" title="In Deck D laden">D</button>
+          </div>
+          <button id="btn-synth-rec-download" class="btn-synth-action download" title="Als WAV Datei auf PC herunterladen">💾 WAV</button>
+          <button id="btn-synth-rec-discard" class="btn-synth-action danger" title="Aufnahme verwerfen">✖</button>
+        </div>
+      </div>
+
+      <!-- Instrument Selection Bar (10 Presets inkl. Tiësto DZZZ Bass) -->
       <div class="synth-presets-bar">
-        <button class="btn-synth-preset active" data-instrument="piano" title="Akustisches Konzert-Klavier">
+        <button class="btn-synth-preset active" data-instrument="tiesto_bass" title="Tiësto DZZZ Bass (Knackig verzerrter Brazilian / Slap House Club-Bass)">
+          <span class="preset-icon">💥</span>
+          <span class="preset-name">Tiësto DZZZ</span>
+        </button>
+        <button class="btn-synth-preset" data-instrument="future_rave_bass" title="Future Rave Bass (David Guetta & MORTEN Festival-Bass)">
+          <span class="preset-icon">🚀</span>
+          <span class="preset-name">Future Rave</span>
+        </button>
+        <button class="btn-synth-preset" data-instrument="piano" title="Akustisches Konzert-Klavier">
           <span class="preset-icon">🎹</span>
           <span class="preset-name">Klavier</span>
         </button>
@@ -714,7 +754,7 @@
         </button>
       </div>
 
-      <!-- Controls Dashboard (Pitch, Octave, Arp, Filter) -->
+      <!-- Controls Dashboard (Pitch, Octave, Arp, Filter, Saturation Drive) -->
       <div class="synth-dashboard">
         <!-- Octave & Detune Controls -->
         <div class="synth-control-card">
@@ -722,8 +762,8 @@
           <div class="synth-controls-inline">
             <div class="synth-param-box">
               <label for="synth-octave-slider">OKTAVE:</label>
-              <input type="range" id="synth-octave-slider" min="-2" max="2" step="1" value="0">
-              <span id="synth-octave-display" class="synth-param-val">0 (NORMAL)</span>
+              <input type="range" id="synth-octave-slider" min="-2" max="2" step="1" value="-1">
+              <span id="synth-octave-display" class="synth-param-val">-1 OKT</span>
             </div>
             <div class="synth-param-box">
               <label for="synth-detune-slider">DETUNE:</label>
@@ -739,13 +779,25 @@
           <div class="synth-controls-inline">
             <div class="synth-param-box">
               <label for="synth-cutoff-slider">CUTOFF:</label>
-              <input type="range" id="synth-cutoff-slider" min="150" max="10000" step="50" value="3500">
-              <span id="synth-cutoff-display" class="synth-param-val">3500 Hz</span>
+              <input type="range" id="synth-cutoff-slider" min="150" max="10000" step="50" value="4200">
+              <span id="synth-cutoff-display" class="synth-param-val">4200 Hz</span>
             </div>
             <div class="synth-param-box">
               <label for="synth-res-slider">RESONANZ:</label>
-              <input type="range" id="synth-res-slider" min="0.5" max="15" step="0.5" value="2.0">
-              <span id="synth-res-display" class="synth-param-val">2.0</span>
+              <input type="range" id="synth-res-slider" min="0.5" max="15" step="0.5" value="6.5">
+              <span id="synth-res-display" class="synth-param-val">6.5</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Drive / DZZZ-Bite Saturation -->
+        <div class="synth-control-card">
+          <span class="synth-card-title">DZZZ-BITE & DRIVE</span>
+          <div class="synth-controls-inline">
+            <div class="synth-param-box" style="flex:1;">
+              <label for="synth-drive-slider">DRIVE / BITE:</label>
+              <input type="range" id="synth-drive-slider" min="0" max="1" step="0.05" value="0.7">
+              <span id="synth-drive-display" class="synth-param-val">70%</span>
             </div>
           </div>
         </div>

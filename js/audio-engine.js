@@ -26,6 +26,7 @@ class AudioEngine {
     this.drumsGain = null;
     this.samplerGain = null;
     this.synthGain = null;
+    this.synthRecordDest = null;
     this.noiseBuffer = null;
 
     // Solo & Mute State Tracking
@@ -104,6 +105,10 @@ class AudioEngine {
     this.synthGain = this.ctx.createGain();
     this.synthGain.gain.setValueAtTime(0.9, this.ctx.currentTime);
     this.synthGain.connect(this.masterGain);
+
+    // Dedicated Synth Recording Destination (Isolated pure instrument stream)
+    this.synthRecordDest = this.ctx.createMediaStreamDestination();
+    this.synthGain.connect(this.synthRecordDest);
 
     this._createNoiseBuffer();
     this.isUnlocked = true;

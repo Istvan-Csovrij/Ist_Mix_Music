@@ -20,13 +20,14 @@
 
 class SynthStudio {
   constructor() {
-    this.currentInstrument = 'piano';
-    this.octaveShift = 0; // -2, -1, 0, +1, +2
+    this.currentInstrument = 'tiesto_bass';
+    this.octaveShift = -1; // -2, -1, 0, +1, +2 (Default -1 for deep club bass)
     this.detuneSemi = 0;   // -12 to +12
-    this.filterCutoff = 3500;
-    this.filterResonance = 2.0;
-    this.attackTime = 0.01;
-    this.releaseTime = 0.3;
+    this.filterCutoff = 4200;
+    this.filterResonance = 6.5;
+    this.attackTime = 0.003;
+    this.releaseTime = 0.18;
+    this.drive = 0.70; // 0.0 to 1.0 (Saturation / DZZZ bite)
     this.volume = 0.85;
 
     // Arpeggiator Settings
@@ -42,6 +43,17 @@ class SynthStudio {
     // Held keys for arpeggiator
     this.heldNotes = new Set();
     this.isPointerDown = false;
+
+    // Dedicated Instrument Recorder State
+    this.isRecording = false;
+    this.mediaRecorder = null;
+    this.recordedChunks = [];
+    this.recStartTime = 0;
+    this.recTimerInterval = null;
+    this.lastRecordedBuffer = null;
+    this.lastRecordedBlob = null;
+    this.previewSourceNode = null;
+    this.isPreviewPlaying = false;
 
     // UI Elements
     this.section = document.getElementById('instrument-studio-section');
@@ -59,6 +71,8 @@ class SynthStudio {
     this.lblCutoff = document.getElementById('synth-cutoff-display');
     this.sliderRes = document.getElementById('synth-res-slider');
     this.lblRes = document.getElementById('synth-res-display');
+    this.sliderDrive = document.getElementById('synth-drive-slider');
+    this.lblDrive = document.getElementById('synth-drive-display');
     this.sliderVolume = document.getElementById('synth-volume-slider');
     this.lblVolume = document.getElementById('synth-volume-display');
 
@@ -66,8 +80,39 @@ class SynthStudio {
     this.selArpMode = document.getElementById('synth-arp-mode');
     this.selArpRate = document.getElementById('synth-arp-rate');
 
+    // Recording Controls & Result Bar UI
+    this.btnRec = document.getElementById('btn-rec-synth');
+    this.lblRecTimer = document.getElementById('synth-rec-timer');
+    this.resultBar = document.getElementById('synth-rec-result-bar');
+    this.inputRecName = document.getElementById('synth-rec-name');
+    this.lblRecDuration = document.getElementById('synth-rec-duration-badge');
+    this.btnPreview = document.getElementById('btn-synth-rec-preview');
+    this.btnSaveVault = document.getElementById('btn-synth-rec-save-vault');
+    this.btnDownload = document.getElementById('btn-synth-rec-download');
+    this.btnDiscard = document.getElementById('btn-synth-rec-discard');
+
     // Instrument Presets Metadata
     this.presets = {
+      tiesto_bass: {
+        name: 'Tiësto DZZZ Bass',
+        icon: '💥',
+        cutoff: 4200,
+        res: 6.5,
+        octave: -1,
+        attack: 0.003,
+        release: 0.18,
+        drive: 0.70
+      },
+      future_rave_bass: {
+        name: 'Future Rave Bass',
+        icon: '🚀',
+        cutoff: 3600,
+        res: 5.0,
+        octave: -1,
+        attack: 0.004,
+        release: 0.22,
+        drive: 0.65
+      },
       piano: {
         name: 'Konzert-Klavier',
         icon: '🎹',
@@ -75,7 +120,8 @@ class SynthStudio {
         res: 1.0,
         octave: 0,
         attack: 0.005,
-        release: 0.5
+        release: 0.5,
+        drive: 0.0
       },
       synth_lead: {
         name: 'EDM Club Synthesizer',
@@ -84,7 +130,8 @@ class SynthStudio {
         res: 4.5,
         octave: 0,
         attack: 0.01,
-        release: 0.25
+        release: 0.25,
+        drive: 0.35
       },
       sub_bass: {
         name: 'Deep 808 Sub-Bass',
@@ -93,7 +140,8 @@ class SynthStudio {
         res: 1.5,
         octave: -1,
         attack: 0.015,
-        release: 0.45
+        release: 0.45,
+        drive: 0.15
       },
       acid_bass: {
         name: 'Acid / Slap Bass',
@@ -102,7 +150,8 @@ class SynthStudio {
         res: 8.5,
         octave: -1,
         attack: 0.005,
-        release: 0.18
+        release: 0.18,
+        drive: 0.45
       },
       flute: {
         name: 'Flöte (Pan / Konzert)',
@@ -111,7 +160,8 @@ class SynthStudio {
         res: 2.0,
         octave: 1,
         attack: 0.06,
-        release: 0.28
+        release: 0.28,
+        drive: 0.0
       },
       strings_pad: {
         name: 'Synth Strings & Pad',
@@ -120,7 +170,8 @@ class SynthStudio {
         res: 1.8,
         octave: 0,
         attack: 0.25,
-        release: 0.95
+        release: 0.95,
+        drive: 0.1
       },
       organ: {
         name: 'Electro Club Orgel',
@@ -129,7 +180,8 @@ class SynthStudio {
         res: 2.0,
         octave: 0,
         attack: 0.005,
-        release: 0.18
+        release: 0.18,
+        drive: 0.2
       },
       pluck_marimba: {
         name: 'Pluck / Marimba',
@@ -138,7 +190,8 @@ class SynthStudio {
         res: 3.0,
         octave: 0,
         attack: 0.002,
-        release: 0.35
+        release: 0.35,
+        drive: 0.0
       }
     };
 
@@ -347,6 +400,57 @@ class SynthStudio {
       });
     }
 
+    // Saturation / DZZZ-Bite Drive Slider
+    if (this.sliderDrive) {
+      this.sliderDrive.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        this.drive = val;
+        if (this.lblDrive) {
+          this.lblDrive.textContent = `${Math.round(val * 100)}%`;
+        }
+      });
+    }
+
+    // Dedicated Instrument Recording Button
+    if (this.btnRec) {
+      this.btnRec.addEventListener('click', () => {
+        this.toggleRecording();
+      });
+    }
+
+    // Recorded Riff Result Bar Controls
+    if (this.btnPreview) {
+      this.btnPreview.addEventListener('click', () => {
+        this.togglePreview();
+      });
+    }
+
+    if (this.btnSaveVault) {
+      this.btnSaveVault.addEventListener('click', () => {
+        this.saveRecordedToVault();
+      });
+    }
+
+    if (this.btnDownload) {
+      this.btnDownload.addEventListener('click', () => {
+        this.downloadRecordedWav();
+      });
+    }
+
+    if (this.btnDiscard) {
+      this.btnDiscard.addEventListener('click', () => {
+        this.discardRecorded();
+      });
+    }
+
+    // Deck load buttons for recorded riff
+    document.querySelectorAll('.btn-load-synth-deck').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const deckId = btn.dataset.deck;
+        this.loadRecordedToDeck(deckId);
+      });
+    });
+
     // Volume Slider
     if (this.sliderVolume) {
       this.sliderVolume.addEventListener('input', (e) => {
@@ -430,6 +534,7 @@ class SynthStudio {
     this.octaveShift = p.octave;
     this.attackTime = p.attack;
     this.releaseTime = p.release;
+    this.drive = p.drive !== undefined ? p.drive : 0.2;
 
     // Update UI controls
     if (this.sliderCutoff) this.sliderCutoff.value = p.cutoff;
@@ -440,6 +545,8 @@ class SynthStudio {
     if (this.lblOctave) {
       this.lblOctave.textContent = p.octave > 0 ? `+${p.octave} OKT` : (p.octave === 0 ? '0 (NORMAL)' : `${p.octave} OKT`);
     }
+    if (this.sliderDrive) this.sliderDrive.value = this.drive;
+    if (this.lblDrive) this.lblDrive.textContent = `${Math.round(this.drive * 100)}%`;
 
     // Current instrument banner / title
     const banner = document.getElementById('synth-active-instrument-title');
@@ -540,6 +647,17 @@ class SynthStudio {
     this._stopVoice(midi);
   }
 
+  _getTanhCurve(drive) {
+    const samples = 1024;
+    const curve = new Float32Array(samples);
+    const k = Math.max(1, 1 + drive * 28);
+    for (let i = 0; i < samples; i++) {
+      const x = (i * 2) / samples - 1;
+      curve[i] = Math.tanh(k * x) / Math.tanh(k);
+    }
+    return curve;
+  }
+
   _startVoice(midi) {
     if (!window.audioEngine) return;
     window.audioEngine.unlockAudio();
@@ -579,6 +697,107 @@ class SynthStudio {
 
     // Synthesize based on selected instrument
     switch (inst) {
+      case 'tiesto_bass': {
+        // Tiësto Brazilian / Slap House "DZZZ" Club Bass
+        // 1. Dual Saturation Waveforms: Sawtooth + Square/Pulse with gritty phase detune
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(freq, now);
+
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(freq, now);
+        osc2.detune.setValueAtTime(5.0, now); // 5 cents detune creates classic harmonic buzz
+
+        // Snappy Kick-Style Pitch Drop Transient in first 35ms (The punchy "knock" attack)
+        osc1.frequency.setValueAtTime(freq * 1.5, now);
+        osc1.frequency.exponentialRampToValueAtTime(freq, now + 0.035);
+        osc2.frequency.setValueAtTime(freq * 1.5, now);
+        osc2.frequency.exponentialRampToValueAtTime(freq, now + 0.035);
+
+        // Pre-gain stage into Waveshaper saturation
+        const preGain = ctx.createGain();
+        preGain.gain.setValueAtTime(0.75, now);
+        osc1.connect(preGain);
+        osc2.connect(preGain);
+
+        // Non-linear Waveshaper for the authentic "DZZZ" overtone buzz
+        const shaper = ctx.createWaveShaper();
+        const driveAmt = Math.max(0.25, this.drive * 1.8);
+        shaper.curve = this._getTanhCurve(driveAmt);
+        shaper.oversample = '2x';
+
+        preGain.connect(shaper);
+        shaper.connect(filter);
+
+        // 2. Sub Sine underneath: Bypasses distortion to guarantee clean, massive 40-80Hz sub pressure
+        const subOsc = ctx.createOscillator();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(freq, now);
+
+        const subGain = ctx.createGain();
+        subGain.gain.setValueAtTime(0.7, now);
+        subOsc.connect(subGain);
+        subGain.connect(envGain); // Straight into master envGain, clean & punchy
+
+        // 3. Resonant Pluck Filter Envelope Sweep (Snaps open then drops fast to 150Hz in 160ms)
+        filter.Q.setValueAtTime(Math.max(5.5, this.filterResonance), now);
+        filter.frequency.setValueAtTime(Math.min(9500, this.filterCutoff * 2.2), now);
+        filter.frequency.exponentialRampToValueAtTime(Math.max(120, this.filterCutoff * 0.12), now + 0.16);
+
+        // 4. Tight Amp Envelope (Instant Attack, Punchy Decay)
+        envGain.gain.linearRampToValueAtTime(0.95, now + this.attackTime);
+        envGain.gain.exponentialRampToValueAtTime(0.35, now + 0.18);
+
+        [osc1, osc2, subOsc].forEach(o => { o.start(now); voice.oscillators.push(o); });
+        break;
+      }
+
+      case 'future_rave_bass': {
+        // David Guetta & MORTEN Future Rave Saturated Saw Bass
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const oscSub = ctx.createOscillator();
+
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(freq, now);
+        osc1.detune.setValueAtTime(-9, now);
+
+        osc2.type = 'sawtooth';
+        osc2.frequency.setValueAtTime(freq, now);
+        osc2.detune.setValueAtTime(9, now);
+
+        oscSub.type = 'triangle';
+        oscSub.frequency.setValueAtTime(freq / 2, now); // Deep Sub body
+
+        const preGain = ctx.createGain();
+        preGain.gain.setValueAtTime(0.7, now);
+        osc1.connect(preGain);
+        osc2.connect(preGain);
+
+        const shaper = ctx.createWaveShaper();
+        shaper.curve = this._getTanhCurve(Math.max(0.2, this.drive * 1.5));
+        shaper.oversample = '2x';
+        preGain.connect(shaper);
+        shaper.connect(filter);
+
+        const subGain = ctx.createGain();
+        subGain.gain.setValueAtTime(0.55, now);
+        oscSub.connect(subGain);
+        subGain.connect(filter);
+
+        filter.Q.setValueAtTime(Math.max(4.5, this.filterResonance), now);
+        filter.frequency.setValueAtTime(Math.min(8500, this.filterCutoff * 2.5), now);
+        filter.frequency.exponentialRampToValueAtTime(Math.max(160, this.filterCutoff * 0.15), now + 0.22);
+
+        envGain.gain.linearRampToValueAtTime(0.9, now + this.attackTime);
+        envGain.gain.exponentialRampToValueAtTime(0.45, now + 0.24);
+
+        [osc1, osc2, oscSub].forEach(o => { o.start(now); voice.oscillators.push(o); });
+        break;
+      }
+
       case 'piano': {
         // Multi-harmonic acoustic piano emulation
         const osc1 = ctx.createOscillator();
@@ -946,6 +1165,336 @@ class SynthStudio {
         }
       }, 140);
     });
+  }
+
+  // ==========================================
+  // INSTRUMENT RECORDER & RIFF EXPORT ENGINE
+  // ==========================================
+  toggleRecording() {
+    if (this.isRecording) {
+      this.stopRecording();
+    } else {
+      this.startRecording();
+    }
+  }
+
+  async startRecording() {
+    if (!window.audioEngine) return;
+    window.audioEngine.unlockAudio();
+
+    if (!window.audioEngine.synthRecordDest || !window.audioEngine.synthRecordDest.stream) {
+      alert('Audiotreiber für Instrumenten-Aufnahme nicht bereit. Bitte Seite aktualisieren.');
+      return;
+    }
+
+    const stream = window.audioEngine.synthRecordDest.stream;
+
+    let mimeType = 'audio/webm;codecs=opus';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+      } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+        mimeType = 'audio/ogg';
+      } else {
+        mimeType = '';
+      }
+    }
+
+    try {
+      this.recordedChunks = [];
+      this.mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+
+      this.mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          this.recordedChunks.push(e.data);
+        }
+      };
+
+      this.mediaRecorder.onstop = async () => {
+        await this._processRecordedData();
+      };
+
+      this.mediaRecorder.start(100);
+      this.isRecording = true;
+      this.recStartTime = Date.now();
+
+      // UI state updates
+      if (this.btnRec) {
+        this.btnRec.classList.add('recording');
+        const lbl = this.btnRec.querySelector('.rec-label');
+        if (lbl) lbl.textContent = '⏹ AUFNAHME BEENDEN';
+      }
+      if (this.lblRecTimer) {
+        this.lblRecTimer.style.display = 'inline-block';
+        this.lblRecTimer.textContent = '00:00';
+      }
+      if (this.resultBar) {
+        this.resultBar.classList.add('hidden');
+      }
+
+      if (this.recTimerInterval) clearInterval(this.recTimerInterval);
+      this.recTimerInterval = setInterval(() => {
+        const elapsedSec = Math.floor((Date.now() - this.recStartTime) / 1000);
+        const mins = Math.floor(elapsedSec / 60);
+        const secs = elapsedSec % 60;
+        if (this.lblRecTimer) {
+          this.lblRecTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+      }, 500);
+
+    } catch (err) {
+      console.error('Fehler beim Starten der Instrumentenaufnahme:', err);
+      alert('Fehler beim Starten der Instrumentenaufnahme: ' + err.message);
+      this.isRecording = false;
+    }
+  }
+
+  stopRecording() {
+    if (!this.isRecording || !this.mediaRecorder) return;
+    this.isRecording = false;
+
+    if (this.recTimerInterval) {
+      clearInterval(this.recTimerInterval);
+      this.recTimerInterval = null;
+    }
+
+    if (this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    }
+
+    if (this.btnRec) {
+      this.btnRec.classList.remove('recording');
+      const lbl = this.btnRec.querySelector('.rec-label');
+      if (lbl) lbl.textContent = '🔴 RIFF AUFNEHMEN';
+    }
+    if (this.lblRecTimer) {
+      this.lblRecTimer.style.display = 'none';
+    }
+  }
+
+  async _processRecordedData() {
+    if (!this.recordedChunks || this.recordedChunks.length === 0) {
+      alert('Keine Audiodaten im aufgenommenen Riff gefunden.');
+      return;
+    }
+
+    const rawBlob = new Blob(this.recordedChunks, { type: (this.mediaRecorder && this.mediaRecorder.mimeType) || 'audio/webm' });
+    const ctx = window.audioEngine ? window.audioEngine.ctx : null;
+    if (!ctx) return;
+
+    try {
+      const arrayBuf = await rawBlob.arrayBuffer();
+      const decodedBuffer = await ctx.decodeAudioData(arrayBuf);
+
+      if (!decodedBuffer || decodedBuffer.length === 0) {
+        alert('Aufnahme war leer.');
+        return;
+      }
+
+      // Lossless WAV Blob creation using global audioBufferToWav
+      const wavBlob = window.audioBufferToWav
+        ? window.audioBufferToWav(decodedBuffer)
+        : rawBlob;
+
+      this.lastRecordedBuffer = decodedBuffer;
+      this.lastRecordedBlob = wavBlob;
+
+      const dur = decodedBuffer.duration;
+      const durStr = dur >= 60
+        ? `${Math.floor(dur / 60)}:${(dur % 60).toFixed(1).padStart(4, '0')} min`
+        : `${dur.toFixed(1)}s`;
+
+      const instName = this.presets[this.currentInstrument]?.name || 'Instrument';
+      const cleanInstName = instName.replace(/[^a-zA-Z0-9]/g, '_');
+      const timeTag = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
+
+      if (this.inputRecName) {
+        this.inputRecName.value = `${cleanInstName}_Riff_${timeTag}`;
+      }
+      if (this.lblRecDuration) {
+        this.lblRecDuration.textContent = `⏱️ ${durStr}`;
+      }
+      if (this.resultBar) {
+        this.resultBar.classList.remove('hidden');
+        this.resultBar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+    } catch (e) {
+      console.error('Fehler beim Dekodieren des aufgenommenen Riffs:', e);
+      alert('Konnte Riff-Aufnahme nicht verarbeiten: ' + e.message);
+    }
+  }
+
+  togglePreview() {
+    if (!this.lastRecordedBuffer || !window.audioEngine) return;
+    window.audioEngine.unlockAudio();
+    const ctx = window.audioEngine.ctx;
+
+    if (this.isPreviewPlaying && this.previewSourceNode) {
+      try {
+        this.previewSourceNode.stop();
+        this.previewSourceNode.disconnect();
+      } catch (e) {}
+      this.previewSourceNode = null;
+      this.isPreviewPlaying = false;
+      if (this.btnPreview) this.btnPreview.textContent = '▶ ANHÖREN';
+      return;
+    }
+
+    try {
+      const src = ctx.createBufferSource();
+      src.buffer = this.lastRecordedBuffer;
+      src.connect(window.audioEngine.synthGain || window.audioEngine.masterGain);
+
+      src.onended = () => {
+        this.isPreviewPlaying = false;
+        this.previewSourceNode = null;
+        if (this.btnPreview) this.btnPreview.textContent = '▶ ANHÖREN';
+      };
+
+      src.start(0);
+      this.previewSourceNode = src;
+      this.isPreviewPlaying = true;
+      if (this.btnPreview) this.btnPreview.textContent = '⏹ STOPP';
+    } catch (e) {
+      console.error('Preview error:', e);
+    }
+  }
+
+  async saveRecordedToVault() {
+    if (!this.lastRecordedBuffer || !this.lastRecordedBlob) {
+      alert('Keine Aufnahme vorhanden zum Speichern.');
+      return;
+    }
+
+    if (!window.sampleVault) {
+      alert('Sample-Bank nicht bereit.');
+      return;
+    }
+
+    const name = (this.inputRecName ? this.inputRecName.value.trim() : '') || `Synth_Riff_${Date.now().toString().slice(-4)}`;
+    const dur = this.lastRecordedBuffer.duration;
+    const durStr = dur >= 60
+      ? `${Math.floor(dur / 60)}:${(dur % 60).toFixed(1).padStart(4, '0')}`
+      : `${dur.toFixed(1)}s`;
+
+    const sampleObj = {
+      id: 'sample_synth_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+      name: name,
+      sourceTrackName: `Studio (${this.presets[this.currentInstrument]?.name || 'Synthesizer'})`,
+      startSec: 0,
+      endSec: dur,
+      duration: dur,
+      durationStr: durStr,
+      blob: this.lastRecordedBlob,
+      buffer: this.lastRecordedBuffer,
+      createdAt: Date.now()
+    };
+
+    try {
+      if (window.sampleVault.storage) {
+        await window.sampleVault.storage.save(sampleObj);
+      }
+      window.sampleVault.addSample(sampleObj);
+      window.sampleVault.show();
+
+      // Visual success confirmation on button
+      if (this.btnSaveVault) {
+        const origText = this.btnSaveVault.textContent;
+        this.btnSaveVault.textContent = '✅ GESPEICHERT!';
+        this.btnSaveVault.style.background = '#10b981';
+        this.btnSaveVault.style.color = '#000';
+        setTimeout(() => {
+          this.btnSaveVault.textContent = origText;
+          this.btnSaveVault.style.background = '';
+          this.btnSaveVault.style.color = '';
+        }, 1800);
+      }
+    } catch (err) {
+      console.error('Fehler beim Speichern in Sample-Bank:', err);
+      alert('Konnte Riff nicht in Sample-Bank speichern: ' + err.message);
+    }
+  }
+
+  loadRecordedToDeck(deckId) {
+    if (!this.lastRecordedBuffer) {
+      alert('Keine Aufnahme vorhanden zum Laden.');
+      return;
+    }
+
+    if (window.isDeckHidden && window.isDeckHidden(deckId)) {
+      const deckLetter = deckId.split('-')[1].toUpperCase();
+      const confirmUnhide = confirm(`⚠️ DECK ${deckLetter} ist momentan ausgeblendet!\n\nUm das aufgenommene Riff in DECK ${deckLetter} zu laden, muss der Player zuerst eingeblendet werden.\n\nMöchtest du DECK ${deckLetter} jetzt einblenden und das Riff laden?`);
+      if (confirmUnhide) {
+        window.setDeckVisibility(deckId, true);
+      } else {
+        return;
+      }
+    }
+
+    if (!window.decks || !window.decks[deckId]) {
+      alert(`Deck ${deckId} nicht gefunden.`);
+      return;
+    }
+
+    const deck = window.decks[deckId];
+    window.audioEngine.unlockAudio();
+
+    const name = (this.inputRecName ? this.inputRecName.value.trim() : '') || 'Synth_Riff';
+    const dur = this.lastRecordedBuffer.duration;
+    const durStr = dur >= 60 ? `${Math.floor(dur / 60)}:${(dur % 60).toFixed(1)}` : `${dur.toFixed(1)}s`;
+
+    deck.audioBuffer = this.lastRecordedBuffer;
+    deck.pauseOffset = 0;
+    deck.stop();
+
+    if (deck.trackNameEl) {
+      deck.trackNameEl.textContent = `[RIFF] ${name} (${durStr})`;
+    }
+
+    deck._drawWaveform();
+    deck.updateTimeDisplay();
+
+    // Visual pulse on target deck badge
+    const badge = document.querySelector(`.deck-${deckId.split('-')[1]} .deck-badge`);
+    if (badge) {
+      badge.style.transform = 'scale(1.3)';
+      badge.style.transition = 'transform 0.2s';
+      setTimeout(() => badge.style.transform = '', 350);
+    }
+  }
+
+  downloadRecordedWav() {
+    if (!this.lastRecordedBlob) {
+      alert('Keine Aufnahme vorhanden zum Herunterladen.');
+      return;
+    }
+
+    const name = (this.inputRecName ? this.inputRecName.value.trim() : '') || 'Synth_Riff';
+    const url = URL.createObjectURL(this.lastRecordedBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}.wav`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  discardRecorded() {
+    if (this.isPreviewPlaying && this.previewSourceNode) {
+      try {
+        this.previewSourceNode.stop();
+        this.previewSourceNode.disconnect();
+      } catch (e) {}
+      this.previewSourceNode = null;
+      this.isPreviewPlaying = false;
+    }
+    this.lastRecordedBuffer = null;
+    this.lastRecordedBlob = null;
+    if (this.resultBar) {
+      this.resultBar.classList.add('hidden');
+    }
   }
 }
 
