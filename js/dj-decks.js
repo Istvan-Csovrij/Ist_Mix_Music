@@ -210,19 +210,19 @@ class DJDeck {
       });
     }
 
-    // Quick Skip buttons (⏪ -15s / ⏩ +30s)
+    // Quick Skip buttons (⏪ -5s / ⏩ +5s)
     const btnSkipBack = document.getElementById(`${id}-skip-back`);
     if (btnSkipBack) {
       btnSkipBack.addEventListener('click', () => {
         window.audioEngine.unlockAudio();
-        this.seekRelative(-15);
+        this.seekRelative(-5);
       });
     }
     const btnSkipFwd = document.getElementById(`${id}-skip-fwd`);
     if (btnSkipFwd) {
       btnSkipFwd.addEventListener('click', () => {
         window.audioEngine.unlockAudio();
-        this.seekRelative(30);
+        this.seekRelative(5);
       });
     }
 
@@ -1117,6 +1117,21 @@ window.initDecks = () => {
     };
     requestAnimationFrame(updateMasterVU);
   }
+
+  // 3. Global Keyboard Shortcuts: Pfeiltasten Links/Rechts springen 5 Sekunden im Track
+  window.addEventListener('keydown', (e) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      const delta = (e.key === 'ArrowLeft') ? -5 : 5;
+      const playingDeck = Object.values(window.decks || {}).find(d => d.isPlaying && d.audioBuffer) || window.decks?.['deck-a'];
+      if (playingDeck && playingDeck.audioBuffer) {
+        e.preventDefault();
+        window.audioEngine.unlockAudio();
+        playingDeck.seekRelative(delta);
+      }
+    }
+  });
 };
 
 window.isDeckHidden = (deckId) => {
