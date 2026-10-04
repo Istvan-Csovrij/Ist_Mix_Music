@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Ist_Mix_Music 🎛️ 4-Deck Escowator DJ Studio</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/style.css?v=3.3">
+  <link rel="stylesheet" href="css/style.css?v=3.4">
 </head>
 <body>
 
@@ -63,13 +63,13 @@
 
       <div class="tempo-box" style="display:inline-flex; align-items:center; gap:5px;" title="Wähle dein Audiogerät (z.B. Logitech Headset oder Lautsprecher)">
         <label for="audio-output-select" style="color:#38bdf8; font-weight:800; font-size:10px;">🎧 AUSGANG:</label>
-        <select id="audio-output-select" style="background:#0f172a; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:10px; font-weight:700; padding:2px 5px; max-width:140px; cursor:pointer;">
+        <select id="audio-output-select" style="background:#0f172a; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:10px; font-weight:700; padding:2px 5px; max-width:clamp(95px, 10vw, 130px); cursor:pointer;">
           <option value="">Standard (Windows)</option>
         </select>
       </div>
 
       <button id="btn-sound-test" class="btn-rec-master" style="border-color:#10b981; color:#10b981; background:rgba(16,185,129,0.15); font-weight:800;" title="Startet/Stoppt einen Dauerton (440Hz), um Lautsprecher & Headset ohne Unterbrechung zu testen">
-        🔊 Sound-Test (Dauerton)
+        🔊 Sound-Test
       </button>
 
       <button id="btn-rec-master" class="btn-rec-master" title="Nimmt alle 4 Decks + Stimme + Beats auf">

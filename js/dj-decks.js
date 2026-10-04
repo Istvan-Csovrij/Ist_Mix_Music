@@ -1132,6 +1132,22 @@ window.initDecks = () => {
       }
     }
   });
+
+  // 4. Responsive Window Resize Handler for Waveforms
+  let resizeTimeout;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      if (window.decks) {
+        Object.values(window.decks).forEach(deck => {
+          if (deck && deck.audioBuffer) {
+            deck._drawWaveform();
+            deck._updateWaveformCursor();
+          }
+        });
+      }
+    }, 120);
+  });
 };
 
 window.isDeckHidden = (deckId) => {
