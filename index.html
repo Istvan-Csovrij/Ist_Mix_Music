@@ -1117,15 +1117,94 @@
         </div>
       </div>
 
-      <!-- 16-Step Beat Sequencer -->
+      <!-- 16-Step Beat Sequencer mit dynamischen Spuren & Aufnahme -->
       <div class="sequencer-card">
         <div class="seq-header">
-          <span style="font-size:11px; font-weight:bold; color:var(--vu-green);">16-STEP BEAT SEQUENCER</span>
-          <div style="display:flex; gap:8px;">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:12px; font-weight:900; color:var(--vu-green); letter-spacing:0.5px;">16-STEP BEAT SEQUENCER</span>
+            
+            <!-- Dedicated Beat Recording Button & Timer -->
+            <div style="display:flex; align-items:center; gap:6px;">
+              <button id="seq-btn-rec" class="btn-synth-rec" style="padding:4px 10px; font-size:10px;" title="Nimmt den laufenden 16-Step Beat als sauberes Audio auf">
+                <span class="rec-dot">🔴</span> <span class="seq-rec-label">BEAT AUFNEHMEN</span>
+              </button>
+              <span id="seq-rec-timer" class="synth-rec-timer" style="display:none; font-size:10px; padding:2px 6px;">00:00</span>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button id="seq-btn-add-track" class="btn-seq-add" title="Neue Spur hinzufügen (z.B. Toms, Bässe, Synths oder ausgeschnittene Samples)">
+              ➕ SPUR HINZUFÜGEN
+            </button>
             <button id="seq-btn-play" style="background:#00e676; color:#000000; border:none; padding:5px 14px; border-radius:4px; font-weight:800; font-size:11px; cursor:pointer; box-shadow:0 0 10px rgba(0,230,118,0.4);">▶ BEAT STARTEN</button>
             <button id="seq-btn-clear" style="background:var(--bg-card); color:var(--text-dim); border:1px solid var(--border-color); padding:4px 8px; border-radius:4px; font-size:10px; cursor:pointer;">Löschen</button>
           </div>
         </div>
+
+        <!-- Recorded Beat Result Bar (Shown after beat recording finishes) -->
+        <div id="seq-rec-result-bar" class="synth-rec-result-bar hidden" style="border-color:var(--vu-green); box-shadow:0 4px 20px rgba(0,230,118,0.2);">
+          <div class="synth-rec-result-info">
+            <span class="synth-rec-badge" style="color:var(--vu-green);">🥁 BEAT AUFGENOMMEN:</span>
+            <input type="text" id="seq-rec-name" class="synth-rec-name-input" placeholder="Name für Beat eingeben..." value="Mein_Club_Beat_1">
+            <span id="seq-rec-duration-badge" class="synth-rec-duration" style="color:var(--vu-green); border-color:rgba(0,230,118,0.3);">⏱️ 0.0s</span>
+          </div>
+          <div class="synth-rec-result-actions">
+            <button id="btn-seq-rec-preview" class="btn-synth-action preview" title="Beat vorhören / stoppen">▶ ANHÖREN</button>
+            <button id="btn-seq-rec-save-vault" class="btn-synth-action primary" style="border-color:var(--vu-green); color:var(--vu-green); background:rgba(0,230,118,0.12);" title="In eigene Sample-Bank als Drop/Loop speichern">💾 IN SAMPLE-BANK</button>
+            <div class="synth-deck-load-buttons">
+              <span class="load-label">IN DECK:</span>
+              <button class="btn-load-seq-deck load-a" data-deck="deck-a" title="In Deck A laden">A</button>
+              <button class="btn-load-seq-deck load-b" data-deck="deck-b" title="In Deck B laden">B</button>
+              <button class="btn-load-seq-deck load-c" data-deck="deck-c" title="In Deck C laden">C</button>
+              <button class="btn-load-seq-deck load-d" data-deck="deck-d" title="In Deck D laden">D</button>
+            </div>
+            <button id="btn-seq-rec-download" class="btn-synth-action download" title="Als WAV Datei herunterladen">💾 WAV</button>
+            <button id="btn-seq-rec-discard" class="btn-synth-action danger" title="Aufnahme verwerfen">✖</button>
+          </div>
+        </div>
+
+        <!-- Add Track Inline Panel (Instrumente / Toms / Sample-Bank) -->
+        <div id="seq-add-track-panel" class="seq-add-panel hidden">
+          <div class="seq-add-section">
+            <span class="seq-add-title">🥁 MUSIKINSTRUMENT / DRUM-TON:</span>
+            <div class="seq-add-row">
+              <select id="seq-select-instrument" class="synth-select" style="min-width:180px;">
+                <optgroup label="Toms & Percussion">
+                  <option value="tom_high">🥁 High Tom</option>
+                  <option value="tom_mid">🥁 Mid Tom</option>
+                  <option value="tom_low">🥁 Low / Floor Tom</option>
+                  <option value="cowbell">🔔 808 Phonk Cowbell</option>
+                  <option value="rimshot">🥢 Rimshot</option>
+                  <option value="shaker">✨ Shaker</option>
+                  <option value="crash">💥 Crash Cymbal</option>
+                </optgroup>
+                <optgroup label="Bässe & Synthesizer">
+                  <option value="tiesto_bass">💥 Tiësto DZZZ Bass</option>
+                  <option value="bass_808">🎸 Deep 808 Sub-Bass</option>
+                  <option value="lead_synth">⚡ EDM Club Lead</option>
+                  <option value="piano_chord">🎹 Konzert-Klavier Akkord</option>
+                  <option value="organ_stab">🎶 House Club Orgel</option>
+                  <option value="marimba_pluck">🔔 Marimba Pluck</option>
+                  <option value="flute_note">🪈 Flöten-Ton</option>
+                  <option value="scratch_fx">💿 DJ Scratch FX</option>
+                </optgroup>
+              </select>
+              <button id="btn-add-inst-track" class="btn-seq-confirm">➕ Instrument-Spur</button>
+            </div>
+          </div>
+
+          <div class="seq-add-section">
+            <span class="seq-add-title">✂️ AUSGESCHNITTENE MUSIK (SAMPLE-BANK):</span>
+            <div class="seq-add-row">
+              <select id="seq-select-sample" class="synth-select" style="min-width:200px;">
+                <option value="">Keine Samples vorhanden</option>
+              </select>
+              <button id="btn-add-sample-track" class="btn-seq-confirm" style="border-color:#38bdf8; color:#38bdf8;">➕ Sample als Spur</button>
+            </div>
+          </div>
+          <button id="btn-close-seq-add" class="btn-close-lib" title="Schließen" style="margin-left:auto;">✖</button>
+        </div>
+
         <div id="seq-rows-container" class="seq-rows-container"></div>
       </div>
     </section>

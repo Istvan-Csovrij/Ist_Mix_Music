@@ -24,6 +24,7 @@ class AudioEngine {
 
     this.micGain = null;
     this.drumsGain = null;
+    this.drumsRecordDest = null;
     this.samplerGain = null;
     this.synthGain = null;
     this.synthRecordDest = null;
@@ -95,6 +96,10 @@ class AudioEngine {
     this.drumsGain = this.ctx.createGain();
     this.drumsGain.gain.setValueAtTime(0.9, this.ctx.currentTime);
     this.drumsGain.connect(this.masterGain);
+
+    // Dedicated Drums / Sequencer Recording Destination (Isolated pure beat stream)
+    this.drumsRecordDest = this.ctx.createMediaStreamDestination();
+    this.drumsGain.connect(this.drumsRecordDest);
 
     // Sampler / Sound-Schnipsel & Drop Bank Channel
     this.samplerGain = this.ctx.createGain();
@@ -511,6 +516,293 @@ class AudioEngine {
 
     osc.start(t);
     osc.stop(t + 0.55);
+  }
+
+  playTom(pitch = 'mid', time = 0) {
+    this.unlockAudio();
+    const t = time || this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    let startFreq = 145;
+    let endFreq = 65;
+    let dur = 0.22;
+
+    if (pitch === 'high' || pitch === 'hi') {
+      startFreq = 210;
+      endFreq = 95;
+      dur = 0.17;
+    } else if (pitch === 'low') {
+      startFreq = 95;
+      endFreq = 45;
+      dur = 0.28;
+    }
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(startFreq, t);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, t + dur);
+
+    gain.gain.setValueAtTime(1.0, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+    osc.connect(gain);
+    gain.connect(this.drumsGain);
+
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+
+    // Initial click transient for stick attack
+    if (this.noiseBuffer) {
+      const click = this.ctx.createBufferSource();
+      click.buffer = this.noiseBuffer;
+      const cFilter = this.ctx.createBiquadFilter();
+      cFilter.type = 'bandpass';
+      cFilter.frequency.setValueAtTime(startFreq * 3, t);
+      const cGain = this.ctx.createGain();
+      cGain.gain.setValueAtTime(0.3, t);
+      cGain.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+      click.connect(cFilter);
+      cFilter.connect(cGain);
+      cGain.connect(this.drumsGain);
+      click.start(t);
+      click.stop(t + 0.03);
+    }
+  }
+
+  playCowbell(time = 0) {
+    this.unlockAudio();
+    const t = time || this.ctx.currentTime;
+    // Classic 808 dual-frequency square wave through bandpass
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    osc1.type = 'square';
+    osc2.type = 'square';
+    osc1.frequency.setValueAtTime(540, t);
+    osc2.frequency.setValueAtTime(800, t);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(840, t);
+    filter.Q.setValueAtTime(12, t);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.85, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.drumsGain);
+
+    osc1.start(t);
+    osc2.start(t);
+    osc1.stop(t + 0.26);
+    osc2.stop(t + 0.26);
+  }
+
+  playRimshot(time = 0) {
+    this.unlockAudio();
+    const t = time || this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(450, t);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.9, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+
+    osc.connect(gain);
+    gain.connect(this.drumsGain);
+    osc.start(t);
+    osc.stop(t + 0.05);
+
+    if (this.noiseBuffer) {
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = this.noiseBuffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(2500, t);
+      const nGain = this.ctx.createGain();
+      nGain.gain.setValueAtTime(0.5, t);
+      nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.035);
+      noise.connect(filter);
+      filter.connect(nGain);
+      nGain.connect(this.drumsGain);
+      noise.start(t);
+      noise.stop(t + 0.04);
+    }
+  }
+
+  playShaker(time = 0) {
+    this.unlockAudio();
+    if (!this.noiseBuffer) return;
+    const t = time || this.ctx.currentTime;
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = this.noiseBuffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(6500, t);
+    filter.Q.setValueAtTime(4.0, t);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.01, t);
+    gain.gain.linearRampToValueAtTime(0.4, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.065);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.drumsGain);
+
+    noise.start(t);
+    noise.stop(t + 0.075);
+  }
+
+  playCrash(time = 0) {
+    this.unlockAudio();
+    if (!this.noiseBuffer) return;
+    const t = time || this.ctx.currentTime;
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = this.noiseBuffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.setValueAtTime(4000, t);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.7, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.drumsGain);
+
+    noise.start(t);
+    noise.stop(t + 1.25);
+  }
+
+  playSynthStab(type = 'tiesto', time = 0) {
+    this.unlockAudio();
+    const t = time || this.ctx.currentTime;
+
+    switch (type) {
+      case 'tiesto': {
+        // Punchy Tiësto Club DZZZ Bass note
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        osc1.type = 'sawtooth';
+        osc2.type = 'square';
+        osc1.frequency.setValueAtTime(65.4, t);
+        osc2.frequency.setValueAtTime(65.4, t);
+        osc2.detune.setValueAtTime(5, t);
+
+        // Pitch snap
+        osc1.frequency.setValueAtTime(110, t);
+        osc1.frequency.exponentialRampToValueAtTime(65.4, t + 0.035);
+        osc2.frequency.setValueAtTime(110, t);
+        osc2.frequency.exponentialRampToValueAtTime(65.4, t + 0.035);
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(4200, t);
+        filter.frequency.exponentialRampToValueAtTime(180, t + 0.16);
+        filter.Q.setValueAtTime(6.5, t);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.9, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.drumsGain);
+
+        osc1.start(t);
+        osc2.start(t);
+        osc1.stop(t + 0.3);
+        osc2.stop(t + 0.3);
+        break;
+      }
+
+      case 'organ': {
+        // 90s House Club Organ Chord (C-Minor: C, Eb, G)
+        [261.63, 311.13, 392.00].forEach((freq) => {
+          const osc = this.ctx.createOscillator();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, t);
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0.3, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+          osc.connect(gain);
+          gain.connect(this.drumsGain);
+          osc.start(t);
+          osc.stop(t + 0.26);
+        });
+        break;
+      }
+
+      case 'pluck': {
+        // Crisp Marimba / Pluck stab (523.25 Hz)
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, t);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.7, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+        osc.connect(gain);
+        gain.connect(this.drumsGain);
+        osc.start(t);
+        osc.stop(t + 0.23);
+        break;
+      }
+
+      case 'flute': {
+        // Flute note (880 Hz / A5)
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, t);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.01, t);
+        gain.gain.linearRampToValueAtTime(0.5, t + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.connect(gain);
+        gain.connect(this.drumsGain);
+        osc.start(t);
+        osc.stop(t + 0.36);
+        break;
+      }
+    }
+  }
+
+  playSampleClip(sampleId, time = 0) {
+    this.unlockAudio();
+    if (!window.sampleVault || !window.sampleVault.samples) return;
+    const sample = window.sampleVault.samples.find(s => s.id === sampleId);
+    if (!sample) return;
+
+    const t = time || this.ctx.currentTime;
+
+    const playBuf = (buf) => {
+      if (!buf) return;
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(1.0, t);
+      src.connect(gain);
+      gain.connect(this.drumsGain);
+      src.start(t);
+    };
+
+    if (sample.buffer) {
+      playBuf(sample.buffer);
+    } else if (sample.blob) {
+      sample.blob.arrayBuffer().then((ab) => {
+        this.ctx.decodeAudioData(ab).then((decoded) => {
+          sample.buffer = decoded;
+          playBuf(decoded);
+        }).catch(err => console.warn('Decode error in sequencer sample clip:', err));
+      });
+    }
   }
 
   // =========================================================================
