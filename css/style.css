@@ -1438,3 +1438,504 @@ footer {
     height: 65px;
   }
 }
+
+/* ==========================================================================
+   Header Sample Button & Deck Cut Action
+   ========================================================================== */
+.btn-toggle-samples {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 230, 118, 0.4);
+  color: var(--vu-green);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-toggle-samples:hover, .btn-toggle-samples.active {
+  background: rgba(0, 230, 118, 0.2);
+  border-color: var(--vu-green);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(0, 230, 118, 0.5);
+}
+
+.sample-badge {
+  background: var(--vu-green);
+  color: #000;
+}
+
+.btn-deck-cut {
+  background: rgba(0, 230, 118, 0.15);
+  border: 1px solid var(--vu-green);
+  color: var(--vu-green);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-left: auto;
+}
+
+.btn-deck-cut:hover {
+  background: var(--vu-green);
+  color: #000;
+  box-shadow: 0 0 8px rgba(0, 230, 118, 0.6);
+  transform: scale(1.05);
+}
+
+.btn-slice-track {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--deck-a-color);
+  border: 1px solid var(--deck-a-color);
+  border-radius: 3px;
+  padding: 4px 7px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-slice-track:hover {
+  background: var(--deck-a-color);
+  color: #000;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+/* ==========================================================================
+   Sample Vault / Eigene Sample-Bank & Sound-Schnipsel
+   ========================================================================== */
+.sample-vault-section {
+  background: var(--bg-surface);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.sample-vault-section.hidden {
+  display: none !important;
+}
+
+.sample-vault-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.samples-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.sample-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.sample-card:hover {
+  border-color: rgba(0, 230, 118, 0.5);
+  box-shadow: 0 4px 14px rgba(0, 230, 118, 0.2);
+}
+
+/* Big Interactive Trigger Pad */
+.sample-pad {
+  background: linear-gradient(145deg, #131d2e, #0b111a);
+  border: 1px solid rgba(0, 230, 118, 0.4);
+  border-radius: 6px;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: all 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+
+.sample-pad:hover {
+  border-color: var(--vu-green);
+  background: linear-gradient(145deg, #19273c, #0e1724);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 230, 118, 0.3);
+}
+
+.sample-pad:active, .sample-pad.fired {
+  background: var(--vu-green) !important;
+  color: #000 !important;
+  transform: scale(0.96) translateY(0);
+  box-shadow: 0 0 20px #00e676, inset 0 0 10px rgba(255,255,255,0.8);
+}
+
+.sample-pad.fired .pad-icon,
+.sample-pad.fired .pad-title,
+.sample-pad.fired .pad-dur,
+.sample-pad.fired .pad-action-hint {
+  color: #000 !important;
+}
+
+.pad-icon {
+  font-size: 20px;
+}
+
+.pad-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.pad-dur {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--vu-green);
+  font-weight: 700;
+}
+
+.pad-action-hint {
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.sample-info-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.sample-source-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-size: 9px;
+}
+
+.sample-deck-loads {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 6px;
+}
+
+.btn-load-sample {
+  padding: 3px 6px;
+  font-size: 9px;
+  font-weight: 800;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-load-sample.load-a { background: rgba(0, 240, 255, 0.2); color: var(--deck-a-color); border: 1px solid var(--deck-a-color); }
+.btn-load-sample.load-b { background: rgba(255, 0, 127, 0.2); color: var(--deck-b-color); border: 1px solid var(--deck-b-color); }
+.btn-load-sample.load-c { background: rgba(255, 107, 53, 0.2); color: var(--deck-c-color); border: 1px solid var(--deck-c-color); }
+.btn-load-sample.load-d { background: rgba(157, 78, 221, 0.2); color: var(--deck-d-color); border: 1px solid var(--deck-d-color); }
+
+.btn-load-sample:hover {
+  filter: brightness(1.3);
+  transform: scale(1.1);
+}
+
+.btn-sample-download, .btn-sample-del {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: transform 0.12s;
+}
+
+.btn-sample-download:hover, .btn-sample-del:hover {
+  transform: scale(1.2);
+}
+
+/* ==========================================================================
+   Waveform Audio Cutter Modal
+   ========================================================================== */
+.cutter-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(5px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.cutter-modal.hidden {
+  display: none !important;
+}
+
+.cutter-modal-content {
+  background: #090d16;
+  border: 1px solid var(--border-highlight);
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.25), 0 20px 40px rgba(0,0,0,0.9);
+  width: 100%;
+  max-width: 820px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cutter-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.cutter-waveform-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cutter-waveform-canvas {
+  width: 100%;
+  height: 140px;
+  background: #05080f;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  cursor: crosshair;
+  display: block;
+}
+
+.cutter-waveform-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.cutter-controls-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1fr;
+  gap: 12px;
+  align-items: center;
+  background: var(--bg-card);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.cutter-time-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.cutter-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.cutter-time-val {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.cutter-fine-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-cutter-step {
+  background: var(--bg-inner);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.btn-cutter-step:hover {
+  background: #1e293b;
+  color: #fff;
+}
+
+.cutter-presets-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.cutter-presets-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-cutter-preset {
+  background: #111827;
+  border: 1px solid var(--border-color);
+  color: #93c5fd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.btn-cutter-preset:hover {
+  background: #2563eb;
+  color: #fff;
+  border-color: #3b82f6;
+}
+
+.cutter-dur-badge {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--vu-yellow);
+  font-size: 12px;
+}
+
+.cutter-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 14px;
+}
+
+.cutter-preview-group {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-cutter-play {
+  background: var(--vu-green);
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+  transition: all 0.15s;
+}
+
+.btn-cutter-play.playing {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+
+.btn-cutter-loop {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-dim);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-cutter-loop.active {
+  background: #3b82f6;
+  border-color: #60a5fa;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.cutter-save-group {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  max-width: 440px;
+  justify-content: flex-end;
+}
+
+.cutter-name-input {
+  background: #0f172a;
+  border: 1px solid var(--border-highlight);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.cutter-name-input:focus {
+  outline: none;
+  border-color: var(--deck-a-color);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.btn-cutter-save {
+  background: linear-gradient(135deg, #00f0ff, #00e676);
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.4);
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.btn-cutter-save:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.7);
+}
+

@@ -27,6 +27,10 @@
         📂 MEINE MUSIKLISTE <span id="lib-count" class="lib-badge">0</span>
       </button>
 
+      <button id="btn-toggle-samples" class="btn-toggle-samples" title="Eigene Sample-Bank & Sound-Schnipsel ein-/ausblenden">
+        ✂️ SAMPLE-BANK <span id="samples-count" class="lib-badge sample-badge">0</span>
+      </button>
+
       <div class="tempo-box">
         <label for="bpm-slider">TEMPO:</label>
         <input type="range" id="bpm-slider" min="70" max="160" value="120">
@@ -157,6 +161,7 @@
             <span class="deck-badge">DECK A</span>
             <span id="deck-a-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-a-time-display" class="deck-time-display">00:00.00</span>
+            <button class="btn-deck-cut" data-deck="deck-a" title="Sample aus Deck A ausschneiden">✂️</button>
           </div>
 
           <label class="deck-upload-btn">
@@ -215,6 +220,7 @@
             <span class="deck-badge">DECK C</span>
             <span id="deck-c-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-c-time-display" class="deck-time-display">00:00.00</span>
+            <button class="btn-deck-cut" data-deck="deck-c" title="Sample aus Deck C ausschneiden">✂️</button>
           </div>
 
           <label class="deck-upload-btn">
@@ -501,6 +507,7 @@
             <span class="deck-badge">DECK B</span>
             <span id="deck-b-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-b-time-display" class="deck-time-display">00:00.00</span>
+            <button class="btn-deck-cut" data-deck="deck-b" title="Sample aus Deck B ausschneiden">✂️</button>
           </div>
 
           <label class="deck-upload-btn">
@@ -557,6 +564,7 @@
             <span class="deck-badge">DECK D</span>
             <span id="deck-d-track-name" class="deck-track-title">Kein Track geladen</span>
             <span id="deck-d-time-display" class="deck-time-display">00:00.00</span>
+            <button class="btn-deck-cut" data-deck="deck-d" title="Sample aus Deck D ausschneiden">✂️</button>
           </div>
 
           <label class="deck-upload-btn">
@@ -642,7 +650,7 @@
               <th style="width:50px; text-align:center;">HÖREN</th>
               <th>TITEL / DATEINAME</th>
               <th style="width:70px;">DAUER</th>
-              <th style="width:260px; text-align:right;">IN DECK LADEN</th>
+              <th style="width:310px; text-align:right;">AKTIONEN</th>
             </tr>
           </thead>
           <tbody id="library-table-body">
@@ -651,6 +659,123 @@
         </table>
       </div>
     </section>
+
+    <!-- SECTION: Eigene Sample-Bank & Sound-Schnipsel (Drops, Effekte, Vocals) -->
+    <section id="sample-vault-section" class="sample-vault-section hidden">
+      <div class="library-header sample-vault-header">
+        <div class="library-tools-left">
+          <h2 style="font-size:13px; font-weight:800; color:var(--vu-green); display:flex; align-items:center; gap:6px;">
+            🎛️ EIGENE SAMPLE-BANK & SOUND-SCHNIPSEL (DROPS & EFFEKTE)
+          </h2>
+
+          <div class="sample-quick-cut-box" style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:10px; color:var(--text-dim); font-weight:700;">AUS DECK SCHNEIDEN:</label>
+            <select id="select-cut-deck" class="monitor-deck-select" style="padding:3px 6px;">
+              <option value="deck-a">DECK A (Cyan)</option>
+              <option value="deck-b">DECK B (Pink)</option>
+              <option value="deck-c">DECK C (Orange)</option>
+              <option value="deck-d">DECK D (Lila)</option>
+            </select>
+            <button id="btn-cut-from-deck" class="btn-lib-demos" style="background:linear-gradient(135deg, #00f0ff, #00e676); color:#000; font-weight:800;">
+              ✂️ Bereich schneiden
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="tempo-box" style="padding:3px 8px;" title="Lautstärke aller One-Shot Samples">
+            <label for="sampler-vol-slider" style="color:var(--vu-green); font-size:10px; font-weight:800;">SAMPLE-VOL:</label>
+            <input type="range" id="sampler-vol-slider" min="0" max="1.5" step="0.05" value="1.0" style="width:65px; accent-color:var(--vu-green);">
+            <span id="sampler-vol-display" class="tempo-display" style="color:var(--vu-green); font-size:10px; font-weight:700;">100%</span>
+          </div>
+
+          <div class="library-search-box">
+            <span>🔍</span>
+            <input type="text" id="samples-search-input" placeholder="Sample suchen...">
+          </div>
+
+          <button id="btn-close-samples" class="btn-close-lib" title="Schließen">✖</button>
+        </div>
+      </div>
+
+      <!-- Sample Cards Grid -->
+      <div id="samples-grid" class="samples-grid">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- MODAL: Audio Cutter / Sample Slicer -->
+    <div id="cutter-modal" class="cutter-modal hidden">
+      <div class="cutter-modal-content">
+        <div class="cutter-modal-header">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:20px;">✂️</span>
+            <div>
+              <h3 style="font-size:14px; font-weight:800; color:var(--deck-a-color); margin:0;">AUDIO CUTTER & DROP-SCHNEIDER</h3>
+              <span id="cutter-track-title" style="font-size:11px; color:var(--text-dim);">Track Name</span>
+            </div>
+          </div>
+          <button id="cutter-btn-close" class="btn-close-lib" title="Schließen">✖</button>
+        </div>
+
+        <div class="cutter-waveform-area">
+          <canvas id="cutter-canvas" class="cutter-waveform-canvas"></canvas>
+          <div class="cutter-waveform-hint">
+            💡 <strong>Tipp:</strong> Klicke oder ziehe mit Maus/Finger auf der Wellenform, um Anfang (Grün) und Ende (Rot) zu verschieben!
+          </div>
+        </div>
+
+        <div class="cutter-controls-row">
+          <!-- Time In & Fine Tune -->
+          <div class="cutter-time-group">
+            <span class="cutter-label" style="color:#00e676;">ANFANG (IN)</span>
+            <span id="cutter-time-in" class="cutter-time-val">00:00.00</span>
+            <div class="cutter-fine-btns">
+              <button id="cutter-btn-in-minus" class="btn-cutter-step" title="-0.05s">-0.05s</button>
+              <button id="cutter-btn-in-plus" class="btn-cutter-step" title="+0.05s">+0.05s</button>
+            </div>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="cutter-presets-group">
+            <span class="cutter-label">SCHNELLE LÄNGE</span>
+            <div class="cutter-presets-row">
+              <button class="btn-cutter-preset" data-preset="1s">1s</button>
+              <button class="btn-cutter-preset" data-preset="2s">2s</button>
+              <button class="btn-cutter-preset" data-preset="4s">4s</button>
+              <button class="btn-cutter-preset" data-preset="1beat">1 Beat</button>
+              <button class="btn-cutter-preset" data-preset="1bar">1 Takt</button>
+            </div>
+            <div style="margin-top:4px;">
+              <span style="font-size:10px; color:var(--text-dim);">Länge: </span>
+              <span id="cutter-duration-badge" class="cutter-dur-badge">0.00s</span>
+            </div>
+          </div>
+
+          <!-- Time Out & Fine Tune -->
+          <div class="cutter-time-group">
+            <span class="cutter-label" style="color:#ff0055;">ENDE (OUT)</span>
+            <span id="cutter-time-out" class="cutter-time-val">00:04.00</span>
+            <div class="cutter-fine-btns">
+              <button id="cutter-btn-out-minus" class="btn-cutter-step" title="-0.05s">-0.05s</button>
+              <button id="cutter-btn-out-plus" class="btn-cutter-step" title="+0.05s">+0.05s</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="cutter-actions-row">
+          <div class="cutter-preview-group">
+            <button id="cutter-btn-play" class="btn-cutter-play">▶ AUSWAHL TESTEN</button>
+            <button id="cutter-btn-loop" class="btn-cutter-loop" title="Als Endlosschleife testen">🔁 LOOP</button>
+          </div>
+
+          <div class="cutter-save-group">
+            <input type="text" id="cutter-name-input" class="cutter-name-input" placeholder="Name für Sample / Drop...">
+            <button id="cutter-btn-save" class="btn-cutter-save">💾 IN SAMPLE-BANK SPEICHERN</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- SECTION 2: Dedicated Vocal & Mic Studio Channel Strip -->
     <section class="voice-studio-area">
@@ -779,13 +904,14 @@
   </footer>
 
   <!-- Scripts with Cache-Busting Versioning -->
-  <script src="js/audio-engine.js?v=2.8"></script>
-  <script src="js/dj-decks.js?v=2.8"></script>
-  <script src="js/mic-recorder.js?v=2.8"></script>
-  <script src="js/beat-pads.js?v=2.8"></script>
-  <script src="js/master-recorder.js?v=2.8"></script>
-  <script src="js/track-library.js?v=2.8"></script>
-  <script src="js/traktor-monitor.js?v=2.8"></script>
+  <script src="js/audio-engine.js?v=2.9"></script>
+  <script src="js/dj-decks.js?v=2.9"></script>
+  <script src="js/mic-recorder.js?v=2.9"></script>
+  <script src="js/beat-pads.js?v=2.9"></script>
+  <script src="js/master-recorder.js?v=2.9"></script>
+  <script src="js/track-library.js?v=2.9"></script>
+  <script src="js/sample-cutter.js?v=2.9"></script>
+  <script src="js/traktor-monitor.js?v=2.9"></script>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -794,7 +920,19 @@
       window.initBeatStudio();
       window.initMasterRecorder();
       window.initTrackLibrary();
+      window.initSampleCutter();
       window.initTraktorMonitor();
+
+      // Deck Header Cut Button Listeners
+      document.querySelectorAll('.btn-deck-cut').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const deckId = btn.dataset.deck;
+          if (window.sampleCutter) {
+            window.sampleCutter.openForDeck(deckId);
+          }
+        });
+      });
 
       // Electro House DJ FX Listeners
       const btnRiser = document.getElementById('fx-btn-riser');

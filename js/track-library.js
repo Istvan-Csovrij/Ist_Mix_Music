@@ -6,7 +6,7 @@
 class TrackStorage {
   constructor() {
     this.dbName = 'IstMixMusicDB';
-    this.dbVersion = 1;
+    this.dbVersion = 2;
     this.storeName = 'tracks';
     this.db = null;
   }
@@ -19,6 +19,9 @@ class TrackStorage {
         const db = e.target.result;
         if (!db.objectStoreNames.contains(this.storeName)) {
           db.createObjectStore(this.storeName, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains('samples')) {
+          db.createObjectStore('samples', { keyPath: 'id' });
         }
       };
       request.onsuccess = (e) => {
@@ -482,8 +485,9 @@ class TrackLibrary {
         </td>
         <td style="font-weight:600;">${track.name}</td>
         <td style="font-family:var(--font-mono); color:var(--text-dim); width:70px;">${track.durationStr}</td>
-        <td style="width:240px; text-align:right;">
+        <td style="width:310px; text-align:right;">
           <div class="deck-load-buttons">
+            <button class="btn-slice-track" data-id="${track.id}" title="Sample / Drop ausschneiden">✂️ CUT</button>
             <button class="btn-load-deck load-a" data-id="${track.id}" data-deck="deck-a">LOAD A</button>
             <button class="btn-load-deck load-b" data-id="${track.id}" data-deck="deck-b">LOAD B</button>
             <button class="btn-load-deck load-c" data-id="${track.id}" data-deck="deck-c">LOAD C</button>
@@ -498,6 +502,16 @@ class TrackLibrary {
         window.audioEngine.unlockAudio();
         this.togglePreview(track.id);
       });
+
+      const btnSlice = tr.querySelector('.btn-slice-track');
+      if (btnSlice) {
+        btnSlice.addEventListener('click', () => {
+          window.audioEngine.unlockAudio();
+          if (window.sampleCutter) {
+            window.sampleCutter.openForTrack(track);
+          }
+        });
+      }
 
       tr.querySelectorAll('.btn-load-deck').forEach((btn) => {
         btn.addEventListener('click', () => {
