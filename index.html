@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Ist_Mix_Music 🎛️ 4-Deck Escowator DJ Studio</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/style.css?v=3.4">
+  <link rel="stylesheet" href="css/style.css?v=3.5">
 </head>
 <body>
 
@@ -192,7 +192,10 @@
 
           <div class="deck-waveform-box">
             <canvas id="deck-a-waveform" class="waveform-canvas"></canvas>
-            <div id="deck-a-cursor" class="waveform-cursor"></div>
+            <div id="deck-a-progress-overlay" class="waveform-progress-overlay"></div>
+            <div id="deck-a-cursor" class="waveform-cursor">
+              <span id="deck-a-cursor-badge" class="cursor-time-badge">00:00</span>
+            </div>
           </div>
 
           <div class="deck-body-layout">
@@ -255,7 +258,10 @@
 
           <div class="deck-waveform-box">
             <canvas id="deck-c-waveform" class="waveform-canvas"></canvas>
-            <div id="deck-c-cursor" class="waveform-cursor"></div>
+            <div id="deck-c-progress-overlay" class="waveform-progress-overlay"></div>
+            <div id="deck-c-cursor" class="waveform-cursor">
+              <span id="deck-c-cursor-badge" class="cursor-time-badge">00:00</span>
+            </div>
           </div>
 
           <div class="deck-body-layout">
@@ -572,7 +578,10 @@
 
           <div class="deck-waveform-box">
             <canvas id="deck-b-waveform" class="waveform-canvas"></canvas>
-            <div id="deck-b-cursor" class="waveform-cursor"></div>
+            <div id="deck-b-progress-overlay" class="waveform-progress-overlay"></div>
+            <div id="deck-b-cursor" class="waveform-cursor">
+              <span id="deck-b-cursor-badge" class="cursor-time-badge">00:00</span>
+            </div>
           </div>
 
           <div class="deck-body-layout">
@@ -633,7 +642,10 @@
 
           <div class="deck-waveform-box">
             <canvas id="deck-d-waveform" class="waveform-canvas"></canvas>
-            <div id="deck-d-cursor" class="waveform-cursor"></div>
+            <div id="deck-d-progress-overlay" class="waveform-progress-overlay"></div>
+            <div id="deck-d-cursor" class="waveform-cursor">
+              <span id="deck-d-cursor-badge" class="cursor-time-badge">00:00</span>
+            </div>
           </div>
 
           <div class="deck-body-layout">
@@ -1260,15 +1272,15 @@
   </footer>
 
   <!-- Scripts with Cache-Busting Versioning -->
-  <script src="js/audio-engine.js?v=3.3"></script>
-  <script src="js/dj-decks.js?v=3.3"></script>
-  <script src="js/mic-recorder.js?v=3.3"></script>
-  <script src="js/beat-pads.js?v=3.3"></script>
-  <script src="js/master-recorder.js?v=3.3"></script>
-  <script src="js/track-library.js?v=3.3"></script>
-  <script src="js/sample-cutter.js?v=3.3"></script>
-  <script src="js/synth-instrument.js?v=3.3"></script>
-  <script src="js/traktor-monitor.js?v=3.3"></script>
+  <script src="js/audio-engine.js?v=3.5"></script>
+  <script src="js/dj-decks.js?v=3.5"></script>
+  <script src="js/mic-recorder.js?v=3.5"></script>
+  <script src="js/beat-pads.js?v=3.5"></script>
+  <script src="js/master-recorder.js?v=3.5"></script>
+  <script src="js/track-library.js?v=3.5"></script>
+  <script src="js/sample-cutter.js?v=3.5"></script>
+  <script src="js/synth-instrument.js?v=3.5"></script>
+  <script src="js/traktor-monitor.js?v=3.5"></script>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {

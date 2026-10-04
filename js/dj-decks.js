@@ -113,6 +113,8 @@ class DJDeck {
     this.canvas = document.getElementById(`${id}-waveform`);
     this.canvasCtx = this.canvas ? this.canvas.getContext('2d') : null;
     this.cursor = document.getElementById(`${id}-cursor`);
+    this.cursorBadge = document.getElementById(`${id}-cursor-badge`);
+    this.progressOverlay = document.getElementById(`${id}-progress-overlay`);
     this.btnPlay = document.getElementById(`${id}-play`);
     this.btnCue = document.getElementById(`${id}-cue`);
     this.btnSync = document.getElementById(`${id}-sync`);
@@ -270,15 +272,39 @@ class DJDeck {
         startX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
 
         const ratio = getRatio(e);
-        if (this.cursor) this.cursor.style.left = `${ratio * 100}%`;
-        this._displayTemporaryTime(ratio * this.audioBuffer.duration);
+        const pct = `${(ratio * 100).toFixed(2)}%`;
+        if (this.cursor) this.cursor.style.left = pct;
+        if (this.progressOverlay) this.progressOverlay.style.width = pct;
+        const curSec = ratio * this.audioBuffer.duration;
+        this._displayTemporaryTime(curSec);
+        if (this.cursorBadge) {
+          const curSafe = Math.max(0, curSec);
+          const hrs = Math.floor(curSafe / 3600);
+          const mins = Math.floor((curSafe % 3600) / 60);
+          const secs = Math.floor(curSafe % 60);
+          this.cursorBadge.textContent = (hrs > 0)
+            ? `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`
+            : `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
       };
 
       const onMove = (e) => {
         if (!isInteracting || !this.audioBuffer) return;
         const ratio = getRatio(e);
-        if (this.cursor) this.cursor.style.left = `${ratio * 100}%`;
-        this._displayTemporaryTime(ratio * this.audioBuffer.duration);
+        const pct = `${(ratio * 100).toFixed(2)}%`;
+        if (this.cursor) this.cursor.style.left = pct;
+        if (this.progressOverlay) this.progressOverlay.style.width = pct;
+        const curSec = ratio * this.audioBuffer.duration;
+        this._displayTemporaryTime(curSec);
+        if (this.cursorBadge) {
+          const curSafe = Math.max(0, curSec);
+          const hrs = Math.floor(curSafe / 3600);
+          const mins = Math.floor((curSafe % 3600) / 60);
+          const secs = Math.floor(curSafe % 60);
+          this.cursorBadge.textContent = (hrs > 0)
+            ? `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`
+            : `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
       };
 
       const onEnd = (e) => {
@@ -457,6 +483,7 @@ class DJDeck {
     }
 
     this._drawWaveform();
+    this._updateWaveformCursor();
     this.updateTimeDisplay();
   }
 
@@ -508,6 +535,12 @@ class DJDeck {
     }
     if (this.cursor) {
       this.cursor.style.left = '0%';
+    }
+    if (this.progressOverlay) {
+      this.progressOverlay.style.width = '0%';
+    }
+    if (this.cursorBadge) {
+      this.cursorBadge.textContent = '00:00';
     }
     if (this.canvasCtx && this.canvas) {
       this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -602,12 +635,14 @@ class DJDeck {
     const elapsed = (ctx.currentTime - this.startTime) * this.playbackRate;
     this.pauseOffset = elapsed % this.audioBuffer.duration;
     this.stop();
+    this._updateWaveformCursor();
+    this.updateTimeDisplay();
   }
 
   cue() {
     this.pauseOffset = 0;
     this.stop();
-    if (this.cursor) this.cursor.style.left = '0%';
+    this._updateWaveformCursor();
     this.updateTimeDisplay();
   }
 
@@ -632,6 +667,7 @@ class DJDeck {
       this.btnPlay.textContent = '▶ PLAY';
       this.btnPlay.classList.remove('playing');
     }
+    this._updateWaveformCursor();
   }
 
   seekTo(ratio) {
@@ -640,9 +676,7 @@ class DJDeck {
     const targetOffset = clampedRatio * this.audioBuffer.duration;
 
     this.pauseOffset = targetOffset;
-    if (this.cursor) {
-      this.cursor.style.left = `${clampedRatio * 100}%`;
-    }
+    this._updateWaveformCursor();
     this.updateTimeDisplay();
 
     if (this.isPlaying) {
@@ -847,10 +881,7 @@ class DJDeck {
 
       // Update Cursor & Time Display (only if not currently dragging)
       if (!this.isWaveformDragging) {
-        const ratio = cur / this.audioBuffer.duration;
-        if (this.cursor) {
-          this.cursor.style.left = `${Math.min(100, ratio * 100)}%`;
-        }
+        this._updateWaveformCursor();
         this.updateTimeDisplay();
       }
 
@@ -863,6 +894,74 @@ class DJDeck {
       requestAnimationFrame(update);
     };
     requestAnimationFrame(update);
+  }
+
+  _getDeckColorPalette() {
+    switch (this.deckId) {
+      case 'deck-a':
+        return {
+          highPeak: '#00ffff',     // Electric cyan highlight
+          midHigh: '#00c8e6',      // Bright cyan
+          coreBass: '#ff0055',     // Hot punchy bass core
+          body: '#0090b8',         // Deep body
+          low: '#005577'           // Low breakdown
+        };
+      case 'deck-b':
+        return {
+          highPeak: '#ff3399',     // Hot neon magenta highlight
+          midHigh: '#ff007f',      // Bright pink
+          coreBass: '#ff6600',     // Neon orange bass core
+          body: '#b30059',         // Deep body
+          low: '#660033'           // Low breakdown
+        };
+      case 'deck-c':
+        return {
+          highPeak: '#ffaa00',     // Bright gold/amber peak
+          midHigh: '#ff6b35',      // Electric orange
+          coreBass: '#e60000',     // Fiery crimson bass core
+          body: '#cc4e14',         // Deep orange body
+          low: '#7a2d07'           // Low breakdown
+        };
+      case 'deck-d':
+      default:
+        return {
+          highPeak: '#d16aff',     // Luminous lavender peak
+          midHigh: '#9d4edd',      // Electric purple
+          coreBass: '#ff007f',     // Vivid magenta bass core
+          body: '#702ca8',         // Deep purple body
+          low: '#41136b'           // Low breakdown
+        };
+    }
+  }
+
+  _updateWaveformCursor() {
+    if (!this.audioBuffer) {
+      if (this.cursor) this.cursor.style.left = '0%';
+      if (this.progressOverlay) this.progressOverlay.style.width = '0%';
+      if (this.cursorBadge) this.cursorBadge.textContent = '00:00';
+      return;
+    }
+
+    const cur = this.getCurrentTime();
+    const duration = this.audioBuffer.duration;
+    const ratio = Math.max(0, Math.min(0.9999, duration > 0 ? cur / duration : 0));
+    const pct = `${(ratio * 100).toFixed(2)}%`;
+
+    if (this.cursor) {
+      this.cursor.style.left = pct;
+    }
+    if (this.progressOverlay) {
+      this.progressOverlay.style.width = pct;
+    }
+    if (this.cursorBadge) {
+      const curSafe = Math.max(0, cur);
+      const hrs = Math.floor(curSafe / 3600);
+      const mins = Math.floor((curSafe % 3600) / 60);
+      const secs = Math.floor(curSafe % 60);
+      this.cursorBadge.textContent = (hrs > 0)
+        ? `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`
+        : `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    }
   }
 
   _drawWaveform() {
@@ -895,6 +994,7 @@ class DJDeck {
     c.lineTo(width, amp);
     c.stroke();
 
+    const pal = this._getDeckColorPalette();
     const step = totalSamples / width;
     // Decimation: sample up to 64 points per bar column for instant (<3ms) calculation on long mixes
     const samplesPerBar = Math.min(64, Math.max(8, Math.floor(step)));
@@ -919,24 +1019,24 @@ class DJDeck {
       const barH = Math.max(3, energy * (height - 6));
       const y = amp - (barH / 2);
 
-      // Traktor Multi-Color Spectrum (NO white washouts!):
+      // Traktor Multi-Color Spectrum (ZERO white washouts!):
       // Bass/warmth core -> Accent color body -> Highlight tip for sharp transients
       const grad = c.createLinearGradient(0, y, 0, y + barH);
       if (energy > 0.85) {
-        grad.addColorStop(0.0, '#ffffff'); // Subtle transient spark on very top peaks only
-        grad.addColorStop(0.12, this.accentColor);
-        grad.addColorStop(0.5, '#ff6b35'); // Deep bass energy core
-        grad.addColorStop(0.88, this.accentColor);
-        grad.addColorStop(1.0, '#ffffff');
+        grad.addColorStop(0.0, pal.highPeak);
+        grad.addColorStop(0.18, pal.midHigh);
+        grad.addColorStop(0.5, pal.coreBass);
+        grad.addColorStop(0.82, pal.midHigh);
+        grad.addColorStop(1.0, pal.highPeak);
       } else if (energy > 0.40) {
-        grad.addColorStop(0.0, this.accentColor);
-        grad.addColorStop(0.5, '#ff8a50');
-        grad.addColorStop(1.0, this.accentColor);
+        grad.addColorStop(0.0, pal.midHigh);
+        grad.addColorStop(0.5, pal.coreBass);
+        grad.addColorStop(1.0, pal.midHigh);
       } else {
         // Quiet breakdown / intro
-        grad.addColorStop(0.0, this.accentColor);
-        grad.addColorStop(0.5, '#005f73');
-        grad.addColorStop(1.0, this.accentColor);
+        grad.addColorStop(0.0, pal.body);
+        grad.addColorStop(0.5, pal.low);
+        grad.addColorStop(1.0, pal.body);
       }
 
       c.fillStyle = grad;
