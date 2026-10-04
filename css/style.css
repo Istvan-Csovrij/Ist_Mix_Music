@@ -16,6 +16,7 @@
 
   /* Indicators */
   --vu-green: #00e676;
+  --neon-green: #00e676;
   --vu-yellow: #ffea00;
   --vu-red: #ff1744;
 
@@ -978,11 +979,37 @@ main {
   margin-bottom: 8px;
 }
 
+#seq-btn-play {
+  background: #00e676 !important;
+  color: #000000 !important;
+  border: none;
+  padding: 5px 14px;
+  border-radius: 4px;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+  transition: all 0.15s ease;
+}
+
+#seq-btn-play:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 14px rgba(0, 230, 118, 0.7);
+}
+
+#seq-btn-play.playing {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+}
+
 .seq-rows-container {
   display: flex;
   flex-direction: column;
   gap: 6px;
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .seq-row {

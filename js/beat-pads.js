@@ -163,8 +163,10 @@ class BeatStudio {
     const btn = document.getElementById('seq-btn-play');
     if (btn) {
       btn.textContent = '⏹ STOP BEAT';
+      btn.classList.add('playing');
       btn.style.background = '#ef4444';
       btn.style.color = '#ffffff';
+      btn.style.boxShadow = '0 0 12px rgba(239, 68, 68, 0.6)';
     }
 
     this._stepLoop();
@@ -183,8 +185,10 @@ class BeatStudio {
     const btn = document.getElementById('seq-btn-play');
     if (btn) {
       btn.textContent = '▶ BEAT STARTEN';
-      btn.style.background = 'var(--neon-green)';
+      btn.classList.remove('playing');
+      btn.style.background = '#00e676';
       btn.style.color = '#000000';
+      btn.style.boxShadow = '0 0 10px rgba(0, 230, 118, 0.4)';
     }
   }
 
