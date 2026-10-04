@@ -269,6 +269,9 @@ class SynthStudio {
   _attachEvents() {
     // Section Drawer Toggle
     if (this.btnToggle && this.section) {
+      const isVisible = !this.section.classList.contains('hidden');
+      this.btnToggle.classList.toggle('active', isVisible);
+
       this.btnToggle.addEventListener('click', () => {
         const isHidden = this.section.classList.toggle('hidden');
         this.btnToggle.classList.toggle('active', !isHidden);

@@ -80,6 +80,7 @@
   <!-- Mobile Deck Switcher Tabs (Smartphone Optimized) -->
   <nav class="mobile-deck-tabs">
     <button class="deck-tab-btn active" data-target="all">ALLE 4 DECKS</button>
+    <button class="deck-tab-btn" data-target="synth" style="color:#38bdf8; font-weight:800;">🎹 INSTRUMENTE</button>
     <button class="deck-tab-btn" data-target="deck-a" style="color:var(--deck-a-color);">DECK A</button>
     <button class="deck-tab-btn" data-target="deck-b" style="color:var(--deck-b-color);">DECK B</button>
     <button class="deck-tab-btn" data-target="deck-c" style="color:var(--deck-c-color);">DECK C</button>
@@ -638,106 +639,21 @@
 
     </section>
 
-    <!-- SECTION: Traktor Track Library / Musik-Liste -->
-    <section id="music-library-section" class="music-library-section">
-      <div class="library-header">
-        <div class="library-tools-left">
-          <h2 style="font-size:13px; font-weight:800; color:var(--deck-a-color); display:flex; align-items:center; gap:6px;">
-            📑 MEINE MUSIKLISTE & TRACK-SAMMLUNG
-          </h2>
-          <label class="btn-lib-add">
-            ➕ Musikdateien hinzufügen (MP3/WAV/MP4)
-            <input type="file" id="library-file-input" accept="audio/*,video/mp4,video/*,.mp3,.wav,.flac,.aac,.ogg,.m4a,.mp4,.wma,.opus,.m4v,.webm" multiple>
-          </label>
-          <button id="btn-library-demos" class="btn-lib-demos">🎵 Demos laden</button>
-        </div>
-
-        <div style="display:flex; align-items:center; gap:8px;">
-          <div class="library-search-box">
-            <span>🔍</span>
-            <input type="text" id="library-search-input" placeholder="Titel suchen...">
-          </div>
-          <button id="btn-close-library" class="btn-close-lib" title="Schließen">✖</button>
-        </div>
-      </div>
-
-      <div class="library-table-container">
-        <table class="library-table">
-          <thead>
-            <tr>
-              <th style="width:40px; text-align:center;">#</th>
-              <th style="width:50px; text-align:center;">HÖREN</th>
-              <th>TITEL / DATEINAME</th>
-              <th style="width:70px;">DAUER</th>
-              <th style="width:310px; text-align:right;">AKTIONEN</th>
-            </tr>
-          </thead>
-          <tbody id="library-table-body">
-            <!-- Rendered dynamically -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- SECTION: Eigene Sample-Bank & Sound-Schnipsel (Drops, Effekte, Vocals) -->
-    <section id="sample-vault-section" class="sample-vault-section hidden">
-      <div class="library-header sample-vault-header">
-        <div class="library-tools-left">
-          <h2 style="font-size:13px; font-weight:800; color:var(--vu-green); display:flex; align-items:center; gap:6px;">
-            🎛️ EIGENE SAMPLE-BANK & SOUND-SCHNIPSEL (DROPS & EFFEKTE)
-          </h2>
-
-          <div class="sample-quick-cut-box" style="display:flex; align-items:center; gap:6px;">
-            <label style="font-size:10px; color:var(--text-dim); font-weight:700;">AUS DECK SCHNEIDEN:</label>
-            <select id="select-cut-deck" class="monitor-deck-select" style="padding:3px 6px;">
-              <option value="deck-a">DECK A (Cyan)</option>
-              <option value="deck-b">DECK B (Pink)</option>
-              <option value="deck-c">DECK C (Orange)</option>
-              <option value="deck-d">DECK D (Lila)</option>
-            </select>
-            <button id="btn-cut-from-deck" class="btn-lib-demos" style="background:linear-gradient(135deg, #00f0ff, #00e676); color:#000; font-weight:800;">
-              ✂️ Bereich schneiden
-            </button>
-          </div>
-        </div>
-
-        <div style="display:flex; align-items:center; gap:12px;">
-          <div class="tempo-box" style="padding:3px 8px;" title="Lautstärke aller One-Shot Samples">
-            <label for="sampler-vol-slider" style="color:var(--vu-green); font-size:10px; font-weight:800;">SAMPLE-VOL:</label>
-            <input type="range" id="sampler-vol-slider" min="0" max="1.5" step="0.05" value="1.0" style="width:65px; accent-color:var(--vu-green);">
-            <span id="sampler-vol-display" class="tempo-display" style="color:var(--vu-green); font-size:10px; font-weight:700;">100%</span>
-          </div>
-
-          <div class="library-search-box">
-            <span>🔍</span>
-            <input type="text" id="samples-search-input" placeholder="Sample suchen...">
-          </div>
-
-          <button id="btn-close-samples" class="btn-close-lib" title="Schließen">✖</button>
-        </div>
-      </div>
-
-      <!-- Sample Cards Grid -->
-      <div id="samples-grid" class="samples-grid">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-    <!-- SECTION: Virtuelles Instrumenten- & Synthesizer-Studio -->
-    <section id="instrument-studio-section" class="instrument-studio-section hidden">
+    <!-- SECTION: Virtuelles Instrumenten- & Synthesizer-Studio (Klavier, Lead, Bässe, Flöte) -->
+    <section id="instrument-studio-section" class="instrument-studio-section">
       <div class="synth-studio-header">
         <div class="synth-header-left">
           <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:20px;">🎹</span>
+            <span style="font-size:24px;">🎹</span>
             <div>
-              <h2 style="font-size:13px; font-weight:800; color:#38bdf8; margin:0; letter-spacing:1px;">
+              <h2 style="font-size:14px; font-weight:900; color:#38bdf8; margin:0; letter-spacing:1px;">
                 VIRTUELLES INSTRUMENTEN- & SYNTHESIZER-STUDIO
               </h2>
-              <span id="synth-active-instrument-title" style="font-size:10px; color:#10b981; font-weight:800;">
+              <span id="synth-active-instrument-title" style="font-size:11px; color:#10b981; font-weight:800;">
                 🎹 <span>KONZERT-KLAVIER</span>
               </span>
             </div>
-            <select id="synth-instrument-select" class="synth-select synth-header-select" style="margin-left:10px; font-size:11px; font-weight:700; background:#0f172a; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; padding:3px 6px;">
+            <select id="synth-instrument-select" class="synth-select synth-header-select" style="margin-left:12px; font-size:11px; font-weight:700; background:#0f172a; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; padding:3px 8px; cursor:pointer;">
               <option value="piano" selected>🎹 Konzert-Klavier</option>
               <option value="synth_lead">⚡ EDM Club Lead</option>
               <option value="sub_bass">🎸 Deep 808 Sub-Bass</option>
@@ -758,7 +674,7 @@
             <span id="synth-volume-display" class="tempo-display" style="color:#38bdf8; font-size:10px; font-weight:700;">85%</span>
           </div>
 
-          <button id="btn-close-synth" class="btn-close-lib" title="Schließen">✖</button>
+          <button id="btn-close-synth" class="btn-close-lib" title="Ausblenden">✖</button>
         </div>
       </div>
 
@@ -883,6 +799,91 @@
         <div id="synth-keyboard-container" class="synth-keyboard-container">
           <!-- Rendered dynamically -->
         </div>
+      </div>
+    </section>
+
+    <!-- SECTION: Traktor Track Library / Musik-Liste -->
+    <section id="music-library-section" class="music-library-section">
+      <div class="library-header">
+        <div class="library-tools-left">
+          <h2 style="font-size:13px; font-weight:800; color:var(--deck-a-color); display:flex; align-items:center; gap:6px;">
+            📑 MEINE MUSIKLISTE & TRACK-SAMMLUNG
+          </h2>
+          <label class="btn-lib-add">
+            ➕ Musikdateien hinzufügen (MP3/WAV/MP4)
+            <input type="file" id="library-file-input" accept="audio/*,video/mp4,video/*,.mp3,.wav,.flac,.aac,.ogg,.m4a,.mp4,.wma,.opus,.m4v,.webm" multiple>
+          </label>
+          <button id="btn-library-demos" class="btn-lib-demos">🎵 Demos laden</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="library-search-box">
+            <span>🔍</span>
+            <input type="text" id="library-search-input" placeholder="Titel suchen...">
+          </div>
+          <button id="btn-close-library" class="btn-close-lib" title="Schließen">✖</button>
+        </div>
+      </div>
+
+      <div class="library-table-container">
+        <table class="library-table">
+          <thead>
+            <tr>
+              <th style="width:40px; text-align:center;">#</th>
+              <th style="width:50px; text-align:center;">HÖREN</th>
+              <th>TITEL / DATEINAME</th>
+              <th style="width:70px;">DAUER</th>
+              <th style="width:310px; text-align:right;">AKTIONEN</th>
+            </tr>
+          </thead>
+          <tbody id="library-table-body">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION: Eigene Sample-Bank & Sound-Schnipsel (Drops, Effekte, Vocals) -->
+    <section id="sample-vault-section" class="sample-vault-section hidden">
+      <div class="library-header sample-vault-header">
+        <div class="library-tools-left">
+          <h2 style="font-size:13px; font-weight:800; color:var(--vu-green); display:flex; align-items:center; gap:6px;">
+            🎛️ EIGENE SAMPLE-BANK & SOUND-SCHNIPSEL (DROPS & EFFEKTE)
+          </h2>
+
+          <div class="sample-quick-cut-box" style="display:flex; align-items:center; gap:6px;">
+            <label style="font-size:10px; color:var(--text-dim); font-weight:700;">AUS DECK SCHNEIDEN:</label>
+            <select id="select-cut-deck" class="monitor-deck-select" style="padding:3px 6px;">
+              <option value="deck-a">DECK A (Cyan)</option>
+              <option value="deck-b">DECK B (Pink)</option>
+              <option value="deck-c">DECK C (Orange)</option>
+              <option value="deck-d">DECK D (Lila)</option>
+            </select>
+            <button id="btn-cut-from-deck" class="btn-lib-demos" style="background:linear-gradient(135deg, #00f0ff, #00e676); color:#000; font-weight:800;">
+              ✂️ Bereich schneiden
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="tempo-box" style="padding:3px 8px;" title="Lautstärke aller One-Shot Samples">
+            <label for="sampler-vol-slider" style="color:var(--vu-green); font-size:10px; font-weight:800;">SAMPLE-VOL:</label>
+            <input type="range" id="sampler-vol-slider" min="0" max="1.5" step="0.05" value="1.0" style="width:65px; accent-color:var(--vu-green);">
+            <span id="sampler-vol-display" class="tempo-display" style="color:var(--vu-green); font-size:10px; font-weight:700;">100%</span>
+          </div>
+
+          <div class="library-search-box">
+            <span>🔍</span>
+            <input type="text" id="samples-search-input" placeholder="Sample suchen...">
+          </div>
+
+          <button id="btn-close-samples" class="btn-close-lib" title="Schließen">✖</button>
+        </div>
+      </div>
+
+      <!-- Sample Cards Grid -->
+      <div id="samples-grid" class="samples-grid">
+        <!-- Rendered dynamically -->
       </div>
     </section>
 
@@ -1239,6 +1240,15 @@
           btn.classList.add('active');
 
           const target = btn.dataset.target;
+          if (target === 'synth') {
+            const synthSec = document.getElementById('instrument-studio-section');
+            if (synthSec) {
+              synthSec.classList.remove('hidden');
+              synthSec.scrollIntoView({ behavior: 'smooth' });
+            }
+            return;
+          }
+
           const cards = ['card-deck-a', 'card-deck-b', 'card-deck-c', 'card-deck-d'];
 
           if (target === 'all') {
