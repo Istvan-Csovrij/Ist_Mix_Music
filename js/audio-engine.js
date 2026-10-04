@@ -75,27 +75,27 @@ class AudioEngine {
       }
     };
 
-    // Master Limiter to prevent clipping
+    // Master Limiter to prevent clipping and Windows WASAPI auto-ducking
     this.masterLimiter = this.ctx.createDynamicsCompressor();
-    this.masterLimiter.threshold.setValueAtTime(-1.0, this.ctx.currentTime);
-    this.masterLimiter.knee.setValueAtTime(0.0, this.ctx.currentTime);
-    this.masterLimiter.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+    this.masterLimiter.threshold.setValueAtTime(-1.5, this.ctx.currentTime);
+    this.masterLimiter.knee.setValueAtTime(6.0, this.ctx.currentTime);
+    this.masterLimiter.ratio.setValueAtTime(16.0, this.ctx.currentTime);
     this.masterLimiter.attack.setValueAtTime(0.003, this.ctx.currentTime);
-    this.masterLimiter.release.setValueAtTime(0.25, this.ctx.currentTime);
+    this.masterLimiter.release.setValueAtTime(0.08, this.ctx.currentTime);
 
-    // Master Gain
+    // Master Gain (calibrated for multi-deck summing headroom)
     this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.setValueAtTime(0.9, this.ctx.currentTime);
+    this.masterGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
 
     // Recording Bus
     this.recordDestination = this.ctx.createMediaStreamDestination();
 
-    // Direct uncompressed routing to speakers + routing to limiter/recorder
-    this.masterGain.connect(this.ctx.destination);
+    // Master Limiter chain: masterGain -> masterLimiter -> speakers + recording
     this.masterGain.connect(this.masterLimiter);
+    this.masterLimiter.connect(this.ctx.destination);
     this.masterLimiter.connect(this.recordDestination);
 
-    // Master Stereo Analysers for dual L/R VU-Meter
+    // Master Stereo Analysers for dual L/R VU-Meter (connected after limiter)
     this.masterSplitter = this.ctx.createChannelSplitter(2);
     this.masterAnalyserL = this.ctx.createAnalyser();
     this.masterAnalyserR = this.ctx.createAnalyser();
@@ -104,7 +104,7 @@ class AudioEngine {
     this.masterAnalyserL.smoothingTimeConstant = 0.7;
     this.masterAnalyserR.smoothingTimeConstant = 0.7;
 
-    this.masterGain.connect(this.masterSplitter);
+    this.masterLimiter.connect(this.masterSplitter);
     this.masterSplitter.connect(this.masterAnalyserL, 0);
     this.masterSplitter.connect(this.masterAnalyserR, 1);
 
@@ -113,9 +113,9 @@ class AudioEngine {
       const inGain = this.ctx.createGain();
       inGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
 
-      // Direct Dry Path to master
+      // Direct Dry Path to master with calibrated summing headroom
       const dryGain = this.ctx.createGain();
-      dryGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+      dryGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
       inGain.connect(dryGain);
       dryGain.connect(this.masterGain);
 
@@ -188,14 +188,18 @@ class AudioEngine {
       this.init();
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().then(() => {
+        if (window.fourDeckCrossfader) {
+          window.fourDeckCrossfader.update();
+        }
+      });
     }
   }
 
   setMasterVolume(val) {
     if (!this.masterGain || !this.ctx) return;
     const v = Math.max(0, Math.min(1.5, parseFloat(val)));
-    this.masterGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
+    this.masterGain.gain.setTargetAtTime(v * 0.85, this.ctx.currentTime, 0.02);
   }
 
   setSamplerVolume(val) {

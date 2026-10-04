@@ -538,11 +538,11 @@
         <div class="master-crossfader-area">
           <div class="crossfader-labels">
             <span class="lbl-side-a">◄ SIDE X (A / C)</span>
-            <span style="color:var(--text-dim);">CROSSFADER</span>
+            <button id="btn-crossfader-center" class="btn-xf-center" title="Crossfader zentrieren (100% Lautstärke für beide Decks)">CROSSFADER [CENTER 1:1]</button>
             <span class="lbl-side-b">SIDE Y (B / D) ►</span>
           </div>
           <div class="crossfader-track">
-            <input type="range" id="crossfader-slider" class="crossfader-slider" min="0" max="1" step="0.01" value="0.5">
+            <input type="range" id="crossfader-slider" class="crossfader-slider" min="0" max="1" step="0.01" value="0.5" autocomplete="off" title="Crossfader: Doppelklick für Center (Beide Decks 100% Lautstärke)">
           </div>
         </div>
       </section>

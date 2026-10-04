@@ -892,24 +892,53 @@ class FourDeckCrossfader {
   constructor(decks) {
     this.decks = decks;
     this.slider = document.getElementById('crossfader-slider');
+    this.centerBtn = document.getElementById('btn-crossfader-center');
     this.attach();
   }
 
   attach() {
     if (!this.slider) return;
+    // Always initialize at dead center (1:1 equal volume for all decks)
+    this.slider.value = 0.5;
+
     this.slider.addEventListener('input', () => this.update());
+    this.slider.addEventListener('dblclick', () => {
+      this.slider.value = 0.5;
+      this.update();
+    });
+
+    if (this.centerBtn) {
+      this.centerBtn.addEventListener('click', () => {
+        this.slider.value = 0.5;
+        this.update();
+      });
+    }
+
     this.update();
   }
 
   update() {
     if (!this.slider) return;
     const val = parseFloat(this.slider.value); // 0.0 (Left) to 1.0 (Right)
-    const ctx = window.audioEngine.ctx;
+    const ctx = window.audioEngine ? window.audioEngine.ctx : null;
     if (!ctx) return;
 
-    // Constant power curves:
-    const gainLeft = Math.cos(val * 0.5 * Math.PI);
-    const gainRight = Math.sin(val * 0.5 * Math.PI);
+    // Professional DJ Club Smooth Mix Curve:
+    // In center band (0.42 to 0.58), BOTH sides play at 100% (1.0) full volume.
+    // Neither deck drops in volume when started together!
+    let gainLeft = 1.0;
+    let gainRight = 1.0;
+
+    if (val < 0.42) {
+      gainLeft = 1.0;
+      gainRight = Math.max(0.0, val / 0.42);
+    } else if (val > 0.58) {
+      gainLeft = Math.max(0.0, (1.0 - val) / 0.42);
+      gainRight = 1.0;
+    } else {
+      gainLeft = 1.0;
+      gainRight = 1.0;
+    }
 
     Object.values(this.decks).forEach((deck) => {
       let g = 1.0;
@@ -918,9 +947,16 @@ class FourDeckCrossfader {
       } else if (deck.xfaderSide === 'right') {
         g = gainRight;
       } else {
-        g = 1.0; // Thru
+        g = 1.0; // Thru (always full volume)
       }
-      deck.xfaderGain.gain.setTargetAtTime(g, ctx.currentTime, 0.02);
+
+      if (deck.xfaderGain && deck.xfaderGain.gain) {
+        if (ctx.state === 'running') {
+          deck.xfaderGain.gain.setTargetAtTime(g, ctx.currentTime, 0.015);
+        } else {
+          deck.xfaderGain.gain.setValueAtTime(g, ctx.currentTime);
+        }
+      }
     });
   }
 }

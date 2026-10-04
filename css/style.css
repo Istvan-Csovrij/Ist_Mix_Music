@@ -927,9 +927,34 @@ main {
 .crossfader-labels {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
   font-size: 9px;
   font-weight: 900;
+}
+
+.btn-xf-center {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  color: var(--text-dim);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.btn-xf-center:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: var(--accent-cyan);
+  color: #fff;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.3);
+}
+
+.btn-xf-center:active {
+  transform: scale(0.96);
 }
 
 .lbl-side-a { color: var(--deck-a-color); }
