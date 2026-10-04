@@ -8,7 +8,7 @@ Erstellt für **Istvan Csovrij**.
 
 ## 🌟 Funktionen
 
-1. **💿 DJ Decks (Esowator Style)**:
+1. **💿 DJ Decks (Escowator Style)**:
    - Eigene Musik hochladen (MP3, WAV, FLAC, M4A).
    - Interaktive Waveform-Anzeige mit Touch-Seek.
    - Play, Pause, Cue und 3-Band Equalizer (Bass, Mitten, Höhen).
