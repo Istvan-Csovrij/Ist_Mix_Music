@@ -25,6 +25,7 @@ class AudioEngine {
     this.micGain = null;
     this.drumsGain = null;
     this.samplerGain = null;
+    this.synthGain = null;
     this.noiseBuffer = null;
 
     // Solo & Mute State Tracking
@@ -99,6 +100,11 @@ class AudioEngine {
     this.samplerGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
     this.samplerGain.connect(this.masterGain);
 
+    // Synthesizer & Virtual Instruments Channel
+    this.synthGain = this.ctx.createGain();
+    this.synthGain.gain.setValueAtTime(0.9, this.ctx.currentTime);
+    this.synthGain.connect(this.masterGain);
+
     this._createNoiseBuffer();
     this.isUnlocked = true;
   }
@@ -122,6 +128,12 @@ class AudioEngine {
     if (!this.samplerGain || !this.ctx) return;
     const v = Math.max(0, Math.min(1.5, parseFloat(val)));
     this.samplerGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
+  }
+
+  setSynthVolume(val) {
+    if (!this.synthGain || !this.ctx) return;
+    const v = Math.max(0, Math.min(1.5, parseFloat(val)));
+    this.synthGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
   }
 
   async rebindAudioDevice(deviceId = '') {

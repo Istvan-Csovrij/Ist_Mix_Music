@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Ist_Mix_Music 🎛️ 4-Deck Esowator DJ Studio</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/style.css?v=3.2">
+  <link rel="stylesheet" href="css/style.css?v=3.3">
 </head>
 <body>
 
@@ -29,6 +29,10 @@
 
       <button id="btn-toggle-samples" class="btn-toggle-samples" title="Eigene Sample-Bank & Sound-Schnipsel ein-/ausblenden">
         ✂️ SAMPLE-BANK <span id="samples-count" class="lib-badge sample-badge">0</span>
+      </button>
+
+      <button id="btn-toggle-synth" class="btn-toggle-synth" title="Virtuelles Instrumenten- & Synthesizer-Studio ein-/ausblenden">
+        🎹 INSTRUMENTE
       </button>
 
       <div class="header-deck-toggles" style="display:flex; gap:5px;">
@@ -719,6 +723,169 @@
       </div>
     </section>
 
+    <!-- SECTION: Virtuelles Instrumenten- & Synthesizer-Studio -->
+    <section id="instrument-studio-section" class="instrument-studio-section hidden">
+      <div class="synth-studio-header">
+        <div class="synth-header-left">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:20px;">🎹</span>
+            <div>
+              <h2 style="font-size:13px; font-weight:800; color:#38bdf8; margin:0; letter-spacing:1px;">
+                VIRTUELLES INSTRUMENTEN- & SYNTHESIZER-STUDIO
+              </h2>
+              <span id="synth-active-instrument-title" style="font-size:10px; color:#10b981; font-weight:800;">
+                🎹 <span>KONZERT-KLAVIER</span>
+              </span>
+            </div>
+            <select id="synth-instrument-select" class="synth-select synth-header-select" style="margin-left:10px; font-size:11px; font-weight:700; background:#0f172a; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; padding:3px 6px;">
+              <option value="piano" selected>🎹 Konzert-Klavier</option>
+              <option value="synth_lead">⚡ EDM Club Lead</option>
+              <option value="sub_bass">🎸 Deep 808 Sub-Bass</option>
+              <option value="acid_bass">🔊 Acid / Slap Bass</option>
+              <option value="flute">🪈 Flöte (Pan / Konzert)</option>
+              <option value="strings_pad">🎻 Synth Strings & Pad</option>
+              <option value="organ">🎶 Electro Club Orgel</option>
+              <option value="pluck_marimba">🔔 Pluck / Marimba</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Master Instrument Controls (Volume & Close) -->
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="tempo-box" style="padding:3px 8px;" title="Lautstärke des Synthesizers im Gesamt-Mix">
+            <label for="synth-volume-slider" style="color:#38bdf8; font-size:10px; font-weight:800;">SYNTH-VOL:</label>
+            <input type="range" id="synth-volume-slider" min="0" max="1.5" step="0.05" value="0.85" style="width:65px; accent-color:#38bdf8;">
+            <span id="synth-volume-display" class="tempo-display" style="color:#38bdf8; font-size:10px; font-weight:700;">85%</span>
+          </div>
+
+          <button id="btn-close-synth" class="btn-close-lib" title="Schließen">✖</button>
+        </div>
+      </div>
+
+      <!-- Instrument Selection Bar (8 Presets) -->
+      <div class="synth-presets-bar">
+        <button class="btn-synth-preset active" data-instrument="piano" title="Akustisches Konzert-Klavier">
+          <span class="preset-icon">🎹</span>
+          <span class="preset-name">Klavier</span>
+        </button>
+        <button class="btn-synth-preset" data-instrument="synth_lead" title="EDM Club Sawtooth Lead Synthesizer">
+          <span class="preset-icon">⚡</span>
+          <span class="preset-name">EDM Lead</span>
+        </button>
+        <button class="btn-synth-preset" data-instrument="sub_bass" title="Deep 808 Sub-Bass mit Sub-Druck">
+          <span class="preset-icon">🎸</span>
+          <span class="preset-name">Deep 808 Bass</span>
+        </button>
+        <button class="btn-synth-preset" data-instrument="acid_bass" title="Acid / Slap Bass (Knackig & Perkussiv)">
+          <span class="preset-icon">🔊</span>
+          <span class="preset-name">Acid Bass</span>
+        </button>
+        <button class="btn-synth-preset" data-instrument="flute" title="Flöte mit Atemluft & Vibrato">
+          <span class="preset-icon">🪈</span>
+          <span class="preset-name">Flöte</span>
+        </button>
+        <button class="btn-synth-preset" data-instrument="strings_pad" title="Synth Strings & Ambient Pad">
+          <span class="preset-icon">🎻</span>
+          <span class="preset-name">Strings Pad</span>
+        </button>
+        <button class="btn-synth-preset" data-instrument="organ" title="Electro Club House Orgel">
+          <span class="preset-icon">🎶</span>
+          <span class="preset-name">Club Orgel</span>
+        </button>
+        <button class="btn-synth-preset" data-instrument="pluck_marimba" title="Pluck / Marimba / Glöckchen">
+          <span class="preset-icon">🔔</span>
+          <span class="preset-name">Marimba Pluck</span>
+        </button>
+      </div>
+
+      <!-- Controls Dashboard (Pitch, Octave, Arp, Filter) -->
+      <div class="synth-dashboard">
+        <!-- Octave & Detune Controls -->
+        <div class="synth-control-card">
+          <span class="synth-card-title">TONHÖHE & OKTAVE</span>
+          <div class="synth-controls-inline">
+            <div class="synth-param-box">
+              <label for="synth-octave-slider">OKTAVE:</label>
+              <input type="range" id="synth-octave-slider" min="-2" max="2" step="1" value="0">
+              <span id="synth-octave-display" class="synth-param-val">0 (NORMAL)</span>
+            </div>
+            <div class="synth-param-box">
+              <label for="synth-detune-slider">DETUNE:</label>
+              <input type="range" id="synth-detune-slider" min="-12" max="12" step="1" value="0">
+              <span id="synth-detune-display" class="synth-param-val">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Cutoff & Resonance -->
+        <div class="synth-control-card">
+          <span class="synth-card-title">KLANGFARBE (FILTER)</span>
+          <div class="synth-controls-inline">
+            <div class="synth-param-box">
+              <label for="synth-cutoff-slider">CUTOFF:</label>
+              <input type="range" id="synth-cutoff-slider" min="150" max="10000" step="50" value="3500">
+              <span id="synth-cutoff-display" class="synth-param-val">3500 Hz</span>
+            </div>
+            <div class="synth-param-box">
+              <label for="synth-res-slider">RESONANZ:</label>
+              <input type="range" id="synth-res-slider" min="0.5" max="15" step="0.5" value="2.0">
+              <span id="synth-res-display" class="synth-param-val">2.0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arpeggiator & Speed Control -->
+        <div class="synth-control-card">
+          <span class="synth-card-title">GESCHWINDIGKEIT (ARP)</span>
+          <div class="synth-controls-inline">
+            <div class="synth-param-box">
+              <label for="synth-arp-mode">MODUS:</label>
+              <select id="synth-arp-mode" class="synth-select">
+                <option value="off">AUS (Normal)</option>
+                <option value="up">UP (Aufsteigend)</option>
+                <option value="down">DOWN (Absteigend)</option>
+                <option value="updown">UP-DOWN (Auf/Ab)</option>
+                <option value="random">RANDOM (Zufall)</option>
+                <option value="chord">CHORD (Puls)</option>
+              </select>
+            </div>
+            <div class="synth-param-box">
+              <label for="synth-arp-rate">SPEED:</label>
+              <select id="synth-arp-rate" class="synth-select">
+                <option value="1/4">1/4 Takt</option>
+                <option value="1/8">1/8 Beat</option>
+                <option value="1/16" selected>1/16 Schnell</option>
+                <option value="1/32">1/32 Ultra</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- One-Touch Quick Chords -->
+        <div class="synth-control-card synth-chords-card">
+          <span class="synth-card-title">ONE-TOUCH AKKORDE</span>
+          <div class="synth-chords-row">
+            <button class="btn-quick-chord" data-chord="chord-c">C-Dur</button>
+            <button class="btn-quick-chord" data-chord="chord-am">A-Moll</button>
+            <button class="btn-quick-chord" data-chord="chord-f">F-Dur</button>
+            <button class="btn-quick-chord" data-chord="chord-g">G-Dur</button>
+            <button class="btn-quick-chord" data-chord="chord-dm">D-Moll</button>
+            <button class="btn-quick-chord" data-chord="chord-em">E-Moll</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playable Keyboard / Piano Bed -->
+      <div class="synth-keyboard-wrapper">
+        <div class="synth-keyboard-hint">
+          <span>💡 <strong>Spielen:</strong> Tippe/Klicke auf die Tasten (Wischen für Glissando) oder nutze deine Computertastatur (<strong>A, W, S, E, D, F...</strong>).</span>
+        </div>
+        <div id="synth-keyboard-container" class="synth-keyboard-container">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
     <!-- MODAL: Audio Cutter / Sample Slicer -->
     <div id="cutter-modal" class="cutter-modal hidden">
       <div class="cutter-modal-content">
@@ -919,14 +1086,15 @@
   </footer>
 
   <!-- Scripts with Cache-Busting Versioning -->
-  <script src="js/audio-engine.js?v=3.2"></script>
-  <script src="js/dj-decks.js?v=3.2"></script>
-  <script src="js/mic-recorder.js?v=3.2"></script>
-  <script src="js/beat-pads.js?v=3.2"></script>
-  <script src="js/master-recorder.js?v=3.2"></script>
-  <script src="js/track-library.js?v=3.2"></script>
-  <script src="js/sample-cutter.js?v=3.2"></script>
-  <script src="js/traktor-monitor.js?v=3.2"></script>
+  <script src="js/audio-engine.js?v=3.3"></script>
+  <script src="js/dj-decks.js?v=3.3"></script>
+  <script src="js/mic-recorder.js?v=3.3"></script>
+  <script src="js/beat-pads.js?v=3.3"></script>
+  <script src="js/master-recorder.js?v=3.3"></script>
+  <script src="js/track-library.js?v=3.3"></script>
+  <script src="js/sample-cutter.js?v=3.3"></script>
+  <script src="js/synth-instrument.js?v=3.3"></script>
+  <script src="js/traktor-monitor.js?v=3.3"></script>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -936,6 +1104,7 @@
       window.initMasterRecorder();
       window.initTrackLibrary();
       window.initSampleCutter();
+      window.initSynthStudio();
       window.initTraktorMonitor();
 
       // Deck Header Cut Button Listeners
