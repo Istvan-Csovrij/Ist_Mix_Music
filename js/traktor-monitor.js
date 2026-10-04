@@ -174,11 +174,8 @@ class TraktorMasterMonitor {
 
       const barHeight = Math.max(2, (max - min) * maxAmp);
 
-      // Traktor Color Spectrum:
-      // High transient peaks = White, Mids = Primary Deck Color, Lows = Deep Color
-      if (barHeight > maxAmp * 0.85) {
-        c.fillStyle = '#ffffff';
-      } else if (barHeight > maxAmp * 0.45) {
+      // Traktor Color Spectrum (bar body is vibrant primary/secondary, white only on transient tips):
+      if (barHeight > maxAmp * 0.45) {
         c.fillStyle = primaryColor;
       } else {
         c.fillStyle = secondaryColor;
@@ -186,6 +183,13 @@ class TraktorMasterMonitor {
 
       const y = centerY - barHeight / 2;
       c.fillRect(x, y, 1.5, barHeight);
+
+      // Subtle transient spark on highest peaks only
+      if (barHeight > maxAmp * 0.88) {
+        c.fillStyle = '#ffffff';
+        c.fillRect(x, y, 1.5, 2);
+        c.fillRect(x, y + barHeight - 2, 1.5, 2);
+      }
     }
 
     // 3. Draw HotCue Flags on the waveform

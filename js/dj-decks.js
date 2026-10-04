@@ -210,6 +210,22 @@ class DJDeck {
       });
     }
 
+    // Quick Skip buttons (⏪ -15s / ⏩ +30s)
+    const btnSkipBack = document.getElementById(`${id}-skip-back`);
+    if (btnSkipBack) {
+      btnSkipBack.addEventListener('click', () => {
+        window.audioEngine.unlockAudio();
+        this.seekRelative(-15);
+      });
+    }
+    const btnSkipFwd = document.getElementById(`${id}-skip-fwd`);
+    if (btnSkipFwd) {
+      btnSkipFwd.addEventListener('click', () => {
+        window.audioEngine.unlockAudio();
+        this.seekRelative(30);
+      });
+    }
+
     // Pitch Fader Slider
     if (this.pitchSlider) {
       this.pitchSlider.addEventListener('input', (e) => {
@@ -237,82 +253,60 @@ class DJDeck {
     const targetElement = waveformBox || this.canvas;
 
     if (targetElement) {
+      let isInteracting = false;
+      let startX = 0;
+
       const getRatio = (e) => {
         const rect = targetElement.getBoundingClientRect();
         const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
         return Math.max(0, Math.min(0.999, (clientX - rect.left) / rect.width));
       };
 
-      const startDrag = (e) => {
+      const onStart = (e) => {
         if (!this.audioBuffer) return;
+        window.audioEngine.unlockAudio();
+        isInteracting = true;
         this.isWaveformDragging = true;
-        this.wasPlayingBeforeDrag = this.isPlaying;
-
-        // Stop playback cleanly while dragging so audio does not duplicate or glitch
-        if (this.isPlaying) {
-          this.stop();
-        }
+        startX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
 
         const ratio = getRatio(e);
-        this.pauseOffset = ratio * this.audioBuffer.duration;
         if (this.cursor) this.cursor.style.left = `${ratio * 100}%`;
-        this.updateTimeDisplay();
+        this._displayTemporaryTime(ratio * this.audioBuffer.duration);
       };
 
-      const moveDrag = (e) => {
-        if (!this.isWaveformDragging || !this.audioBuffer) return;
+      const onMove = (e) => {
+        if (!isInteracting || !this.audioBuffer) return;
         const ratio = getRatio(e);
-        this.pauseOffset = ratio * this.audioBuffer.duration;
         if (this.cursor) this.cursor.style.left = `${ratio * 100}%`;
-        this.updateTimeDisplay();
+        this._displayTemporaryTime(ratio * this.audioBuffer.duration);
       };
 
-      const endDrag = () => {
-        if (!this.isWaveformDragging || !this.audioBuffer) return;
+      const onEnd = (e) => {
+        if (!isInteracting || !this.audioBuffer) return;
+        isInteracting = false;
         this.isWaveformDragging = false;
 
-        // If it was playing before dragging began, resume playback immediately from new position
-        if (this.wasPlayingBeforeDrag) {
-          this.play();
-        }
+        const ratio = getRatio(e);
+        this.seekTo(ratio);
       };
 
-      let lastTouchTime = 0;
-      const handleMouseDown = (e) => {
-        if (performance.now() - lastTouchTime < 600) return;
-        startDrag(e);
-      };
-      const handleMouseMove = (e) => {
-        if (performance.now() - lastTouchTime < 600) return;
-        moveDrag(e);
-      };
-      const handleMouseUp = (e) => {
-        if (performance.now() - lastTouchTime < 600) return;
-        endDrag(e);
-      };
+      // Mouse Listeners
+      targetElement.addEventListener('mousedown', onStart);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onEnd);
 
-      const handleTouchStart = (e) => {
-        lastTouchTime = performance.now();
-        startDrag(e);
-      };
-      const handleTouchMove = (e) => {
-        lastTouchTime = performance.now();
-        moveDrag(e);
-      };
-      const handleTouchEnd = (e) => {
-        lastTouchTime = performance.now();
-        endDrag(e);
-      };
+      // Touch Listeners (Mobile & Touch Laptop)
+      targetElement.addEventListener('touchstart', onStart, { passive: true });
+      window.addEventListener('touchmove', onMove, { passive: true });
+      window.addEventListener('touchend', onEnd);
 
-      // Mouse drag listeners
-      targetElement.addEventListener('mousedown', handleMouseDown);
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-
-      // Touch drag listeners (phones, tablets, touch laptops)
-      targetElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-      window.addEventListener('touchmove', handleTouchMove, { passive: true });
-      window.addEventListener('touchend', handleTouchEnd);
+      // Direct click listener (instant jump to any position)
+      targetElement.addEventListener('click', (e) => {
+        if (!this.audioBuffer) return;
+        window.audioEngine.unlockAudio();
+        const ratio = getRatio(e);
+        this.seekTo(ratio);
+      });
     }
 
     // Rotating Vinyl Jog Wheel Drag & Scratch
@@ -552,7 +546,7 @@ class DJDeck {
     }
 
     const now = performance.now();
-    if (this._lastPlayTime && (now - this._lastPlayTime < 120)) {
+    if (this._lastPlayTime && (now - this._lastPlayTime < 80)) {
       return;
     }
     this._lastPlayTime = now;
@@ -568,10 +562,16 @@ class DJDeck {
     this.sourceNode.playbackRate.value = this.playbackRate;
     this.sourceNode.connect(this.eqLow);
 
-    const offset = this.pauseOffset % this.audioBuffer.duration;
+    const safeDuration = this.audioBuffer.duration;
+    const rawOffset = this.pauseOffset % safeDuration;
+    const offset = Math.max(0, Math.min(safeDuration - 0.05, rawOffset));
     this.startTime = ctx.currentTime - (offset / this.playbackRate);
 
-    this.sourceNode.start(0, offset);
+    try {
+      this.sourceNode.start(0, offset);
+    } catch (e) {
+      console.warn('sourceNode.start error:', e);
+    }
     this.isPlaying = true;
 
     if (this.btnPlay) {
@@ -634,27 +634,63 @@ class DJDeck {
     }
   }
 
-  seek(ratio) {
+  seekTo(ratio) {
     if (!this.audioBuffer) return;
     const clampedRatio = Math.max(0, Math.min(0.999, ratio));
     const targetOffset = clampedRatio * this.audioBuffer.duration;
-    const wasPlaying = this.isPlaying;
-    if (wasPlaying) this.stop();
+
     this.pauseOffset = targetOffset;
-    if (this.cursor) this.cursor.style.left = `${clampedRatio * 100}%`;
-    this.updateTimeDisplay();
-    if (wasPlaying) {
-      setTimeout(() => {
-        if (!this.isPlaying) this.play();
-      }, 30);
+    if (this.cursor) {
+      this.cursor.style.left = `${clampedRatio * 100}%`;
     }
+    this.updateTimeDisplay();
+
+    if (this.isPlaying) {
+      // Clear debounce so user can jump multiple times rapidly without getting blocked
+      this._lastPlayTime = 0;
+      this._cleanStopCurrentSource();
+
+      window.audioEngine.unlockAudio();
+      const ctx = window.audioEngine.ctx;
+
+      this.sourceNode = ctx.createBufferSource();
+      this.sourceNode.buffer = this.audioBuffer;
+      this.sourceNode.playbackRate.value = this.playbackRate;
+      this.sourceNode.connect(this.eqLow);
+
+      const offset = Math.max(0, Math.min(this.audioBuffer.duration - 0.05, targetOffset));
+      this.startTime = ctx.currentTime - (offset / this.playbackRate);
+
+      try {
+        this.sourceNode.start(0, offset);
+      } catch (e) {
+        console.warn('Playback seek start error at offset:', offset, e);
+      }
+
+      const nodeRef = this.sourceNode;
+      this.sourceNode.onended = () => {
+        if (this.sourceNode === nodeRef && this.isPlaying && !this.isLooping) {
+          this.pauseOffset = 0;
+          this.isPlaying = false;
+          this.sourceNode = null;
+          if (this.btnPlay) {
+            this.btnPlay.textContent = '▶ PLAY';
+            this.btnPlay.classList.remove('playing');
+          }
+        }
+      };
+    }
+  }
+
+  seek(ratio) {
+    this.seekTo(ratio);
   }
 
   seekRelative(seconds) {
     if (!this.audioBuffer) return;
     const curr = this.getCurrentTime();
-    const next = Math.max(0, Math.min(this.audioBuffer.duration, curr + seconds));
-    this.seek(next / this.audioBuffer.duration);
+    const next = Math.max(0, Math.min(this.audioBuffer.duration - 0.05, curr + seconds));
+    this.seekTo(next / this.audioBuffer.duration);
   }
 
   getCurrentTime() {
@@ -667,13 +703,23 @@ class DJDeck {
     return this.pauseOffset % this.audioBuffer.duration;
   }
 
-  updateTimeDisplay() {
+  _displayTemporaryTime(seconds) {
     if (!this.timeDisplay) return;
-    const cur = this.getCurrentTime();
-    const mins = Math.floor(cur / 60);
+    const cur = Math.max(0, seconds);
+    const hrs = Math.floor(cur / 3600);
+    const mins = Math.floor((cur % 3600) / 60);
     const secs = Math.floor(cur % 60);
     const ms = Math.floor((cur % 1) * 100);
-    this.timeDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}.${ms < 10 ? '0' : ''}${ms}`;
+
+    if (hrs > 0) {
+      this.timeDisplay.textContent = `${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    } else {
+      this.timeDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}.${ms < 10 ? '0' : ''}${ms}`;
+    }
+  }
+
+  updateTimeDisplay() {
+    this._displayTemporaryTime(this.getCurrentTime());
   }
 
   setPitch(percent) {
@@ -825,42 +871,76 @@ class DJDeck {
     const height = this.canvas.height = this.canvas.offsetHeight * window.devicePixelRatio || 90;
     const c = this.canvasCtx;
     const rawData = this.audioBuffer.getChannelData(0);
-    const step = Math.ceil(rawData.length / width);
+    const totalSamples = rawData.length;
     const amp = height / 2;
 
-    c.fillStyle = '#080a0f';
+    c.fillStyle = '#07080c';
     c.fillRect(0, 0, width, height);
 
-    // Grid center line
-    c.strokeStyle = '#1b202c';
+    // Subtle time grid lines (every 25% of track duration)
+    c.strokeStyle = '#141824';
     c.lineWidth = 1;
+    [0.25, 0.5, 0.75].forEach(pct => {
+      const gx = Math.round(width * pct);
+      c.beginPath();
+      c.moveTo(gx, 0);
+      c.lineTo(gx, height);
+      c.stroke();
+    });
+
+    // Center baseline
+    c.strokeStyle = '#1a2233';
     c.beginPath();
     c.moveTo(0, amp);
     c.lineTo(width, amp);
     c.stroke();
 
-    // Multi-color Traktor spectral waveform
+    const step = totalSamples / width;
+    // Decimation: sample up to 64 points per bar column for instant (<3ms) calculation on long mixes
+    const samplesPerBar = Math.min(64, Math.max(8, Math.floor(step)));
+    const subStep = Math.max(1, Math.floor(step / samplesPerBar));
+
     for (let i = 0; i < width; i++) {
-      let min = 1.0;
-      let max = -1.0;
-      for (let j = 0; j < step; j++) {
-        const datum = rawData[i * step + j];
-        if (datum < min) min = datum;
-        if (datum > max) max = datum;
+      const startIdx = Math.floor(i * step);
+      let sumSq = 0;
+      let peak = 0;
+      let count = 0;
+
+      for (let j = 0; j < step && (startIdx + j) < totalSamples; j += subStep) {
+        const val = Math.abs(rawData[startIdx + j]);
+        sumSq += val * val;
+        if (val > peak) peak = val;
+        count++;
       }
 
-      const barHeight = (max - min) * amp;
-      // Color based on amplitude (spectral frequency simulation)
-      if (barHeight > amp * 1.1) {
-        c.fillStyle = '#ffffff'; // Transients / peaks
-      } else if (barHeight > amp * 0.7) {
-        c.fillStyle = this.accentColor; // Midrange
+      const rms = count > 0 ? Math.sqrt(sumSq / count) : 0;
+      // Perceptual dynamic energy: mixes RMS energy (body) and transient peak
+      const energy = Math.min(1.0, (rms * 2.2 * 0.70) + (peak * 0.30));
+      const barH = Math.max(3, energy * (height - 6));
+      const y = amp - (barH / 2);
+
+      // Traktor Multi-Color Spectrum (NO white washouts!):
+      // Bass/warmth core -> Accent color body -> Highlight tip for sharp transients
+      const grad = c.createLinearGradient(0, y, 0, y + barH);
+      if (energy > 0.85) {
+        grad.addColorStop(0.0, '#ffffff'); // Subtle transient spark on very top peaks only
+        grad.addColorStop(0.12, this.accentColor);
+        grad.addColorStop(0.5, '#ff6b35'); // Deep bass energy core
+        grad.addColorStop(0.88, this.accentColor);
+        grad.addColorStop(1.0, '#ffffff');
+      } else if (energy > 0.40) {
+        grad.addColorStop(0.0, this.accentColor);
+        grad.addColorStop(0.5, '#ff8a50');
+        grad.addColorStop(1.0, this.accentColor);
       } else {
-        c.fillStyle = '#ff6b35'; // Lows / bass warmth
+        // Quiet breakdown / intro
+        grad.addColorStop(0.0, this.accentColor);
+        grad.addColorStop(0.5, '#005f73');
+        grad.addColorStop(1.0, this.accentColor);
       }
 
-      const y1 = (1 + min) * amp;
-      c.fillRect(i, y1, 1, Math.max(2, barHeight));
+      c.fillStyle = grad;
+      c.fillRect(i, y, 1, barH);
     }
   }
 
