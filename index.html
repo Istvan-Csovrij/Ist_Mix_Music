@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Ist_Mix_Music 🎛️ 4-Deck Traktor DJ Studio</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=3.0">
 </head>
 <body>
 
@@ -29,6 +29,10 @@
 
       <button id="btn-toggle-samples" class="btn-toggle-samples" title="Eigene Sample-Bank & Sound-Schnipsel ein-/ausblenden">
         ✂️ SAMPLE-BANK <span id="samples-count" class="lib-badge sample-badge">0</span>
+      </button>
+
+      <button id="btn-toggle-decks-mode" class="btn-toggle-decks-mode" title="Zwischen 2 Decks (A/B) und 4 Decks (A/B/C/D) wechseln, um viel Platz zu sparen">
+        🎛️ <span id="lbl-decks-mode-state">4 DECKS (A/B/C/D)</span>
       </button>
 
       <div class="tempo-box">
@@ -276,8 +280,13 @@
       <!-- CENTER 4-CHANNEL MIXER CONSOLE -->
       <section class="central-mixer-console">
         <div class="mixer-header">
-          <span class="mixer-title">4-KANAL MIXING CONSOLE</span>
-          <span style="font-size:9px; color:var(--text-dim);">EQUALIZER & FILTERS</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span id="lbl-mixer-title" class="mixer-title">4-KANAL MIXING CONSOLE</span>
+            <span id="lbl-mixer-sub" style="font-size:9px; color:var(--text-dim);">(A/B/C/D)</span>
+          </div>
+          <button id="btn-mixer-toggle-mode" class="btn-mixer-toggle-mode" title="Decks C & D ausblenden / einblenden, um Platz zu sparen">
+            ➖ DECKS C & D AUSBLENDEN
+          </button>
         </div>
 
         <!-- 4 Vertical Channel Strips (Ch 1 = Deck A, Ch 2 = Deck B, Ch 3 = Deck C, Ch 4 = Deck D) -->
@@ -904,14 +913,14 @@
   </footer>
 
   <!-- Scripts with Cache-Busting Versioning -->
-  <script src="js/audio-engine.js?v=2.9"></script>
-  <script src="js/dj-decks.js?v=2.9"></script>
-  <script src="js/mic-recorder.js?v=2.9"></script>
-  <script src="js/beat-pads.js?v=2.9"></script>
-  <script src="js/master-recorder.js?v=2.9"></script>
-  <script src="js/track-library.js?v=2.9"></script>
-  <script src="js/sample-cutter.js?v=2.9"></script>
-  <script src="js/traktor-monitor.js?v=2.9"></script>
+  <script src="js/audio-engine.js?v=3.0"></script>
+  <script src="js/dj-decks.js?v=3.0"></script>
+  <script src="js/mic-recorder.js?v=3.0"></script>
+  <script src="js/beat-pads.js?v=3.0"></script>
+  <script src="js/master-recorder.js?v=3.0"></script>
+  <script src="js/track-library.js?v=3.0"></script>
+  <script src="js/sample-cutter.js?v=3.0"></script>
+  <script src="js/traktor-monitor.js?v=3.0"></script>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {

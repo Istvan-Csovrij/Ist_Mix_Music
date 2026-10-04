@@ -793,4 +793,57 @@ window.initDecks = () => {
   };
 
   window.fourDeckCrossfader = new FourDeckCrossfader(window.decks);
+  window.initDeckLayoutMode();
+};
+
+window.initDeckLayoutMode = () => {
+  const btnHeader = document.getElementById('btn-toggle-decks-mode');
+  const btnMixer = document.getElementById('btn-mixer-toggle-mode');
+  const lblHeader = document.getElementById('lbl-decks-mode-state');
+  const lblMixerTitle = document.getElementById('lbl-mixer-title');
+  const lblMixerSub = document.getElementById('lbl-mixer-sub');
+
+  let currentMode = localStorage.getItem('ist_mix_decks_mode') || '4deck';
+
+  function applyMode(mode) {
+    currentMode = mode;
+    localStorage.setItem('ist_mix_decks_mode', mode);
+
+    const is2Deck = (mode === '2deck');
+    document.body.classList.toggle('mode-2deck', is2Deck);
+
+    if (btnHeader) {
+      btnHeader.classList.toggle('active-2deck', is2Deck);
+    }
+    if (lblHeader) {
+      lblHeader.textContent = is2Deck ? '2 DECKS (A & B)' : '4 DECKS (A/B/C/D)';
+    }
+    if (lblMixerTitle) {
+      lblMixerTitle.textContent = is2Deck ? '2-KANAL MIXER' : '4-KANAL MIXER';
+    }
+    if (lblMixerSub) {
+      lblMixerSub.textContent = is2Deck ? '(A / B)' : '(A/B/C/D)';
+    }
+    if (btnMixer) {
+      btnMixer.textContent = is2Deck ? '➕ DECKS C & D EINBLENDEN' : '➖ DECKS C & D AUSBLENDEN';
+    }
+
+    // Trigger waveform redraws so canvas scales cleanly to new dimensions
+    setTimeout(() => {
+      if (window.decks) {
+        if (window.decks['deck-a']) window.decks['deck-a']._drawWaveform();
+        if (window.decks['deck-b']) window.decks['deck-b']._drawWaveform();
+      }
+    }, 100);
+  }
+
+  function toggle() {
+    applyMode(currentMode === '2deck' ? '4deck' : '2deck');
+  }
+
+  if (btnHeader) btnHeader.addEventListener('click', toggle);
+  if (btnMixer) btnMixer.addEventListener('click', toggle);
+
+  // Initialize saved state
+  applyMode(currentMode);
 };

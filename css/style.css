@@ -1939,3 +1939,73 @@ footer {
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.7);
 }
 
+/* ==========================================================================
+   2-Deck / 4-Deck Layout Mode (Decks C & D Ausblenden / Einblenden)
+   ========================================================================== */
+.btn-toggle-decks-mode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-highlight);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-toggle-decks-mode:hover {
+  background: #334155;
+  border-color: #64748b;
+  color: #fff;
+}
+
+.btn-toggle-decks-mode.active-2deck {
+  border-color: var(--deck-a-color);
+  color: var(--deck-a-color);
+  background: rgba(0, 240, 255, 0.12);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.btn-mixer-toggle-mode {
+  background: var(--bg-inner);
+  border: 1px solid var(--border-color);
+  color: var(--text-dim);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-mixer-toggle-mode:hover {
+  border-color: var(--deck-a-color);
+  color: #fff;
+}
+
+/* 2-Deck Mode: Hide Decks C & D and Mixer Channels 3 & 4 */
+body.mode-2deck #card-deck-c,
+body.mode-2deck #card-deck-d,
+body.mode-2deck .channel-strip.ch-3,
+body.mode-2deck .channel-strip.ch-4,
+body.mode-2deck .deck-tab-btn[data-target="deck-c"],
+body.mode-2deck .deck-tab-btn[data-target="deck-d"] {
+  display: none !important;
+}
+
+body.mode-2deck .channels-wrapper {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 250px;
+  margin: 0 auto;
+}
+
+body.mode-2deck .decks-side {
+  gap: 0;
+}
+
+
