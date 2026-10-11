@@ -625,8 +625,8 @@ main {
 
 /* Vinyl Jog Wheel - Adaptive Responsive Traktor Platter */
 .vinyl-container {
-  width: clamp(75px, 8.5vw, 150px);
-  height: clamp(75px, 8.5vw, 150px);
+  width: clamp(92px, 11vw, 175px);
+  height: clamp(92px, 11vw, 175px);
   border-radius: 50%;
   background: radial-gradient(circle, #252a36 0%, #151821 35%, #0c0e14 70%, #050608 100%);
   border: 3px solid #2e364a;
@@ -670,7 +670,7 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(10px, 1.1vw, 16px);
+  font-size: clamp(11px, 1.3vw, 18px);
   font-weight: 900;
   box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
 }
@@ -684,7 +684,7 @@ main {
   position: absolute;
   top: 2px;
   width: clamp(2px, 0.3vw, 4px);
-  height: clamp(12px, 1.4vw, 20px);
+  height: clamp(14px, 1.6vw, 24px);
   background: #fff;
   border-radius: 2px;
   box-shadow: 0 0 6px #fff, 0 0 12px rgba(255,255,255,0.8);
@@ -696,7 +696,7 @@ main {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  width: clamp(22px, 2.2vw, 32px);
+  width: clamp(24px, 2.4vw, 34px);
   flex-shrink: 0;
 }
 
@@ -710,7 +710,7 @@ main {
   writing-mode: bt-lr; /* Vertical */
   -webkit-appearance: slider-vertical;
   width: 12px;
-  height: clamp(50px, 5vw, 68px);
+  height: clamp(55px, 5.5vw, 75px);
   cursor: pointer;
   accent-color: var(--text-dim);
 }
@@ -1945,8 +1945,8 @@ footer {
     display: none !important;
   }
   .vinyl-container {
-    width: 80px;
-    height: 80px;
+    width: clamp(95px, 24vw, 115px);
+    height: clamp(95px, 24vw, 115px);
   }
   .central-mixer-console {
     padding: 8px;
