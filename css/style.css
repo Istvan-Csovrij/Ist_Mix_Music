@@ -618,19 +618,20 @@ main {
 .deck-body-layout {
   display: flex;
   align-items: center;
-  gap: clamp(6px, 0.8vw, 12px);
+  gap: clamp(8px, 1.1vw, 16px);
   min-width: 0;
   width: 100%;
+  flex-wrap: wrap;
 }
 
-/* Vinyl Jog Wheel - Adaptive Responsive Traktor Platter */
+/* Vinyl Jog Wheel - Adaptive Responsive Traktor Platter (2x Size) */
 .vinyl-container {
-  width: clamp(92px, 11vw, 175px);
-  height: clamp(92px, 11vw, 175px);
+  width: clamp(160px, 17.5vw, 300px);
+  height: clamp(160px, 17.5vw, 300px);
   border-radius: 50%;
   background: radial-gradient(circle, #252a36 0%, #151821 35%, #0c0e14 70%, #050608 100%);
-  border: 3px solid #2e364a;
-  box-shadow: inset 0 0 16px #000, 0 6px 20px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.6);
+  border: 4px solid #2e364a;
+  box-shadow: inset 0 0 24px #000, 0 8px 30px rgba(0,0,0,0.85), 0 0 16px rgba(0,0,0,0.6);
   position: relative;
   cursor: grab;
   flex-shrink: 0;
@@ -654,40 +655,40 @@ main {
   height: 82%;
   border-radius: 50%;
   border: 1px dashed rgba(255,255,255,0.12);
-  box-shadow: inset 0 0 14px rgba(0,0,0,0.9);
+  box-shadow: inset 0 0 18px rgba(0,0,0,0.92);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: repeating-radial-gradient(circle, transparent 0, transparent 4px, rgba(255,255,255,0.03) 5px, transparent 6px);
+  background: repeating-radial-gradient(circle, transparent 0, transparent 4px, rgba(255,255,255,0.035) 5px, transparent 6px);
 }
 
 .vinyl-center-badge {
-  width: 36%;
-  height: 36%;
+  width: 34%;
+  height: 34%;
   border-radius: 50%;
   background: radial-gradient(circle, #1a202c, #0d1117);
-  border: 2px solid #334155;
+  border: 3px solid #334155;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(11px, 1.3vw, 18px);
+  font-size: clamp(20px, 2.4vw, 36px);
   font-weight: 900;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+  box-shadow: inset 0 0 14px rgba(0,0,0,0.85);
 }
 
-.deck-a .vinyl-center-badge { color: var(--deck-a-color); border-color: var(--deck-a-color); box-shadow: 0 0 12px rgba(0, 240, 255, 0.4); }
-.deck-b .vinyl-center-badge { color: var(--deck-b-color); border-color: var(--deck-b-color); box-shadow: 0 0 12px rgba(255, 0, 127, 0.4); }
-.deck-c .vinyl-center-badge { color: var(--deck-c-color); border-color: var(--deck-c-color); box-shadow: 0 0 12px rgba(255, 107, 53, 0.4); }
-.deck-d .vinyl-center-badge { color: var(--deck-d-color); border-color: var(--deck-d-color); box-shadow: 0 0 12px rgba(157, 78, 221, 0.4); }
+.deck-a .vinyl-center-badge { color: var(--deck-a-color); border-color: var(--deck-a-color); box-shadow: 0 0 16px rgba(0, 240, 255, 0.45); }
+.deck-b .vinyl-center-badge { color: var(--deck-b-color); border-color: var(--deck-b-color); box-shadow: 0 0 16px rgba(255, 0, 127, 0.45); }
+.deck-c .vinyl-center-badge { color: var(--deck-c-color); border-color: var(--deck-c-color); box-shadow: 0 0 16px rgba(255, 107, 53, 0.45); }
+.deck-d .vinyl-center-badge { color: var(--deck-d-color); border-color: var(--deck-d-color); box-shadow: 0 0 16px rgba(157, 78, 221, 0.45); }
 
 .vinyl-needle {
   position: absolute;
-  top: 2px;
-  width: clamp(2px, 0.3vw, 4px);
-  height: clamp(14px, 1.6vw, 24px);
+  top: 3px;
+  width: clamp(3px, 0.45vw, 6px);
+  height: clamp(22px, 2.8vw, 42px);
   background: #fff;
-  border-radius: 2px;
-  box-shadow: 0 0 6px #fff, 0 0 12px rgba(255,255,255,0.8);
+  border-radius: 3px;
+  box-shadow: 0 0 8px #fff, 0 0 16px rgba(255,255,255,0.9);
 }
 
 /* Pitch / Tempo Fader */
@@ -695,47 +696,49 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  width: clamp(24px, 2.4vw, 34px);
+  gap: 4px;
+  width: clamp(28px, 2.8vw, 42px);
   flex-shrink: 0;
 }
 
 .pitch-fader-box label {
-  font-size: 8px;
+  font-size: 8.5px;
   font-weight: bold;
   color: var(--text-dim);
+  letter-spacing: 0.5px;
 }
 
 .pitch-slider {
   writing-mode: bt-lr; /* Vertical */
   -webkit-appearance: slider-vertical;
-  width: 12px;
-  height: clamp(55px, 5.5vw, 75px);
+  width: 14px;
+  height: clamp(80px, 9vw, 150px);
   cursor: pointer;
   accent-color: var(--text-dim);
 }
 
 .pitch-value {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 8.5px;
   color: var(--text-dim);
 }
 
 /* Deck Controls Area */
 .deck-performance-area {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 200px;
+  min-width: 180px;
   display: flex;
   flex-direction: column;
-  gap: clamp(4px, 0.6vw, 8px);
+  gap: clamp(5px, 0.7vw, 10px);
 }
 
 .transport-row {
   display: flex;
   align-items: center;
-  gap: clamp(2px, 0.35vw, 5px);
+  gap: clamp(3px, 0.4vw, 6px);
   width: 100%;
   min-width: 0;
+  flex-wrap: wrap;
 }
 
 .btn-deck-play {
@@ -1945,8 +1948,8 @@ footer {
     display: none !important;
   }
   .vinyl-container {
-    width: clamp(95px, 24vw, 115px);
-    height: clamp(95px, 24vw, 115px);
+    width: clamp(160px, 42vw, 220px);
+    height: clamp(160px, 42vw, 220px);
   }
   .central-mixer-console {
     padding: 8px;
