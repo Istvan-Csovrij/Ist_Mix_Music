@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Ist_Mix_Music 🎛️ 4-Deck Escowator DJ Studio</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/style.css?v=3.8">
+  <link rel="stylesheet" href="css/style.css?v=4.0">
 </head>
 <body>
 
@@ -53,7 +53,7 @@
 
       <div class="tempo-box master-vol-box">
         <label for="master-volume-slider" style="color:#10b981; font-weight:800;">VOL:</label>
-        <input type="range" id="master-volume-slider" min="0" max="1.5" step="0.05" value="1.0" style="width:65px; accent-color:#10b981;">
+        <input type="range" id="master-volume-slider" min="0" max="2.0" step="0.05" value="1.0" style="width:65px; accent-color:#10b981;" title="Master Lautstärke (bis zu 200% Boost für leise Kopfhörer / Tracks)">
         <span id="master-volume-display" class="tempo-display" style="color:#10b981; font-weight:700;">100%</span>
         <div class="master-stereo-vu" title="Master Stereo Output (L / R)">
           <div class="vu-channel"><span class="vu-ch-label">L</span><div class="vu-meter-bar master-bar" id="master-vu-l"><div class="vu-led red"></div><div class="vu-led yellow"></div><div class="vu-led green"></div><div class="vu-led green"></div><div class="vu-led green"></div></div></div>
@@ -61,14 +61,14 @@
         </div>
       </div>
 
-      <div class="tempo-box" style="display:inline-flex; align-items:center; gap:5px;" title="Wähle dein Audiogerät (z.B. Logitech Headset oder Lautsprecher)">
+      <div class="tempo-box" style="display:inline-flex; align-items:center; gap:5px;" title="Wähle dein Audiogerät (z.B. Kopfhörer oder Lautsprecher)">
         <label for="audio-output-select" style="color:#38bdf8; font-weight:800; font-size:10px;">🎧 AUSGANG:</label>
         <select id="audio-output-select" style="background:#0f172a; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; font-size:10px; font-weight:700; padding:2px 5px; max-width:clamp(95px, 10vw, 130px); cursor:pointer;">
           <option value="">Standard (Windows)</option>
         </select>
       </div>
 
-      <button id="btn-sound-test" class="btn-rec-master" style="border-color:#10b981; color:#10b981; background:rgba(16,185,129,0.15); font-weight:800;" title="Startet/Stoppt einen Dauerton (440Hz), um Lautsprecher & Headset ohne Unterbrechung zu testen">
+      <button id="btn-sound-test" class="btn-rec-master" style="border-color:#10b981; color:#10b981; background:rgba(16,185,129,0.15); font-weight:800;" title="Startet/Stoppt einen Dauerton-Beat, um Lautsprecher & Headset ohne Unterbrechung zu testen">
         🔊 Sound-Test
       </button>
 
@@ -81,6 +81,49 @@
       </button>
     </div>
   </header>
+
+  <!-- Audio Routing & Sound Control Hub (Always Visible & Instant 1-Click Access) -->
+  <section id="audio-routing-hub" class="audio-routing-hub">
+    <div class="audio-hub-content">
+      <div class="audio-hub-status">
+        <span class="audio-hub-icon">🎧</span>
+        <div class="audio-hub-info">
+          <div class="audio-hub-title">AKTIVE AUDIO-AUSGABE:</div>
+          <div id="audio-active-device-name" class="audio-hub-device">Standard (Windows)</div>
+        </div>
+      </div>
+
+      <div class="audio-hub-buttons">
+        <button id="btn-device-klinke" class="btn-audio-device" title="Sound auf Kopfhörer-Kabel (Realtek Audio 3.5mm Buchse) leiten">
+          🎧 Kabel (Realtek)
+        </button>
+        <button id="btn-device-bluetooth" class="btn-audio-device" title="Sound auf Bluetooth Kopfhörer (JBL TUNE FLEX / DOCKIN) leiten">
+          📶 Bluetooth (JBL)
+        </button>
+        <button id="btn-device-usb" class="btn-audio-device" title="Sound auf Logitech USB Headset leiten">
+          🎧 Logitech USB
+        </button>
+        <button id="btn-device-monitor" class="btn-audio-device" title="Sound auf LG HDMI Display Monitor leiten">
+          🖥️ Monitor (LG)
+        </button>
+        <button id="btn-device-default" class="btn-audio-device" title="Standard-Audiogerät von Windows nutzen">
+          🔊 Windows Standard
+        </button>
+        <button id="btn-device-picker" class="btn-audio-device highlight" title="Öffnet den offiziellen Browser-Dialog zur Auswahl aller Lautsprecher">
+          ⚙️ Gerät wählen
+        </button>
+      </div>
+
+      <div class="audio-hub-actions">
+        <button id="btn-sound-test-beat" class="btn-hub-test" title="Spielt einen dauerhaften EDM Club-Beat, um Kopfhörer & Boxen sofort zu prüfen">
+          ▶ SOUND-TEST (BEAT)
+        </button>
+        <div id="audio-context-badge" class="audio-ctx-badge active" title="Audio-Engine Status">
+          ● AUDIO BEREIT
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- Mobile Deck Switcher Tabs (Smartphone Optimized) -->
   <nav class="mobile-deck-tabs">
@@ -1272,15 +1315,15 @@
   </footer>
 
   <!-- Scripts with Cache-Busting Versioning -->
-  <script src="js/audio-engine.js?v=3.8"></script>
-  <script src="js/dj-decks.js?v=3.8"></script>
-  <script src="js/mic-recorder.js?v=3.8"></script>
-  <script src="js/beat-pads.js?v=3.8"></script>
-  <script src="js/master-recorder.js?v=3.8"></script>
-  <script src="js/track-library.js?v=3.8"></script>
-  <script src="js/sample-cutter.js?v=3.8"></script>
-  <script src="js/synth-instrument.js?v=3.8"></script>
-  <script src="js/traktor-monitor.js?v=3.8"></script>
+  <script src="js/audio-engine.js?v=4.0"></script>
+  <script src="js/dj-decks.js?v=4.0"></script>
+  <script src="js/mic-recorder.js?v=4.0"></script>
+  <script src="js/beat-pads.js?v=4.0"></script>
+  <script src="js/master-recorder.js?v=4.0"></script>
+  <script src="js/track-library.js?v=4.0"></script>
+  <script src="js/sample-cutter.js?v=4.0"></script>
+  <script src="js/synth-instrument.js?v=4.0"></script>
+  <script src="js/traktor-monitor.js?v=4.0"></script>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -1344,7 +1387,7 @@
         });
       }
 
-      // Master Volume slider listener
+      // Master Volume slider listener (Supports up to 200% volume boost)
       const masterVolSlider = document.getElementById('master-volume-slider');
       const masterVolDisplay = document.getElementById('master-volume-display');
       if (masterVolSlider && masterVolDisplay) {
@@ -1355,87 +1398,199 @@
         });
       }
 
-      // Audio Output Selector & Device Enumeration
+      // =====================================================================
+      // AUDIO ROUTING HUB & OUTPUT DEVICE MANAGER
+      // =====================================================================
       const audioOutputSelect = document.getElementById('audio-output-select');
-      async function requestDeviceLabelsPermission() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          // Stop immediately so microphone hardware is released right away!
-          stream.getTracks().forEach(t => t.stop());
-        } catch (e) {}
+      const activeDevNameEl = document.getElementById('audio-active-device-name');
+      const audioCtxBadge = document.getElementById('audio-context-badge');
+      const btnHubTest = document.getElementById('btn-sound-test-beat');
+      const btnHeaderTest = document.getElementById('btn-sound-test');
+
+      function updateActiveOutputBadge(label, activeBtnId = '') {
+        if (activeDevNameEl) {
+          activeDevNameEl.textContent = label || 'Standard (Windows)';
+        }
+        // Update active class on buttons
+        document.querySelectorAll('.btn-audio-device').forEach(b => {
+          b.classList.toggle('active', activeBtnId && b.id === activeBtnId);
+        });
       }
 
-      async function populateAudioOutputs(requestPerm = false) {
-        if (!audioOutputSelect || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
-        try {
-          let devices = await navigator.mediaDevices.enumerateDevices();
-          let outputs = devices.filter(d => d.kind === 'audiooutput');
-          if (outputs.length === 0) return;
-
-          // If labels are masked (empty) in Chrome and user clicked dropdown, unmask device names
-          if (requestPerm && outputs.some(d => !d.label)) {
-            await requestDeviceLabelsPermission();
-            devices = await navigator.mediaDevices.enumerateDevices();
-            outputs = devices.filter(d => d.kind === 'audiooutput');
-          }
-
-          const currentVal = audioOutputSelect.value;
-          audioOutputSelect.innerHTML = '<option value="">Standard (Windows)</option>';
-          outputs.forEach((dev, idx) => {
-            const opt = document.createElement('option');
-            opt.value = dev.deviceId;
-            let label = dev.label;
-            if (!label) {
-              label = `Audiogerät ${idx + 1} (${dev.deviceId.slice(0, 8)}...)`;
-            }
-            opt.textContent = label;
-            if (dev.deviceId === currentVal) opt.selected = true;
-            audioOutputSelect.appendChild(opt);
-          });
-        } catch (err) {
-          console.warn('Fehler bei Audio-Geräte-Erkennung:', err);
+      function updateCtxStatusBadge() {
+        if (!audioCtxBadge || !window.audioEngine || !window.audioEngine.ctx) return;
+        const state = window.audioEngine.ctx.state;
+        if (state === 'running') {
+          audioCtxBadge.textContent = '● AUDIO AKTIV';
+          audioCtxBadge.className = 'audio-ctx-badge active';
+          audioCtxBadge.title = 'Audio-Engine läuft einwandfrei auf 100% Studio-Qualität';
+        } else {
+          audioCtxBadge.textContent = '⚠️ AUDIO ENTSPERREN';
+          audioCtxBadge.className = 'audio-ctx-badge suspended';
+          audioCtxBadge.title = 'Audio ist pausiert. Klicke hier zum sofortigen Starten!';
         }
       }
 
+      if (audioCtxBadge) {
+        audioCtxBadge.addEventListener('click', () => {
+          if (window.audioEngine) {
+            window.audioEngine.unlockAudio();
+            setTimeout(updateCtxStatusBadge, 100);
+          }
+        });
+      }
+
+      setInterval(updateCtxStatusBadge, 500);
+
+      async function populateAudioOutputs() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const outputs = devices.filter(d => d.kind === 'audiooutput');
+          window._availableOutputs = outputs;
+
+          if (audioOutputSelect) {
+            const currentVal = audioOutputSelect.value;
+            audioOutputSelect.innerHTML = '<option value="">Standard (Windows)</option>';
+            outputs.forEach((dev, idx) => {
+              const opt = document.createElement('option');
+              opt.value = dev.deviceId;
+              let label = dev.label;
+              if (!label) {
+                label = `Audiogerät ${idx + 1} (${dev.deviceId.slice(0, 6)}...)`;
+              }
+              opt.textContent = label;
+              if (dev.deviceId === currentVal) opt.selected = true;
+              audioOutputSelect.appendChild(opt);
+            });
+          }
+          return outputs;
+        } catch (err) {
+          console.warn('Audio Device Enumeration notice:', err);
+          return [];
+        }
+      }
+
+      async function switchToOutputByKeyword(keyword, friendlyName, btnId) {
+        window.audioEngine.unlockAudio();
+        const outputs = await populateAudioOutputs();
+        const match = outputs.find(d => d.label && d.label.toLowerCase().includes(keyword.toLowerCase()));
+        if (match) {
+          await window.audioEngine.setAudioOutputDevice(match.deviceId, match.label);
+          if (audioOutputSelect) audioOutputSelect.value = match.deviceId;
+          updateActiveOutputBadge(match.label, btnId);
+        } else {
+          // If labels are masked or exact name not matching, try browser picker if available or route to default
+          if (keyword === 'realtek' || keyword === 'klinke') {
+            const realtekMatch = outputs.find(d => d.label && (d.label.toLowerCase().includes('realtek') || d.label.toLowerCase().includes('lautsprecher')));
+            if (realtekMatch) {
+              await window.audioEngine.setAudioOutputDevice(realtekMatch.deviceId, realtekMatch.label);
+              updateActiveOutputBadge(realtekMatch.label, btnId);
+              return;
+            }
+          }
+          await window.audioEngine.setAudioOutputDevice('', friendlyName);
+          updateActiveOutputBadge(`${friendlyName}`, btnId);
+        }
+      }
+
+      // Device Buttons:
+      const btnKlinke = document.getElementById('btn-device-klinke');
+      if (btnKlinke) {
+        btnKlinke.addEventListener('click', () => {
+          switchToOutputByKeyword('realtek', 'Lautsprecher / Klinke (Realtek)', 'btn-device-klinke');
+        });
+      }
+
+      const btnBt = document.getElementById('btn-device-bluetooth');
+      if (btnBt) {
+        btnBt.addEventListener('click', () => {
+          switchToOutputByKeyword('jbl', 'Bluetooth Kopfhörer (JBL / Dockin)', 'btn-device-bluetooth');
+        });
+      }
+
+      const btnUsb = document.getElementById('btn-device-usb');
+      if (btnUsb) {
+        btnUsb.addEventListener('click', () => {
+          switchToOutputByKeyword('logitech', 'Logitech USB Headset', 'btn-device-usb');
+        });
+      }
+
+      const btnMonitor = document.getElementById('btn-device-monitor');
+      if (btnMonitor) {
+        btnMonitor.addEventListener('click', () => {
+          switchToOutputByKeyword('lg', 'Monitor HDMI Audio (LG)', 'btn-device-monitor');
+        });
+      }
+
+      const btnDef = document.getElementById('btn-device-default');
+      if (btnDef) {
+        btnDef.addEventListener('click', async () => {
+          window.audioEngine.unlockAudio();
+          await window.audioEngine.setAudioOutputDevice('', 'Standard (Windows)');
+          if (audioOutputSelect) audioOutputSelect.value = '';
+          updateActiveOutputBadge('Standard (Windows)', 'btn-device-default');
+        });
+      }
+
+      const btnPicker = document.getElementById('btn-device-picker');
+      if (btnPicker) {
+        btnPicker.addEventListener('click', async () => {
+          window.audioEngine.unlockAudio();
+          if (navigator.mediaDevices && typeof navigator.mediaDevices.selectAudioOutput === 'function') {
+            try {
+              const dev = await navigator.mediaDevices.selectAudioOutput();
+              if (dev && dev.deviceId) {
+                await window.audioEngine.setAudioOutputDevice(dev.deviceId, dev.label);
+                updateActiveOutputBadge(dev.label || dev.deviceId, 'btn-device-picker');
+                await populateAudioOutputs();
+              }
+            } catch (e) {
+              console.warn('Device Picker notice:', e);
+            }
+          } else {
+            alert('Wähle dein Ausgabegerät direkt aus dem Dropdown "🎧 AUSGANG" in der oberen Leiste.');
+          }
+        });
+      }
+
       if (audioOutputSelect) {
-        populateAudioOutputs(false);
-        audioOutputSelect.addEventListener('click', () => populateAudioOutputs(true), { once: true });
+        populateAudioOutputs();
         audioOutputSelect.addEventListener('change', async (e) => {
           if (window.audioEngine) {
-            await window.audioEngine.setAudioOutputDevice(e.target.value);
+            const selectedText = e.target.options[e.target.selectedIndex]?.text || '';
+            await window.audioEngine.setAudioOutputDevice(e.target.value, selectedText);
+            updateActiveOutputBadge(selectedText);
           }
         });
       }
 
       if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
         navigator.mediaDevices.addEventListener('devicechange', () => {
-          populateAudioOutputs(false);
+          populateAudioOutputs();
         });
       }
 
-      // Sound Test Continuous Tone Toggle Button
-      const btnSoundTest = document.getElementById('btn-sound-test');
-      if (btnSoundTest) {
-        btnSoundTest.addEventListener('click', () => {
-          if (window.audioEngine) {
-            const isPlaying = window.audioEngine.toggleContinuousTestTone();
-            if (isPlaying) {
-              btnSoundTest.innerHTML = '⏹ TESTTON STOPPEN <span style="font-size:10px;">(LÄUFT...)</span>';
-              btnSoundTest.style.background = '#dc2626';
-              btnSoundTest.style.color = '#ffffff';
-              btnSoundTest.style.borderColor = '#ef4444';
-              btnSoundTest.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.6)';
-            } else {
-              btnSoundTest.innerHTML = '🔊 Sound-Test (Dauerton)';
-              btnSoundTest.style.background = 'rgba(16,185,129,0.15)';
-              btnSoundTest.style.color = '#10b981';
-              btnSoundTest.style.borderColor = '#10b981';
-              btnSoundTest.style.boxShadow = 'none';
-            }
+      // Synchronized Sound-Test Button Function
+      function toggleSoundTestBeat() {
+        if (!window.audioEngine) return;
+        const isPlaying = window.audioEngine.toggleContinuousTestTone();
+        const testButtons = [btnSoundTest, btnHubTest];
+        testButtons.forEach(btn => {
+          if (!btn) return;
+          if (isPlaying) {
+            btn.innerHTML = '⏹ TEST-BEAT STOPPEN';
+            btn.classList.add('running');
+          } else {
+            btn.innerHTML = '▶ SOUND-TEST (BEAT)';
+            btn.classList.remove('running');
           }
         });
+        updateCtxStatusBadge();
       }
+
+      if (btnHeaderTest) btnHeaderTest.addEventListener('click', toggleSoundTestBeat);
+      if (btnHubTest) btnHubTest.addEventListener('click', toggleSoundTestBeat);
 
       // Mobile Deck Switcher Tabs
       const tabBtns = document.querySelectorAll('.deck-tab-btn');

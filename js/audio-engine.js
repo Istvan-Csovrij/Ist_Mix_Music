@@ -96,12 +96,15 @@ class AudioEngine {
     // Recording Bus
     this.recordDestination = this.ctx.createMediaStreamDestination();
 
-    // Master Limiter chain: masterGain -> masterLimiter -> speakers + recording
+    // Master Direct Path: Pure, uncompressed, crystal-clear 100% stereo studio output directly to speakers / headphones!
+    // No compressor squashing, no ducking, full punchy dynamic range!
+    this.masterGain.connect(this.ctx.destination);
+
+    // Recording Bus Limiter (limiter applies only to recorded mix files so recordings don't clip):
     this.masterGain.connect(this.masterLimiter);
-    this.masterLimiter.connect(this.ctx.destination);
     this.masterLimiter.connect(this.recordDestination);
 
-    // Master Stereo Analysers for dual L/R VU-Meter (connected after limiter)
+    // Master Stereo Analysers for dual L/R VU-Meter (connected directly to masterGain)
     this.masterSplitter = this.ctx.createChannelSplitter(2);
     this.masterAnalyserL = this.ctx.createAnalyser();
     this.masterAnalyserR = this.ctx.createAnalyser();
@@ -110,9 +113,20 @@ class AudioEngine {
     this.masterAnalyserL.smoothingTimeConstant = 0.7;
     this.masterAnalyserR.smoothingTimeConstant = 0.7;
 
-    this.masterLimiter.connect(this.masterSplitter);
+    this.masterGain.connect(this.masterSplitter);
     this.masterSplitter.connect(this.masterAnalyserL, 0);
     this.masterSplitter.connect(this.masterAnalyserR, 1);
+
+    // Continuous AudioContext Watchdog & Auto-Resumer
+    if (this._watchdogTimer) clearInterval(this._watchdogTimer);
+    this._watchdogTimer = setInterval(() => {
+      if (this.ctx && (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted')) {
+        const isPlaying = (window.decks && Object.values(window.decks).some(d => d.isPlaying)) || this.testIsActive;
+        if (isPlaying) {
+          this.ctx.resume().catch(() => {});
+        }
+      }
+    }, 300);
 
     // 4 Deck Channels (A, B, C, D) with Beat-Synced Echo/Delay Circuit
     ['deck-a', 'deck-b', 'deck-c', 'deck-d'].forEach((id) => {
@@ -220,28 +234,50 @@ class AudioEngine {
     this.synthGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
   }
 
-  async rebindAudioDevice(deviceId = '') {
+  async rebindAudioDevice(deviceId = '', deviceLabel = '') {
     this.currentSinkId = deviceId;
-    if (!this.ctx) return;
+    this.currentSinkLabel = deviceLabel || (deviceId ? 'Ausgewähltes Gerät' : 'Standard (Windows)');
+    if (!this.ctx) this.init();
     try {
       if (typeof this.ctx.setSinkId === 'function') {
         await this.ctx.setSinkId(deviceId);
-        console.log('Audio Sink erfolgreich geändert zu:', deviceId || 'Standard');
+        console.log('Audio Sink erfolgreich geändert zu:', this.currentSinkLabel);
       }
-      if (this.currentSinkId && this.testAudioEl && typeof this.testAudioEl.setSinkId === 'function') {
-        try { await this.testAudioEl.setSinkId(this.currentSinkId); } catch(e){}
-      }
-      // Never suspend! Only resume if context is currently suspended
       if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
         try { await this.ctx.resume(); } catch (e) {}
       }
+      // Instant confirmation chime so user immediately hears that sound is working through this output
+      this.playDeviceConfirmationChime();
+      return true;
     } catch (e) {
       console.warn('rebindAudioDevice notice:', e);
+      return false;
     }
   }
 
-  async setAudioOutputDevice(deviceId = '') {
-    return this.rebindAudioDevice(deviceId);
+  playDeviceConfirmationChime() {
+    if (!this.ctx) return;
+    this.unlockAudio();
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    // Ascending major chord chime (C5 523Hz -> E5 659Hz -> G5 784Hz)
+    [523.25, 659.25, 783.99].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+      gain.gain.setValueAtTime(0.001, now + idx * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.4, now + idx * 0.08 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 0.32);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now + idx * 0.08);
+      osc.stop(now + idx * 0.08 + 0.35);
+    });
+  }
+
+  async setAudioOutputDevice(deviceId = '', deviceLabel = '') {
+    return this.rebindAudioDevice(deviceId, deviceLabel);
   }
 
   async toggleContinuousTestTone() {
@@ -251,13 +287,9 @@ class AudioEngine {
     // Toggle OFF if already active
     if (this.testIsActive) {
       this.testIsActive = false;
-      if (this.testOsc) {
-        try { this.testOsc.stop(); this.testOsc.disconnect(); } catch (e) {}
-        this.testOsc = null;
-      }
-      if (this.testGain) {
-        try { this.testGain.disconnect(); } catch (e) {}
-        this.testGain = null;
+      if (this._testToneInterval) {
+        clearInterval(this._testToneInterval);
+        this._testToneInterval = null;
       }
       if (this.testAudioEl) {
         try {
@@ -270,36 +302,91 @@ class AudioEngine {
     }
 
     this.testIsActive = true;
-
-    // Direct High-Fidelity Audio Playback (Clean EDM Club Beat, no screechy sine tone!)
-    try {
-      if (!this.testAudioEl) {
-        this.testAudioEl = new Audio('demo_tracks/Fisherman_Club_Mix_Sample.mp3');
-        this.testAudioEl.loop = true;
-        this.testAudioEl.volume = 0.85;
-        if (this.currentSinkId && typeof this.testAudioEl.setSinkId === 'function') {
-          try { await this.testAudioEl.setSinkId(this.currentSinkId); } catch(e){}
-        }
-      }
-      await this.testAudioEl.play();
-    } catch (err) {
-      console.warn('Audio test playback notice:', err);
-      // Fallback to Web Audio if audio element was blocked
-      try {
-        if (ctx) {
-          if (ctx.state === 'suspended' || ctx.state === 'interrupted') await ctx.resume();
-          this.testOsc = ctx.createOscillator();
-          this.testGain = ctx.createGain();
-          this.testOsc.type = 'triangle';
-          this.testOsc.frequency.setValueAtTime(440, ctx.currentTime);
-          this.testGain.gain.setValueAtTime(0.3, ctx.currentTime);
-          this.testOsc.connect(this.testGain);
-          this.testGain.connect(ctx.destination);
-          this.testOsc.start();
-        }
-      } catch (e2) {}
+    if (ctx && ctx.state !== 'running') {
+      try { await ctx.resume(); } catch(e){}
     }
 
+    // High-Fidelity Synthesized Club Groove (zero CORS, zero file dependencies, 100% reliable)
+    let step = 0;
+    const stepDurationMs = 125; // 120 BPM 16th-notes
+    const playSynthesizedStep = () => {
+      if (!this.testIsActive || !this.ctx) return;
+      const t = this.ctx.currentTime;
+      const beat16 = step % 16;
+
+      // 1. Four-on-the-Floor Club Kick (steps 0, 4, 8, 12)
+      if (beat16 % 4 === 0) {
+        const kickOsc = this.ctx.createOscillator();
+        const kickGain = this.ctx.createGain();
+        kickOsc.frequency.setValueAtTime(150, t);
+        kickOsc.frequency.exponentialRampToValueAtTime(35, t + 0.28);
+        kickGain.gain.setValueAtTime(1.1, t);
+        kickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        kickOsc.connect(kickGain);
+        kickGain.connect(this.masterGain);
+        kickOsc.start(t);
+        kickOsc.stop(t + 0.32);
+      }
+
+      // 2. Off-Beat Crispy Hi-Hat (steps 2, 6, 10, 14)
+      if (beat16 % 4 === 2 && this.noiseBuffer) {
+        const hh = this.ctx.createBufferSource();
+        hh.buffer = this.noiseBuffer;
+        const hhFilter = this.ctx.createBiquadFilter();
+        hhFilter.type = 'highpass';
+        hhFilter.frequency.setValueAtTime(8000, t);
+        const hhGain = this.ctx.createGain();
+        hhGain.gain.setValueAtTime(0.35, t);
+        hhGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        hh.connect(hhFilter);
+        hhFilter.connect(hhGain);
+        hhGain.connect(this.masterGain);
+        hh.start(t);
+        hh.stop(t + 0.09);
+      }
+
+      // 3. Deep 808 Sub-Bass Note (steps 0, 3, 6, 8, 11, 14)
+      if ([0, 3, 6, 8, 11, 14].includes(beat16)) {
+        const bassOsc = this.ctx.createOscillator();
+        const bassGain = this.ctx.createGain();
+        const notes = [55, 55, 65.41, 55, 49, 55]; // A1 / C2 / G1 / A1
+        const n = notes[beat16 % notes.length];
+        bassOsc.type = 'triangle';
+        bassOsc.frequency.setValueAtTime(n, t);
+        bassGain.gain.setValueAtTime(0.65, t);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+        bassOsc.connect(bassGain);
+        bassGain.connect(this.masterGain);
+        bassOsc.start(t);
+        bassOsc.stop(t + 0.24);
+      }
+
+      // 4. Melodic House Chime (every 8 steps)
+      if (beat16 === 4 || beat16 === 12) {
+        const chord = beat16 === 4 ? [440, 554.37, 659.25] : [392, 493.88, 587.33];
+        chord.forEach(freq => {
+          const chOsc = this.ctx.createOscillator();
+          const chGain = this.ctx.createGain();
+          chOsc.type = 'sawtooth';
+          chOsc.frequency.setValueAtTime(freq, t);
+          chGain.gain.setValueAtTime(0.18, t);
+          chGain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+          const chFilt = this.ctx.createBiquadFilter();
+          chFilt.type = 'lowpass';
+          chFilt.frequency.setValueAtTime(2200, t);
+          chOsc.connect(chFilt);
+          chFilt.connect(chGain);
+          chGain.connect(this.masterGain);
+          chOsc.start(t);
+          chOsc.stop(t + 0.38);
+        });
+      }
+
+      step++;
+    };
+
+    playSynthesizedStep();
+    this._testToneInterval = setInterval(playSynthesizedStep, stepDurationMs);
     return true; // Playing continuously
   }
 

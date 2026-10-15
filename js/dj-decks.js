@@ -576,7 +576,7 @@ class DJDeck {
     }
   }
 
-  play() {
+  async play() {
     if (!this.audioBuffer) return;
 
     // Strict duplicate protection: if already playing with an active node, do not create another!
@@ -592,6 +592,9 @@ class DJDeck {
 
     window.audioEngine.unlockAudio();
     const ctx = window.audioEngine.ctx;
+    if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+      try { await ctx.resume(); } catch (e) {}
+    }
 
     // Force-stop and disconnect any prior sourceNode before starting new playback
     this._cleanStopCurrentSource();
@@ -694,6 +697,9 @@ class DJDeck {
 
       window.audioEngine.unlockAudio();
       const ctx = window.audioEngine.ctx;
+      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+        try { ctx.resume(); } catch (e) {}
+      }
 
       this.sourceNode = ctx.createBufferSource();
       this.sourceNode.buffer = this.audioBuffer;
