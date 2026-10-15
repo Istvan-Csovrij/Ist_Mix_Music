@@ -248,6 +248,14 @@ class VocalStudio {
     this.mediaRecorder.stop();
     this.isRecording = false;
 
+    // Release microphone hardware immediately so Bluetooth / Windows restores HD Stereo (A2DP)!
+    if (this.mediaStream) {
+      try {
+        this.mediaStream.getTracks().forEach(track => track.stop());
+      } catch (e) {}
+      this.mediaStream = null;
+    }
+
     if (this.btnRecord) {
       this.btnRecord.classList.remove('recording');
       this.btnRecord.textContent = '🎤';

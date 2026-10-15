@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Ist_Mix_Music 🎛️ 4-Deck Escowator DJ Studio</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/style.css?v=3.7">
+  <link rel="stylesheet" href="css/style.css?v=3.8">
 </head>
 <body>
 
@@ -1272,15 +1272,15 @@
   </footer>
 
   <!-- Scripts with Cache-Busting Versioning -->
-  <script src="js/audio-engine.js?v=3.7"></script>
-  <script src="js/dj-decks.js?v=3.7"></script>
-  <script src="js/mic-recorder.js?v=3.7"></script>
-  <script src="js/beat-pads.js?v=3.7"></script>
-  <script src="js/master-recorder.js?v=3.7"></script>
-  <script src="js/track-library.js?v=3.7"></script>
-  <script src="js/sample-cutter.js?v=3.7"></script>
-  <script src="js/synth-instrument.js?v=3.7"></script>
-  <script src="js/traktor-monitor.js?v=3.7"></script>
+  <script src="js/audio-engine.js?v=3.8"></script>
+  <script src="js/dj-decks.js?v=3.8"></script>
+  <script src="js/mic-recorder.js?v=3.8"></script>
+  <script src="js/beat-pads.js?v=3.8"></script>
+  <script src="js/master-recorder.js?v=3.8"></script>
+  <script src="js/track-library.js?v=3.8"></script>
+  <script src="js/sample-cutter.js?v=3.8"></script>
+  <script src="js/synth-instrument.js?v=3.8"></script>
+  <script src="js/traktor-monitor.js?v=3.8"></script>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
@@ -1357,19 +1357,39 @@
 
       // Audio Output Selector & Device Enumeration
       const audioOutputSelect = document.getElementById('audio-output-select');
-      async function populateAudioOutputs() {
+      async function requestDeviceLabelsPermission() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Stop immediately so microphone hardware is released right away!
+          stream.getTracks().forEach(t => t.stop());
+        } catch (e) {}
+      }
+
+      async function populateAudioOutputs(requestPerm = false) {
         if (!audioOutputSelect || !navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
         try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const outputs = devices.filter(d => d.kind === 'audiooutput');
+          let devices = await navigator.mediaDevices.enumerateDevices();
+          let outputs = devices.filter(d => d.kind === 'audiooutput');
           if (outputs.length === 0) return;
+
+          // If labels are masked (empty) in Chrome and user clicked dropdown, unmask device names
+          if (requestPerm && outputs.some(d => !d.label)) {
+            await requestDeviceLabelsPermission();
+            devices = await navigator.mediaDevices.enumerateDevices();
+            outputs = devices.filter(d => d.kind === 'audiooutput');
+          }
 
           const currentVal = audioOutputSelect.value;
           audioOutputSelect.innerHTML = '<option value="">Standard (Windows)</option>';
           outputs.forEach((dev, idx) => {
             const opt = document.createElement('option');
             opt.value = dev.deviceId;
-            opt.textContent = dev.label || `Ausgang ${idx + 1} (${dev.deviceId.slice(0, 8)}...)`;
+            let label = dev.label;
+            if (!label) {
+              label = `Audiogerät ${idx + 1} (${dev.deviceId.slice(0, 8)}...)`;
+            }
+            opt.textContent = label;
             if (dev.deviceId === currentVal) opt.selected = true;
             audioOutputSelect.appendChild(opt);
           });
@@ -1379,8 +1399,8 @@
       }
 
       if (audioOutputSelect) {
-        populateAudioOutputs();
-        audioOutputSelect.addEventListener('focus', populateAudioOutputs);
+        populateAudioOutputs(false);
+        audioOutputSelect.addEventListener('click', () => populateAudioOutputs(true), { once: true });
         audioOutputSelect.addEventListener('change', async (e) => {
           if (window.audioEngine) {
             await window.audioEngine.setAudioOutputDevice(e.target.value);
@@ -1390,7 +1410,7 @@
 
       if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
         navigator.mediaDevices.addEventListener('devicechange', () => {
-          populateAudioOutputs();
+          populateAudioOutputs(false);
         });
       }
 

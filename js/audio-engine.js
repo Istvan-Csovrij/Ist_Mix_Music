@@ -58,7 +58,13 @@ class AudioEngine {
 
     if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
       navigator.mediaDevices.addEventListener('devicechange', () => {
-        this.rebindAudioDevice();
+        // Debounce devicechange and never suspend running audio context!
+        clearTimeout(this._deviceChangeTimeout);
+        this._deviceChangeTimeout = setTimeout(() => {
+          if (this.currentSinkId && this.ctx && typeof this.ctx.setSinkId === 'function') {
+            this.ctx.setSinkId(this.currentSinkId).catch(() => {});
+          }
+        }, 300);
       });
     }
   }
@@ -71,21 +77,21 @@ class AudioEngine {
 
     this.ctx.onstatechange = () => {
       if (this.ctx && (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted')) {
-        this.ctx.resume();
+        this.ctx.resume().catch(() => {});
       }
     };
 
-    // Master Limiter to prevent clipping and Windows WASAPI auto-ducking
+    // Master Studio Limiter: Transparent soft-knee peak protection (no squashing, no distortion, crystal-clear sound)
     this.masterLimiter = this.ctx.createDynamicsCompressor();
-    this.masterLimiter.threshold.setValueAtTime(-1.5, this.ctx.currentTime);
-    this.masterLimiter.knee.setValueAtTime(6.0, this.ctx.currentTime);
-    this.masterLimiter.ratio.setValueAtTime(16.0, this.ctx.currentTime);
-    this.masterLimiter.attack.setValueAtTime(0.003, this.ctx.currentTime);
-    this.masterLimiter.release.setValueAtTime(0.08, this.ctx.currentTime);
+    this.masterLimiter.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+    this.masterLimiter.knee.setValueAtTime(12.0, this.ctx.currentTime);
+    this.masterLimiter.ratio.setValueAtTime(3.0, this.ctx.currentTime);
+    this.masterLimiter.attack.setValueAtTime(0.008, this.ctx.currentTime);
+    this.masterLimiter.release.setValueAtTime(0.25, this.ctx.currentTime);
 
-    // Master Gain (calibrated for multi-deck summing headroom)
+    // Master Gain (full 1.0 headroom for clean, punchy sound)
     this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
+    this.masterGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
 
     // Recording Bus
     this.recordDestination = this.ctx.createMediaStreamDestination();
@@ -113,9 +119,9 @@ class AudioEngine {
       const inGain = this.ctx.createGain();
       inGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
 
-      // Direct Dry Path to master with calibrated summing headroom
+      // Direct Dry Path to master with full 1.0 volume headroom
       const dryGain = this.ctx.createGain();
-      dryGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
+      dryGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
       inGain.connect(dryGain);
       dryGain.connect(this.masterGain);
 
@@ -198,19 +204,19 @@ class AudioEngine {
 
   setMasterVolume(val) {
     if (!this.masterGain || !this.ctx) return;
-    const v = Math.max(0, Math.min(1.5, parseFloat(val)));
-    this.masterGain.gain.setTargetAtTime(v * 0.85, this.ctx.currentTime, 0.02);
+    const v = Math.max(0, Math.min(2.0, parseFloat(val)));
+    this.masterGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
   }
 
   setSamplerVolume(val) {
     if (!this.samplerGain || !this.ctx) return;
-    const v = Math.max(0, Math.min(1.5, parseFloat(val)));
+    const v = Math.max(0, Math.min(2.0, parseFloat(val)));
     this.samplerGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
   }
 
   setSynthVolume(val) {
     if (!this.synthGain || !this.ctx) return;
-    const v = Math.max(0, Math.min(1.5, parseFloat(val)));
+    const v = Math.max(0, Math.min(2.0, parseFloat(val)));
     this.synthGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.02);
   }
 
@@ -222,10 +228,13 @@ class AudioEngine {
         await this.ctx.setSinkId(deviceId);
         console.log('Audio Sink erfolgreich geändert zu:', deviceId || 'Standard');
       }
-      if (this.ctx.state === 'running') {
-        try { await this.ctx.suspend(); } catch (e) {}
+      if (this.currentSinkId && this.testAudioEl && typeof this.testAudioEl.setSinkId === 'function') {
+        try { await this.testAudioEl.setSinkId(this.currentSinkId); } catch(e){}
       }
-      await this.ctx.resume();
+      // Never suspend! Only resume if context is currently suspended
+      if (this.ctx.state === 'suspended' || this.ctx.state === 'interrupted') {
+        try { await this.ctx.resume(); } catch (e) {}
+      }
     } catch (e) {
       console.warn('rebindAudioDevice notice:', e);
     }

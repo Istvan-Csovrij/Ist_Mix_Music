@@ -468,6 +468,10 @@ class DJDeck {
     this.pauseOffset = 0;
     this.stop();
 
+    // Reset loop so newly loaded tracks always play continuously without getting stuck
+    this.isLooping = false;
+    document.querySelectorAll(`.${this.deckId}-loop-btn`).forEach(b => b.classList.remove('active'));
+
     if (trackName && this.trackNameEl) {
       this.trackNameEl.textContent = trackName;
     }
@@ -522,6 +526,8 @@ class DJDeck {
     this.sourceNode = null;
     this.pauseOffset = 0;
     this.trackBpm = null;
+    this.isLooping = false;
+    document.querySelectorAll(`.${this.deckId}-loop-btn`).forEach(b => b.classList.remove('active'));
 
     if (this.trackNameEl) {
       this.trackNameEl.textContent = 'Kein Track geladen';
@@ -641,6 +647,8 @@ class DJDeck {
 
   cue() {
     this.pauseOffset = 0;
+    this.isLooping = false;
+    document.querySelectorAll(`.${this.deckId}-loop-btn`).forEach(b => b.classList.remove('active'));
     this.stop();
     this._updateWaveformCursor();
     this.updateTimeDisplay();
