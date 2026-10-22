@@ -16,24 +16,32 @@ class BeatStudio {
       { id: 'pad-fx',    name: 'DJ FX',    key: '8', fn: () => window.audioEngine.playFx() }
     ];
 
-    // Sequencer Grid: Dynamic array of tracks
+    // Sequencer Grid: Dynamic array of tracks with SEPARATE BASS & SEPARATE BASSTROMMEL
     this.seqTracks = [
-      { id: 'track-kick',  name: 'KICK',  type: 'drum', color: '#00f0ff', isMuted: false, isCustom: false, sound: () => window.audioEngine.playKick(), steps: new Array(16).fill(false) },
-      { id: 'track-snare', name: 'SNARE', type: 'drum', color: '#f43f5e', isMuted: false, isCustom: false, sound: () => window.audioEngine.playSnare(), steps: new Array(16).fill(false) },
-      { id: 'track-hihat', name: 'HIHAT', type: 'drum', color: '#eab308', isMuted: false, isCustom: false, sound: () => window.audioEngine.playHiHat(0, false), steps: new Array(16).fill(false) },
-      { id: 'track-clap',  name: 'CLAP',  type: 'drum', color: '#10b981', isMuted: false, isCustom: false, sound: () => window.audioEngine.playClap(), steps: new Array(16).fill(false) }
+      { id: 'track-kick',   name: '💥 24" BASSTROMMEL', type: 'drum', instrumentType: 'stadium_kick', color: '#ef4444', isMuted: false, isCustom: false, sound: () => (window.synthStudio ? window.synthStudio.triggerSinglePresetNote('stadium_marching_drums', 36, 0.38) : (window.audioEngine && window.audioEngine.playKick())), steps: new Array(16).fill(false) },
+      { id: 'track-snare',  name: '🥁 MARSCH-SNARE',    type: 'drum', instrumentType: 'marching_snare', color: '#38bdf8', isMuted: false, isCustom: false, sound: () => (window.synthStudio ? window.synthStudio.triggerSinglePresetNote('stadium_marching_drums', 60, 0.30) : (window.audioEngine && window.audioEngine.playSnare())), steps: new Array(16).fill(false) },
+      { id: 'track-hihat',  name: '✨ HI-HAT',           type: 'drum', instrumentType: 'hihat', color: '#eab308', isMuted: false, isCustom: false, sound: () => (window.audioEngine && window.audioEngine.playHiHat(0, false)), steps: new Array(16).fill(false) },
+      { id: 'track-bass',   name: '🎸 BASS (SUB C1)',    type: 'instrument', instrumentType: 'industrial_pick_bass', pitch: 'c', color: '#8b5cf6', isMuted: false, isCustom: false, sound: () => (window.synthStudio ? window.synthStudio.triggerSinglePresetNote('industrial_pick_bass', 24, 0.32) : (window.audioEngine && window.audioEngine.playBass(32.7))), steps: new Array(16).fill(false) },
+      { id: 'track-guitar', name: '🔥 METAL GUITAR',    type: 'instrument', instrumentType: 'rammstein_guitar', pitch: 'power_c', color: '#ff4500', isMuted: false, isCustom: false, sound: () => (window.synthStudio ? window.synthStudio.triggerPowerchord('rammstein_guitar', [36, 43, 48], 0.28) : (window.audioEngine && window.audioEngine.playLead())), steps: new Array(16).fill(false) },
+      { id: 'track-clap',   name: '👏 CLAP',             type: 'drum', instrumentType: 'clap', color: '#10b981', isMuted: false, isCustom: false, sound: () => (window.audioEngine && window.audioEngine.playClap()), steps: new Array(16).fill(false) }
     ];
 
-    // Default beat pattern (Classic Groove)
-    this.seqTracks[0].steps[0] = true;  // Kick on 1
-    this.seqTracks[0].steps[8] = true;  // Kick on 3
-    this.seqTracks[0].steps[10] = true; // Kick syncopation
-    this.seqTracks[1].steps[4] = true;  // Snare on 2
-    this.seqTracks[1].steps[12] = true; // Snare on 4
+    // Default beat pattern (Heavy Rock & Metal Groove)
+    this.seqTracks[0].steps[0] = true;  // Basstrommel on 1
+    this.seqTracks[0].steps[8] = true;  // Basstrommel on 3
+    this.seqTracks[0].steps[10] = true; // Basstrommel syncopation
+    this.seqTracks[1].steps[4] = true;  // Marsch-Snare on 2
+    this.seqTracks[1].steps[12] = true; // Marsch-Snare on 4
     for (let i = 0; i < 16; i += 2) {
       this.seqTracks[2].steps[i] = true; // 8th note Hi-Hats
     }
-    this.seqTracks[3].steps[12] = true; // Clap on 4
+    this.seqTracks[3].steps[0] = true;  // Bass on 1
+    this.seqTracks[3].steps[2] = true;  // Bass syncopation
+    this.seqTracks[3].steps[8] = true;  // Bass on 3
+    this.seqTracks[3].steps[10] = true; // Bass driving 16th
+    this.seqTracks[4].steps[0] = true;  // Metal Guitar Chug on 1
+    this.seqTracks[4].steps[8] = true;  // Metal Guitar Chug on 3
+    this.seqTracks[5].steps[12] = true; // Clap on 4
 
     this.isPlayingSeq = false;
     this.currentStep = 0;
@@ -169,6 +177,20 @@ class BeatStudio {
     if (this.btnRec) {
       this.btnRec.addEventListener('click', () => {
         this.toggleRecording();
+      });
+    }
+
+    // Live Step-Recording Toggle
+    this.btnStepRec = document.getElementById('seq-btn-step-rec');
+    this.isStepRecording = false;
+    if (this.btnStepRec) {
+      this.btnStepRec.addEventListener('click', () => {
+        this.isStepRecording = !this.isStepRecording;
+        this.btnStepRec.classList.toggle('active', this.isStepRecording);
+        const lbl = document.getElementById('seq-step-rec-label');
+        if (lbl) {
+          lbl.textContent = this.isStepRecording ? 'STEP-RECORD: AN (LIVE)' : 'STEP-RECORD: AUS';
+        }
       });
     }
 
@@ -772,27 +794,57 @@ class BeatStudio {
 
   resetDefaultTracks() {
     this.seqTracks = [
-      { id: 'track-kick',  name: 'KICK',  type: 'drum', color: '#00f0ff', isMuted: false, isCustom: false, sound: () => window.audioEngine.playKick(), steps: new Array(16).fill(false) },
-      { id: 'track-snare', name: 'SNARE', type: 'drum', color: '#f43f5e', isMuted: false, isCustom: false, sound: () => window.audioEngine.playSnare(), steps: new Array(16).fill(false) },
-      { id: 'track-hihat', name: 'HIHAT', type: 'drum', color: '#eab308', isMuted: false, isCustom: false, sound: () => window.audioEngine.playHiHat(0, false), steps: new Array(16).fill(false) },
-      { id: 'track-clap',  name: 'CLAP',  type: 'drum', color: '#10b981', isMuted: false, isCustom: false, sound: () => window.audioEngine.playClap(), steps: new Array(16).fill(false) }
+      { id: 'track-kick',   name: '💥 24" BASSTROMMEL', type: 'drum', instrumentType: 'stadium_kick', color: '#ef4444', isMuted: false, isCustom: false, sound: () => (window.synthStudio ? window.synthStudio.triggerSinglePresetNote('stadium_marching_drums', 36, 0.38) : (window.audioEngine && window.audioEngine.playKick())), steps: new Array(16).fill(false) },
+      { id: 'track-snare',  name: '🥁 MARSCH-SNARE',    type: 'drum', instrumentType: 'marching_snare', color: '#38bdf8', isMuted: false, isCustom: false, sound: () => (window.synthStudio ? window.synthStudio.triggerSinglePresetNote('stadium_marching_drums', 60, 0.30) : (window.audioEngine && window.audioEngine.playSnare())), steps: new Array(16).fill(false) },
+      { id: 'track-hihat',  name: '✨ HI-HAT',           type: 'drum', instrumentType: 'hihat', color: '#eab308', isMuted: false, isCustom: false, sound: () => (window.audioEngine && window.audioEngine.playHiHat(0, false)), steps: new Array(16).fill(false) },
+      { id: 'track-bass',   name: '🎸 BASS (SUB C1)',    type: 'instrument', instrumentType: 'industrial_pick_bass', pitch: 'c', color: '#8b5cf6', isMuted: false, isCustom: false, sound: () => (window.synthStudio ? window.synthStudio.triggerSinglePresetNote('industrial_pick_bass', 24, 0.32) : (window.audioEngine && window.audioEngine.playBass(32.7))), steps: new Array(16).fill(false) },
+      { id: 'track-guitar', name: '🔥 METAL GUITAR',    type: 'instrument', instrumentType: 'rammstein_guitar', pitch: 'power_c', color: '#ff4500', isMuted: false, isCustom: false, sound: () => (window.synthStudio ? window.synthStudio.triggerPowerchord('rammstein_guitar', [36, 43, 48], 0.28) : (window.audioEngine && window.audioEngine.playLead())), steps: new Array(16).fill(false) },
+      { id: 'track-clap',   name: '👏 CLAP',             type: 'drum', instrumentType: 'clap', color: '#10b981', isMuted: false, isCustom: false, sound: () => (window.audioEngine && window.audioEngine.playClap()), steps: new Array(16).fill(false) }
     ];
 
-    // Default beat pattern (Classic Groove)
-    this.seqTracks[0].steps[0] = true;  // Kick on 1
-    this.seqTracks[0].steps[8] = true;  // Kick on 3
-    this.seqTracks[0].steps[10] = true; // Kick syncopation
-    this.seqTracks[1].steps[4] = true;  // Snare on 2
-    this.seqTracks[1].steps[12] = true; // Snare on 4
+    // Default beat pattern (Heavy Rock & Metal Groove)
+    this.seqTracks[0].steps[0] = true;  // Basstrommel on 1
+    this.seqTracks[0].steps[8] = true;  // Basstrommel on 3
+    this.seqTracks[0].steps[10] = true; // Basstrommel syncopation
+    this.seqTracks[1].steps[4] = true;  // Marsch-Snare on 2
+    this.seqTracks[1].steps[12] = true; // Marsch-Snare on 4
     for (let i = 0; i < 16; i += 2) {
       this.seqTracks[2].steps[i] = true; // 8th note Hi-Hats
     }
-    this.seqTracks[3].steps[12] = true; // Clap on 4
+    this.seqTracks[3].steps[0] = true;  // Bass on 1
+    this.seqTracks[3].steps[2] = true;  // Bass syncopation
+    this.seqTracks[3].steps[8] = true;  // Bass on 3
+    this.seqTracks[3].steps[10] = true; // Bass driving 16th
+    this.seqTracks[4].steps[0] = true;  // Metal Guitar Chug on 1
+    this.seqTracks[4].steps[8] = true;  // Metal Guitar Chug on 3
+    this.seqTracks[5].steps[12] = true; // Clap on 4
 
     this._renderSequencer();
   }
 
   // ==========================================
+  recordLiveNote(instKey, midi) {
+    if (!this.isStepRecording || !this.isPlayingSeq) return;
+
+    // Find track matching this instrument
+    let track = this.seqTracks.find(t => t.instrumentType === instKey || (t.id && t.id.includes(instKey)));
+    if (!track && this.seqTracks.length > 0) {
+      track = this.seqTracks[0];
+    }
+    if (track) {
+      const stepIdx = this.currentStep;
+      track.steps[stepIdx] = true;
+      const stepEl = document.querySelector(`.seq-step[data-step="${stepIdx}"]`);
+      if (stepEl) {
+        stepEl.classList.add('active');
+        if (track.color) {
+          stepEl.style.background = track.color;
+          stepEl.style.boxShadow = `0 0 8px ${track.color}`;
+        }
+      }
+    }
+  }
+
   // SEQUENCER RENDERING
   // ==========================================
   _renderSequencer() {

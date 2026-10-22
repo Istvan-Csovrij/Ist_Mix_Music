@@ -3921,3 +3921,381 @@ body.deck-d-hidden .decks-right {
   padding-bottom: 6px;
   border-bottom: 1px solid #1e293b;
 }
+
+/* ==========================================================================
+   MULTI-STAGE BAND JAM (ALL 4 INSTRUMENTS SIMULTANEOUSLY)
+   ========================================================================== */
+
+.synth-multistage-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.multistage-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: #090d16;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.multistage-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+}
+
+.multistage-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .multistage-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.multistage-console {
+  background: #0a0e1a;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.multistage-console.console-drums  { border-color: rgba(239, 68, 68, 0.35); }
+.multistage-console.console-bass   { border-color: rgba(16, 185, 129, 0.35); }
+.multistage-console.console-guitar { border-color: rgba(255, 69, 0, 0.35); }
+.multistage-console.console-synth  { border-color: rgba(56, 189, 248, 0.35); }
+
+.console-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.console-tag {
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.console-tag.tag-drums  { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); }
+.console-tag.tag-bass   { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); }
+.console-tag.tag-guitar { background: rgba(255, 69, 0, 0.15); color: #ff5722; border: 1px solid rgba(255, 69, 0, 0.4); }
+.console-tag.tag-synth  { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+
+.console-hint {
+  font-size: 9px;
+  color: #64748b;
+  font-family: var(--font-mono, monospace);
+}
+
+/* Multi-Stage Drum Console */
+.multistage-drums-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stage-drum-btn {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.08s ease;
+}
+
+.stage-drum-btn.kick { border-color: #ef4444; }
+.stage-drum-btn.snare { border-color: #38bdf8; }
+.stage-drum-btn.hihat { border-color: #eab308; }
+.stage-drum-btn.crash { border-color: #f97316; }
+
+.stage-drum-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.stage-drum-btn.hit,
+.stage-drum-btn:active {
+  transform: translateY(1px);
+  background: #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px #38bdf8 !important;
+}
+
+.stage-drum-btn.kick.hit,
+.stage-drum-btn.kick:active {
+  background: #ef4444 !important;
+  box-shadow: 0 0 20px #ef4444 !important;
+}
+
+.btn-drum-icon { font-size: 16px; }
+.btn-drum-name { font-size: 9px; font-weight: 800; color: #f1f5f9; text-align: center; }
+.btn-drum-key  { font-size: 8px; font-weight: 900; color: #38bdf8; font-family: var(--font-mono, monospace); }
+
+/* Multi-Stage Bass Console */
+.multistage-bass-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stage-bass-btn {
+  flex: 1;
+  min-width: 80px;
+  background: #0f172a;
+  border: 1px solid #10b981;
+  color: #10b981;
+  padding: 8px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.08s ease;
+  text-align: center;
+}
+
+.stage-bass-btn:hover {
+  background: rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.stage-bass-btn.active,
+.stage-bass-btn:active {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px #10b981 !important;
+  transform: scale(0.97);
+}
+
+/* Multi-Stage Guitar Console */
+.multistage-guitar-powerchords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stage-power-btn {
+  flex: 1;
+  min-width: 70px;
+  background: #0f172a;
+  border: 1px solid #ff5722;
+  color: #ff5722;
+  padding: 8px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.08s ease;
+  text-align: center;
+}
+
+.stage-power-btn:hover {
+  background: rgba(255, 87, 34, 0.2);
+  box-shadow: 0 0 10px rgba(255, 87, 34, 0.4);
+}
+
+.stage-power-btn.active,
+.stage-power-btn:active {
+  background: #ff5722 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 18px #ff5722 !important;
+  transform: scale(0.97);
+}
+
+.btn-stage-tool {
+  background: #1e293b;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.btn-stage-tool.active {
+  background: #ff5722;
+  border-color: #ff5722;
+  color: #ffffff;
+  box-shadow: 0 0 8px #ff5722;
+}
+
+/* Multi-Stage Synth Console */
+.multistage-synth-keys {
+  display: flex;
+  gap: 3px;
+  height: 58px;
+  background: #090d16;
+  padding: 4px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.stage-key-btn {
+  flex: 1;
+  min-width: 22px;
+  height: 100%;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 2px;
+  transition: all 0.08s ease;
+}
+
+.stage-key-btn.white {
+  background: #e2e8f0;
+  border: 1px solid #94a3b8;
+  color: #0f172a;
+}
+
+.stage-key-btn.black {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #38bdf8;
+  height: 70%;
+}
+
+.stage-key-btn.pressed,
+.stage-key-btn:active {
+  background: #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px #38bdf8 !important;
+}
+
+/* ==========================================================================
+   NOTE LATCH / HOLD (FIXIEREN) VISUAL STYLES
+   ========================================================================== */
+
+.btn-synth-action.latch-toggle.active {
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: #10b981 !important;
+  color: #10b981 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4) !important;
+  animation: latch-pulse 1.5s infinite alternate;
+}
+
+@keyframes latch-pulse {
+  0% { box-shadow: 0 0 6px rgba(16, 185, 129, 0.3); }
+  100% { box-shadow: 0 0 14px rgba(16, 185, 129, 0.7); }
+}
+
+.latched-note {
+  border: 2px solid #10b981 !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.8), inset 0 0 8px rgba(16, 185, 129, 0.4) !important;
+  position: relative;
+}
+
+.latched-note::after {
+  content: "🔒";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 8px;
+}
+
+/* ==========================================================================
+   GUITAR PALM-MUTE & STRUMMER BUTTONS
+   ========================================================================== */
+
+.btn-palm-mute {
+  background: #0f172a;
+  border: 1px solid #ff5722;
+  color: #ff5722;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btn-palm-mute.active {
+  background: #ff5722;
+  color: #ffffff;
+  box-shadow: 0 0 12px #ff5722;
+}
+
+.btn-strum {
+  background: #1e293b;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.btn-strum:hover,
+.btn-strum.active {
+  background: #ff5722;
+  border-color: #ff5722;
+  color: #ffffff;
+  box-shadow: 0 0 10px #ff5722;
+}
+
+/* ==========================================================================
+   ENLARGED SEQUENCER & STUDIO SIZING (SPACIOUS & TOUCH-READY)
+   ========================================================================== */
+
+.seq-row {
+  min-height: 44px;
+  gap: 6px;
+}
+
+.seq-step {
+  width: 36px;
+  height: 38px;
+  min-width: 34px;
+  border-radius: 6px;
+}
+
+.seq-track-info {
+  min-width: 145px;
+  padding: 4px 8px;
+}
+
+.seq-track-name {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.synth-key.white-key {
+  height: 190px;
+}
+
+.synth-key.black-key {
+  height: 65%;
+  width: 30px;
+}

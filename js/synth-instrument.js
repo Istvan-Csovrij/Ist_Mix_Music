@@ -45,9 +45,13 @@ class SynthStudio {
     this.isPointerDown = false;
 
     // Playing Surfaces State
-    this.surfaceMode = 'keyboard'; // 'keyboard', 'guitar', 'bass', 'drums'
+    this.surfaceMode = 'keyboard'; // 'keyboard', 'guitar', 'bass', 'drums', 'multistage'
     this.guitarTuning = 'drop_c'; // 'drop_c', 'standard_e', 'drop_d'
     this.bassTuning = 'drop_c'; // 'drop_c', 'standard_e'
+    this.guitarPalmMute = false; // Authentic Metal Palm-Mute toggle
+    this.isLatchActive = false; // Note Hold / Fixieren state
+    this.latchedNotes = new Set(); // Currently locked notes
+    this.lastPlayedMidi = 36;
 
     // Dedicated Instrument Recorder State
     this.isRecording = false;
@@ -386,7 +390,9 @@ class SynthStudio {
       }
     }
 
-    if (mode === 'guitar') {
+    if (mode === 'multistage') {
+      this._renderMultiStage();
+    } else if (mode === 'guitar') {
       this._renderGuitarFretboard();
     } else if (mode === 'bass') {
       this._renderBassFretboard();
@@ -417,11 +423,20 @@ class SynthStudio {
     `;
     wrap.appendChild(ctrlBar);
 
-    // 2. Powerchord Quick-Riff Bar (Rammstein Drop-C Wall of Sound)
+    // 2. Powerchord Quick-Riff Bar & Palm-Mute / Strumming Tools
     const pcBar = document.createElement('div');
     pcBar.className = 'guitar-powerchords-bar';
     pcBar.innerHTML = `
-      <span class="powerchords-label">🔥 DROP-C POWERCHORDS:</span>
+      <div style="display:flex; align-items:center; gap:8px; width:100%; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap;">
+        <span class="powerchords-label">🔥 DROP-C POWERCHORDS & RECHTE HAND (ANSCHLAG):</span>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button id="btn-guitar-palm-mute" class="btn-palm-mute ${this.guitarPalmMute ? 'active' : ''}" title="Umschalten zwischen offenem Klingenlassen und metallischem Palm-Mute Abdämpfen">
+            ${this.guitarPalmMute ? '🔇 PALM-MUTE: AN (CHUG)' : '🔊 OPEN SUSTAIN (KLINGEN)'}
+          </button>
+          <button id="btn-guitar-strum-down" class="btn-strum" title="Abwärts-Schlag über Saiten">⬇ DOWNSTROKE</button>
+          <button id="btn-guitar-strum-up" class="btn-strum" title="Aufwärts-Schlag über Saiten">⬆ UPSTROKE</button>
+        </div>
+      </div>
       <div class="powerchords-btns">
         <button class="btn-guitar-powerchord" data-frets="0,0,0" data-root="C" title="Bund 0-0-0: Drop C Grundakkord">🔥 C (0-0-0)</button>
         <button class="btn-guitar-powerchord" data-frets="2,2,2" data-root="D" title="Bund 2-2-2: D Powerchord">⚡ D (2-2-2)</button>
@@ -583,6 +598,32 @@ class SynthStudio {
     fretboard.appendChild(stringsContainer);
     wrap.appendChild(fretboard);
     this.keyboardContainer.appendChild(wrap);
+
+    // Palm-Mute Button Event
+    const btnPalmMute = wrap.querySelector('#btn-guitar-palm-mute');
+    if (btnPalmMute) {
+      btnPalmMute.addEventListener('click', () => {
+        this.setPalmMute(!this.guitarPalmMute);
+      });
+    }
+
+    // Strummer Down / Up Events
+    const btnStrumDown = wrap.querySelector('#btn-guitar-strum-down');
+    if (btnStrumDown) {
+      btnStrumDown.addEventListener('click', () => {
+        this.strumGuitar('down', [36, 43, 48]);
+        btnStrumDown.classList.add('active');
+        setTimeout(() => btnStrumDown.classList.remove('active'), 200);
+      });
+    }
+    const btnStrumUp = wrap.querySelector('#btn-guitar-strum-up');
+    if (btnStrumUp) {
+      btnStrumUp.addEventListener('click', () => {
+        this.strumGuitar('up', [36, 43, 48]);
+        btnStrumUp.classList.add('active');
+        setTimeout(() => btnStrumUp.classList.remove('active'), 200);
+      });
+    }
 
     // Event listeners for tuning buttons
     wrap.querySelectorAll('.btn-tuning-select').forEach((b) => {
@@ -954,12 +995,36 @@ class SynthStudio {
       });
     }
 
-    // Surface Tabs (Keyboard, Guitar, Bass, Drums)
+    // Surface Tabs (Keyboard, Guitar, Bass, Drums, Multi-Stage)
     document.querySelectorAll('.synth-surface-tab').forEach((tab) => {
       tab.addEventListener('click', () => {
         this.setSurfaceMode(tab.dataset.surface);
       });
     });
+
+    // Note Hold / Fixieren Button
+    const btnLatch = document.getElementById('btn-synth-latch');
+    if (btnLatch) {
+      btnLatch.addEventListener('click', () => {
+        this.toggleLatchMode();
+      });
+    }
+
+    // Panic / Release All Notes Button
+    const btnPanic = document.getElementById('btn-synth-panic');
+    if (btnPanic) {
+      btnPanic.addEventListener('click', () => {
+        this.releaseAllLatchedNotes();
+      });
+    }
+
+    // To-Sequencer Quick Action
+    const btnToSeq = document.getElementById('btn-send-to-pattern');
+    if (btnToSeq) {
+      btnToSeq.addEventListener('click', () => {
+        this.addCurrentToSequencer();
+      });
+    }
 
     // Instrument Quick Preset Buttons
     document.querySelectorAll('.btn-synth-preset').forEach((btn) => {
@@ -1294,6 +1359,24 @@ class SynthStudio {
   }
 
   noteOn(midi) {
+    this.lastPlayedMidi = midi;
+
+    // Send to live step-recording if active
+    if (window.beatStudio && window.beatStudio.isStepRecording) {
+      window.beatStudio.recordLiveNote(this.currentInstrument, midi);
+    }
+
+    // Note Hold / Latch Mode logic
+    if (this.isLatchActive || this.latchedNotes.has(midi)) {
+      if (this.latchedNotes.has(midi)) {
+        this.unlatchNote(midi);
+        return;
+      } else {
+        this.latchNote(midi);
+        return;
+      }
+    }
+
     this.heldNotes.add(midi);
 
     // If arpeggiator is running, let arpeggiator handle scheduling
@@ -1306,6 +1389,11 @@ class SynthStudio {
   }
 
   noteOff(midi) {
+    // If note is latched / held, do NOT stop voice on release!
+    if (this.latchedNotes.has(midi)) {
+      return;
+    }
+
     this.heldNotes.delete(midi);
 
     if (this.arpMode !== 'off') {
@@ -1770,9 +1858,17 @@ class SynthStudio {
         filter.Q.setValueAtTime(Math.max(3.5, this.filterResonance), now);
         filter.frequency.setValueAtTime(Math.min(7500, this.filterCutoff), now);
 
-        // Punchy palm-mute decay
-        envGain.gain.linearRampToValueAtTime(0.95, now + 0.002);
-        envGain.gain.exponentialRampToValueAtTime(0.40, now + 0.16);
+        // Palm-Mute vs Open Sustain Envelope & Filter adjustment
+        if (this.guitarPalmMute) {
+          filter.frequency.setValueAtTime(1800, now);
+          filter.Q.setValueAtTime(6.0, now);
+          envGain.gain.linearRampToValueAtTime(1.0, now + 0.001);
+          envGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09); // Tight metallischer Chug!
+        } else {
+          envGain.gain.linearRampToValueAtTime(0.95, now + 0.003);
+          envGain.gain.exponentialRampToValueAtTime(0.45, now + 0.25);
+          envGain.gain.exponentialRampToValueAtTime(0.15, now + 1.2); // Singendes Sustain
+        }
 
         [osc1, osc2, subOsc].forEach(o => { o.start(now); voice.oscillators.push(o); });
         break;
