@@ -44,6 +44,11 @@ class SynthStudio {
     this.heldNotes = new Set();
     this.isPointerDown = false;
 
+    // Playing Surfaces State
+    this.surfaceMode = 'keyboard'; // 'keyboard', 'guitar', 'bass', 'drums'
+    this.guitarTuning = 'drop_c'; // 'drop_c', 'standard_e', 'drop_d'
+    this.bassTuning = 'drop_c'; // 'drop_c', 'standard_e'
+
     // Dedicated Instrument Recorder State
     this.isRecording = false;
     this.mediaRecorder = null;
@@ -359,6 +364,574 @@ class SynthStudio {
     this.keyboardContainer.appendChild(pianoEl);
   }
 
+  setSurfaceMode(mode) {
+    this.surfaceMode = mode;
+
+    // Update active tab button
+    document.querySelectorAll('.synth-surface-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.surface === mode);
+    });
+
+    // Update hint text
+    const hint = document.getElementById('synth-surface-hint');
+    if (hint) {
+      if (mode === 'guitar') {
+        hint.innerHTML = '<span>🎸 <strong>E-Gitarren Griffbrett:</strong> Klicke Bünde/Saiten oder nutze oben die <strong>Drop-C Powerchords</strong> für fette Rammstein Riffs!</span>';
+      } else if (mode === 'bass') {
+        hint.innerHTML = '<span>⚡ <strong>Rock-Bass Griffbrett:</strong> 4 fette Bass-Saiten (C1 bis F2). Drücke Bünde oder nutze die <strong>Quick Sub-Groove Buttons</strong>!</span>';
+      } else if (mode === 'drums') {
+        hint.innerHTML = '<span>🥁 <strong>Stadium Drum Kit:</strong> Große Stadium Kick (24 Zoll), Marschtrommel, Toms & Becken live spielen! (Tasten: B, V, C, T, R, Y, F, H)</span>';
+      } else {
+        hint.innerHTML = '<span>🎹 <strong>Klavier-Tastatur:</strong> Klicke Tasten (Wischen für Glissando) oder nutze Computertastatur (A, W, S, E, D, F...).</span>';
+      }
+    }
+
+    if (mode === 'guitar') {
+      this._renderGuitarFretboard();
+    } else if (mode === 'bass') {
+      this._renderBassFretboard();
+    } else if (mode === 'drums') {
+      this._renderStadiumDrums();
+    } else {
+      this._renderKeyboard();
+    }
+  }
+
+  _renderGuitarFretboard() {
+    if (!this.keyboardContainer) return;
+    this.keyboardContainer.innerHTML = '';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'synth-guitar-fretboard-wrapper';
+
+    // 1. Guitar Controls Bar: Tuning Selector
+    const ctrlBar = document.createElement('div');
+    ctrlBar.className = 'guitar-fretboard-header';
+    ctrlBar.innerHTML = `
+      <div class="guitar-tuning-group">
+        <span class="guitar-badge">🎸 GITARREN-STIMMUNG:</span>
+        <button class="btn-tuning-select ${this.guitarTuning === 'drop_c' ? 'active' : ''}" data-tuning="drop_c">🔥 DROP-C (Rammstein)</button>
+        <button class="btn-tuning-select ${this.guitarTuning === 'standard_e' ? 'active' : ''}" data-tuning="standard_e">⚡ STANDARD-E</button>
+        <button class="btn-tuning-select ${this.guitarTuning === 'drop_d' ? 'active' : ''}" data-tuning="drop_d">⚡ DROP-D</button>
+      </div>
+    `;
+    wrap.appendChild(ctrlBar);
+
+    // 2. Powerchord Quick-Riff Bar (Rammstein Drop-C Wall of Sound)
+    const pcBar = document.createElement('div');
+    pcBar.className = 'guitar-powerchords-bar';
+    pcBar.innerHTML = `
+      <span class="powerchords-label">🔥 DROP-C POWERCHORDS:</span>
+      <div class="powerchords-btns">
+        <button class="btn-guitar-powerchord" data-frets="0,0,0" data-root="C" title="Bund 0-0-0: Drop C Grundakkord">🔥 C (0-0-0)</button>
+        <button class="btn-guitar-powerchord" data-frets="2,2,2" data-root="D" title="Bund 2-2-2: D Powerchord">⚡ D (2-2-2)</button>
+        <button class="btn-guitar-powerchord" data-frets="3,3,3" data-root="Eb" title="Bund 3-3-3: Eb / D# Powerchord">⚡ Eb (3-3-3)</button>
+        <button class="btn-guitar-powerchord" data-frets="5,5,5" data-root="F" title="Bund 5-5-5: F Powerchord">⚡ F (5-5-5)</button>
+        <button class="btn-guitar-powerchord" data-frets="7,7,7" data-root="G" title="Bund 7-7-7: G Powerchord">⚡ G (7-7-7)</button>
+        <button class="btn-guitar-powerchord" data-frets="8,8,8" data-root="Ab" title="Bund 8-8-8: Ab / G# Powerchord">⚡ Ab (8-8-8)</button>
+        <button class="btn-guitar-powerchord" data-frets="9,9,9" data-root="A" title="Bund 9-9-9: A Powerchord">⚡ A (9-9-9)</button>
+        <button class="btn-guitar-powerchord" data-frets="10,10,10" data-root="Bb" title="Bund 10-10-10: Bb Powerchord">⚡ Bb (10)</button>
+        <button class="btn-guitar-powerchord" data-frets="12,12,12" data-root="C" title="Bund 12-12-12: Oktave C Powerchord">🔥 C (12-12-12)</button>
+      </div>
+    `;
+    wrap.appendChild(pcBar);
+
+    // Tuning definitions (String 1 high to String 6 low)
+    let stringsDef = [
+      { num: 1, name: 'D4', baseMidi: 62, gauge: 1.2 },
+      { num: 2, name: 'A3', baseMidi: 57, gauge: 1.6 },
+      { num: 3, name: 'F3', baseMidi: 53, gauge: 2.1 },
+      { num: 4, name: 'C3', baseMidi: 48, gauge: 2.8 },
+      { num: 5, name: 'G2', baseMidi: 43, gauge: 3.4 },
+      { num: 6, name: 'C2', baseMidi: 36, gauge: 4.2 }
+    ];
+
+    if (this.guitarTuning === 'standard_e') {
+      stringsDef = [
+        { num: 1, name: 'E4', baseMidi: 64, gauge: 1.2 },
+        { num: 2, name: 'B3', baseMidi: 59, gauge: 1.6 },
+        { num: 3, name: 'G3', baseMidi: 55, gauge: 2.1 },
+        { num: 4, name: 'D3', baseMidi: 50, gauge: 2.8 },
+        { num: 5, name: 'A2', baseMidi: 45, gauge: 3.4 },
+        { num: 6, name: 'E2', baseMidi: 40, gauge: 4.2 }
+      ];
+    } else if (this.guitarTuning === 'drop_d') {
+      stringsDef = [
+        { num: 1, name: 'E4', baseMidi: 64, gauge: 1.2 },
+        { num: 2, name: 'B3', baseMidi: 59, gauge: 1.6 },
+        { num: 3, name: 'G3', baseMidi: 55, gauge: 2.1 },
+        { num: 4, name: 'D3', baseMidi: 50, gauge: 2.8 },
+        { num: 5, name: 'A2', baseMidi: 45, gauge: 3.4 },
+        { num: 6, name: 'D2', baseMidi: 38, gauge: 4.2 }
+      ];
+    }
+
+    // 3. Fretboard Body (Neck with Frets 0 to 12 & horizontal strings)
+    const fretboard = document.createElement('div');
+    fretboard.className = 'guitar-fretboard-neck';
+
+    // Fret numbers header row
+    const fretsHeader = document.createElement('div');
+    fretsHeader.className = 'guitar-frets-header';
+    for (let f = 0; f <= 12; f++) {
+      const fNum = document.createElement('div');
+      fNum.className = `guitar-fret-number ${[3, 5, 7, 9, 12].includes(f) ? 'inlay-marker' : ''}`;
+      fNum.textContent = f === 0 ? 'NUT (0)' : f;
+      fretsHeader.appendChild(fNum);
+    }
+    fretboard.appendChild(fretsHeader);
+
+    // Inlay dots overlay
+    const inlaysRow = document.createElement('div');
+    inlaysRow.className = 'guitar-inlays-row';
+    for (let f = 0; f <= 12; f++) {
+      const cell = document.createElement('div');
+      cell.className = 'guitar-inlay-cell';
+      if ([3, 5, 7, 9].includes(f)) {
+        cell.innerHTML = '<span class="fret-dot"></span>';
+      } else if (f === 12) {
+        cell.innerHTML = '<span class="fret-dot double"></span><span class="fret-dot double"></span>';
+      }
+      inlaysRow.appendChild(cell);
+    }
+    fretboard.appendChild(inlaysRow);
+
+    // Strings container
+    const stringsContainer = document.createElement('div');
+    stringsContainer.className = 'guitar-strings-container';
+
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    stringsDef.forEach((strDef) => {
+      const stringRow = document.createElement('div');
+      stringRow.className = 'guitar-string-row';
+      stringRow.dataset.stringNum = strDef.num;
+
+      // Visual metal string wire line
+      const stringWire = document.createElement('div');
+      stringWire.className = `guitar-string-wire string-${strDef.num}`;
+      stringWire.style.height = `${strDef.gauge}px`;
+      stringRow.appendChild(stringWire);
+
+      // String label on left
+      const stringLabel = document.createElement('div');
+      stringLabel.className = 'guitar-string-label';
+      stringLabel.textContent = strDef.name;
+      stringRow.appendChild(stringLabel);
+
+      // Frets 0 to 12
+      for (let f = 0; f <= 12; f++) {
+        const midi = strDef.baseMidi + f;
+        const noteName = noteNames[midi % 12];
+        const octave = Math.floor(midi / 12) - 1;
+
+        const fretBtn = document.createElement('div');
+        fretBtn.className = `guitar-fret-pos fret-${f} ${f === 0 ? 'open-nut' : ''}`;
+        fretBtn.dataset.midi = midi;
+        fretBtn.dataset.string = strDef.num;
+        fretBtn.dataset.fret = f;
+
+        fretBtn.innerHTML = `
+          <span class="fret-note-pill">
+            <span class="fret-note-name">${noteName}</span>
+            <span class="fret-note-oct">${octave}</span>
+          </span>
+        `;
+
+        const triggerFret = (e) => {
+          if (e && e.cancelable && e.type.startsWith('touch')) e.preventDefault();
+          window.audioEngine.unlockAudio();
+          this.noteOn(midi);
+          fretBtn.classList.add('pressed');
+          stringWire.classList.add('vibrating');
+          setTimeout(() => stringWire.classList.remove('vibrating'), 180);
+        };
+
+        const releaseFret = () => {
+          this.noteOff(midi);
+          fretBtn.classList.remove('pressed');
+        };
+
+        fretBtn.addEventListener('mousedown', (e) => {
+          this.isPointerDown = true;
+          triggerFret(e);
+        });
+
+        fretBtn.addEventListener('mouseenter', () => {
+          if (this.isPointerDown) triggerFret();
+        });
+
+        fretBtn.addEventListener('mouseleave', () => {
+          if (this.isPointerDown) releaseFret();
+        });
+
+        fretBtn.addEventListener('mouseup', releaseFret);
+
+        fretBtn.addEventListener('touchstart', (e) => {
+          this.isPointerDown = true;
+          triggerFret(e);
+        }, { passive: false });
+
+        fretBtn.addEventListener('touchend', releaseFret);
+
+        stringRow.appendChild(fretBtn);
+      }
+
+      stringsContainer.appendChild(stringRow);
+    });
+
+    fretboard.appendChild(stringsContainer);
+    wrap.appendChild(fretboard);
+    this.keyboardContainer.appendChild(wrap);
+
+    // Event listeners for tuning buttons
+    wrap.querySelectorAll('.btn-tuning-select').forEach((b) => {
+      b.addEventListener('click', () => {
+        this.guitarTuning = b.dataset.tuning;
+        this._renderGuitarFretboard();
+      });
+    });
+
+    // Event listeners for Powerchord buttons
+    wrap.querySelectorAll('.btn-guitar-powerchord').forEach((b) => {
+      const frets = b.dataset.frets.split(',').map(Number);
+      const playPower = () => {
+        window.audioEngine.unlockAudio();
+        // Drop-C strings 6, 5, 4
+        const chordMidis = [
+          stringsDef[5].baseMidi + frets[0],
+          stringsDef[4].baseMidi + frets[1],
+          stringsDef[3].baseMidi + frets[2]
+        ];
+        this.triggerPowerchord(this.currentInstrument || 'rammstein_guitar', chordMidis, 0.35);
+        b.classList.add('active');
+        setTimeout(() => b.classList.remove('active'), 250);
+      };
+      b.addEventListener('mousedown', playPower);
+      b.addEventListener('touchstart', (e) => {
+        if (e.cancelable) e.preventDefault();
+        playPower();
+      }, { passive: false });
+    });
+  }
+
+  _renderBassFretboard() {
+    if (!this.keyboardContainer) return;
+    this.keyboardContainer.innerHTML = '';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'synth-bass-fretboard-wrapper';
+
+    // 1. Bass Controls Bar
+    const ctrlBar = document.createElement('div');
+    ctrlBar.className = 'guitar-fretboard-header';
+    ctrlBar.innerHTML = `
+      <div class="guitar-tuning-group">
+        <span class="guitar-badge" style="border-color:#10b981; color:#10b981;">🎸 E-BASS STIMMUNG:</span>
+        <button class="btn-tuning-select ${this.bassTuning === 'drop_c' ? 'active' : ''}" data-tuning="drop_c">⚡ DROP-C (C-G-C-F)</button>
+        <button class="btn-tuning-select ${this.bassTuning === 'standard_e' ? 'active' : ''}" data-tuning="standard_e">⚡ STANDARD-E (E-A-D-G)</button>
+      </div>
+    `;
+    wrap.appendChild(ctrlBar);
+
+    // 2. Quick Bassline Groove Buttons
+    const bgBar = document.createElement('div');
+    bgBar.className = 'guitar-powerchords-bar';
+    bgBar.innerHTML = `
+      <span class="powerchords-label" style="color:#10b981;">⚡ QUICK SUB-GROOVES:</span>
+      <div class="powerchords-btns">
+        <button class="btn-guitar-powerchord" data-bass-midi="24" title="C1 (32.7 Hz) - Drop C Sub Bass">💥 SUB C1 (0)</button>
+        <button class="btn-guitar-powerchord" data-bass-midi="26" title="D1 - Punch Bass">⚡ LOW D1 (2)</button>
+        <button class="btn-guitar-powerchord" data-bass-midi="27" title="Eb1 / D#1">⚡ EB1 (3)</button>
+        <button class="btn-guitar-powerchord" data-bass-midi="29" title="F1 - Heavy Punch">⚡ PUNCH F1 (5)</button>
+        <button class="btn-guitar-powerchord" data-bass-midi="31" title="G1 - Power Bass">⚡ HEAVY G1 (7)</button>
+        <button class="btn-guitar-powerchord" data-bass-midi="33" title="A1">⚡ POWER A1 (9)</button>
+        <button class="btn-guitar-powerchord" data-bass-midi="36" title="C2 (65.4 Hz)">🔥 ROOT C2 (12)</button>
+      </div>
+    `;
+    wrap.appendChild(bgBar);
+
+    // Bass strings definition (4 strings: F2, C2, G1, C1 in Drop-C)
+    let stringsDef = [
+      { num: 1, name: 'F2', baseMidi: 41, gauge: 2.8 },
+      { num: 2, name: 'C2', baseMidi: 36, gauge: 3.8 },
+      { num: 3, name: 'G1', baseMidi: 31, gauge: 4.8 },
+      { num: 4, name: 'C1', baseMidi: 24, gauge: 6.0 }
+    ];
+
+    if (this.bassTuning === 'standard_e') {
+      stringsDef = [
+        { num: 1, name: 'G2', baseMidi: 43, gauge: 2.8 },
+        { num: 2, name: 'D2', baseMidi: 38, gauge: 3.8 },
+        { num: 3, name: 'A1', baseMidi: 33, gauge: 4.8 },
+        { num: 4, name: 'E1', baseMidi: 28, gauge: 6.0 }
+      ];
+    }
+
+    // 3. Fretboard Body
+    const fretboard = document.createElement('div');
+    fretboard.className = 'guitar-fretboard-neck bass-neck';
+
+    // Frets header
+    const fretsHeader = document.createElement('div');
+    fretsHeader.className = 'guitar-frets-header';
+    for (let f = 0; f <= 12; f++) {
+      const fNum = document.createElement('div');
+      fNum.className = `guitar-fret-number ${[3, 5, 7, 9, 12].includes(f) ? 'inlay-marker' : ''}`;
+      fNum.textContent = f === 0 ? 'NUT (0)' : f;
+      fretsHeader.appendChild(fNum);
+    }
+    fretboard.appendChild(fretsHeader);
+
+    // Inlays
+    const inlaysRow = document.createElement('div');
+    inlaysRow.className = 'guitar-inlays-row';
+    for (let f = 0; f <= 12; f++) {
+      const cell = document.createElement('div');
+      cell.className = 'guitar-inlay-cell';
+      if ([3, 5, 7, 9].includes(f)) {
+        cell.innerHTML = '<span class="fret-dot"></span>';
+      } else if (f === 12) {
+        cell.innerHTML = '<span class="fret-dot double"></span><span class="fret-dot double"></span>';
+      }
+      inlaysRow.appendChild(cell);
+    }
+    fretboard.appendChild(inlaysRow);
+
+    const stringsContainer = document.createElement('div');
+    stringsContainer.className = 'guitar-strings-container';
+
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+    stringsDef.forEach((strDef) => {
+      const stringRow = document.createElement('div');
+      stringRow.className = 'guitar-string-row bass-string-row';
+      stringRow.dataset.stringNum = strDef.num;
+
+      const stringWire = document.createElement('div');
+      stringWire.className = `guitar-string-wire bass-wire string-${strDef.num}`;
+      stringWire.style.height = `${strDef.gauge}px`;
+      stringRow.appendChild(stringWire);
+
+      const stringLabel = document.createElement('div');
+      stringLabel.className = 'guitar-string-label bass-label';
+      stringLabel.textContent = strDef.name;
+      stringRow.appendChild(stringLabel);
+
+      for (let f = 0; f <= 12; f++) {
+        const midi = strDef.baseMidi + f;
+        const noteName = noteNames[midi % 12];
+        const octave = Math.floor(midi / 12) - 1;
+
+        const fretBtn = document.createElement('div');
+        fretBtn.className = `guitar-fret-pos fret-${f} ${f === 0 ? 'open-nut' : ''}`;
+        fretBtn.dataset.midi = midi;
+
+        fretBtn.innerHTML = `
+          <span class="fret-note-pill bass-pill">
+            <span class="fret-note-name">${noteName}</span>
+            <span class="fret-note-oct">${octave}</span>
+          </span>
+        `;
+
+        const triggerFret = (e) => {
+          if (e && e.cancelable && e.type.startsWith('touch')) e.preventDefault();
+          window.audioEngine.unlockAudio();
+          this.noteOn(midi);
+          fretBtn.classList.add('pressed');
+          stringWire.classList.add('vibrating');
+          setTimeout(() => stringWire.classList.remove('vibrating'), 200);
+        };
+
+        const releaseFret = () => {
+          this.noteOff(midi);
+          fretBtn.classList.remove('pressed');
+        };
+
+        fretBtn.addEventListener('mousedown', (e) => {
+          this.isPointerDown = true;
+          triggerFret(e);
+        });
+
+        fretBtn.addEventListener('mouseenter', () => {
+          if (this.isPointerDown) triggerFret();
+        });
+
+        fretBtn.addEventListener('mouseleave', () => {
+          if (this.isPointerDown) releaseFret();
+        });
+
+        fretBtn.addEventListener('mouseup', releaseFret);
+
+        fretBtn.addEventListener('touchstart', (e) => {
+          this.isPointerDown = true;
+          triggerFret(e);
+        }, { passive: false });
+
+        fretBtn.addEventListener('touchend', releaseFret);
+
+        stringRow.appendChild(fretBtn);
+      }
+
+      stringsContainer.appendChild(stringRow);
+    });
+
+    fretboard.appendChild(stringsContainer);
+    wrap.appendChild(fretboard);
+    this.keyboardContainer.appendChild(wrap);
+
+    // Tuning toggle
+    wrap.querySelectorAll('.btn-tuning-select').forEach((b) => {
+      b.addEventListener('click', () => {
+        this.bassTuning = b.dataset.tuning;
+        this._renderBassFretboard();
+      });
+    });
+
+    // Quick Bass Groove triggers
+    wrap.querySelectorAll('.btn-guitar-powerchord').forEach((b) => {
+      const midi = parseInt(b.dataset.bassMidi, 10);
+      const playBass = () => {
+        window.audioEngine.unlockAudio();
+        this.triggerSinglePresetNote(this.currentInstrument || 'industrial_pick_bass', midi, 0.35);
+        b.classList.add('active');
+        setTimeout(() => b.classList.remove('active'), 250);
+      };
+      b.addEventListener('mousedown', playBass);
+      b.addEventListener('touchstart', (e) => {
+        if (e.cancelable) e.preventDefault();
+        playBass();
+      }, { passive: false });
+    });
+  }
+
+  _renderStadiumDrums() {
+    if (!this.keyboardContainer) return;
+    this.keyboardContainer.innerHTML = '';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'synth-drum-kit-wrapper';
+
+    const drumsGrid = document.createElement('div');
+    drumsGrid.className = 'stadium-drum-grid';
+
+    const drumDefs = [
+      {
+        id: 'stadium-kick',
+        name: '24" STADIUM BASSDRUM',
+        sub: '55Hz Sub & Beater Knock',
+        icon: '💥',
+        color: '#ef4444',
+        keyLabel: 'B / LEERTASTE',
+        midi: 36,
+        fn: () => this.triggerSinglePresetNote('stadium_marching_drums', 36, 0.4)
+      },
+      {
+        id: 'marching-snare',
+        name: 'MARSCHTROMMEL / SNARE',
+        sub: 'Snare Teppich & Punch',
+        icon: '🥁',
+        color: '#38bdf8',
+        keyLabel: 'V',
+        midi: 60,
+        fn: () => this.triggerSinglePresetNote('stadium_marching_drums', 60, 0.3)
+      },
+      {
+        id: 'stadium-rimshot',
+        name: 'RIMSHOT',
+        sub: 'Kessel-Randklick',
+        icon: '🥢',
+        color: '#a3e635',
+        keyLabel: 'C',
+        midi: 64,
+        fn: () => window.audioEngine.playRimshot()
+      },
+      {
+        id: 'stadium-hihat',
+        name: 'STADIUM HI-HAT (CLOSED)',
+        sub: 'Knackige Metal-HiHat',
+        icon: '✨',
+        color: '#eab308',
+        keyLabel: 'T',
+        midi: 67,
+        fn: () => window.audioEngine.playHiHat(0, false)
+      },
+      {
+        id: 'stadium-hihat-open',
+        name: 'OPEN HI-HAT',
+        sub: 'Offene Becken-Schwirrung',
+        icon: '🌟',
+        color: '#facc15',
+        keyLabel: 'R',
+        midi: 68,
+        fn: () => window.audioEngine.playHiHat(0, true)
+      },
+      {
+        id: 'stadium-crash',
+        name: 'STADIUM CRASH',
+        sub: 'Großes Bühnen-Crashbecken',
+        icon: '💥',
+        color: '#f97316',
+        keyLabel: 'Y',
+        midi: 71,
+        fn: () => window.audioEngine.playCrash()
+      },
+      {
+        id: 'stadium-high-tom',
+        name: 'HIGH STADIUM TOM',
+        sub: 'Präziser Tom-Schlag',
+        icon: '🥁',
+        color: '#fbbf24',
+        keyLabel: 'F',
+        midi: 72,
+        fn: () => window.audioEngine.playTom('high')
+      },
+      {
+        id: 'stadium-floor-tom',
+        name: 'FLOOR TOM (LOW)',
+        sub: 'Tiefe Standtrommel',
+        icon: '🥁',
+        color: '#d97706',
+        keyLabel: 'H',
+        midi: 74,
+        fn: () => window.audioEngine.playTom('low')
+      }
+    ];
+
+    drumDefs.forEach((drum) => {
+      const pad = document.createElement('div');
+      pad.className = 'stadium-drum-pad';
+      pad.dataset.drumId = drum.id;
+      pad.dataset.midi = drum.midi;
+      pad.style.setProperty('--drum-color', drum.color);
+
+      pad.innerHTML = `
+        <div class="drum-pad-sensor">
+          <span class="drum-pad-icon">${drum.icon}</span>
+          <span class="drum-pad-name">${drum.name}</span>
+          <span class="drum-pad-sub">${drum.sub}</span>
+          <span class="drum-pad-key">${drum.keyLabel}</span>
+        </div>
+      `;
+
+      const hit = (e) => {
+        if (e && e.cancelable && e.type.startsWith('touch')) e.preventDefault();
+        window.audioEngine.unlockAudio();
+        drum.fn();
+        pad.classList.add('hit');
+        setTimeout(() => pad.classList.remove('hit'), 150);
+      };
+
+      pad.addEventListener('mousedown', hit);
+      pad.addEventListener('touchstart', hit, { passive: false });
+
+      drumsGrid.appendChild(pad);
+    });
+
+    wrap.appendChild(drumsGrid);
+    this.keyboardContainer.appendChild(wrap);
+  }
+
   _attachEvents() {
     // Section Drawer Toggle
     if (this.btnToggle && this.section) {
@@ -380,6 +953,13 @@ class SynthStudio {
         if (this.btnToggle) this.btnToggle.classList.remove('active');
       });
     }
+
+    // Surface Tabs (Keyboard, Guitar, Bass, Drums)
+    document.querySelectorAll('.synth-surface-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        this.setSurfaceMode(tab.dataset.surface);
+      });
+    });
 
     // Instrument Quick Preset Buttons
     document.querySelectorAll('.btn-synth-preset').forEach((btn) => {
@@ -593,6 +1173,19 @@ class SynthStudio {
     if (banner) {
       banner.innerHTML = `${p.icon} <span>${p.name.toUpperCase()}</span>`;
     }
+
+    // Auto-switch surface to match selected instrument family
+    if (instKey === 'rammstein_guitar') {
+      this.setSurfaceMode('guitar');
+    } else if (instKey === 'industrial_pick_bass' || instKey === 'sub_bass' || instKey === 'acid_bass') {
+      this.setSurfaceMode('bass');
+    } else if (instKey === 'stadium_marching_drums') {
+      this.setSurfaceMode('drums');
+    } else {
+      if (['guitar', 'bass', 'drums'].includes(this.surfaceMode)) {
+        this.setSurfaceMode('keyboard');
+      }
+    }
   }
 
   _attachKeyboardListener() {
@@ -630,6 +1223,42 @@ class SynthStudio {
       if (e.repeat) return;
 
       const k = e.key.toLowerCase();
+
+      // Drum hotkeys in drums surface mode
+      if (this.surfaceMode === 'drums') {
+        const drumKeyMap = {
+          'b': 36,
+          ' ': 36, // Spacebar for Stadium Kick
+          'v': 60, // Marsch Snare
+          'c': 64, // Rimshot
+          't': 67, // Closed Hat
+          'r': 68, // Open Hat
+          'y': 71, // Crash
+          'f': 72, // High Tom
+          'g': 73, // Mid Tom
+          'h': 74  // Floor Tom
+        };
+        if (drumKeyMap[k] !== undefined) {
+          e.preventDefault();
+          window.audioEngine.unlockAudio();
+          const pad = this.keyboardContainer.querySelector(`.stadium-drum-pad[data-midi="${drumKeyMap[k]}"]`);
+          if (pad) {
+            pad.classList.add('hit');
+            setTimeout(() => pad.classList.remove('hit'), 150);
+          }
+          if (k === 'b' || k === ' ') this.triggerSinglePresetNote('stadium_marching_drums', 36, 0.4);
+          else if (k === 'v') this.triggerSinglePresetNote('stadium_marching_drums', 60, 0.3);
+          else if (k === 'c') window.audioEngine.playRimshot();
+          else if (k === 't') window.audioEngine.playHiHat(0, false);
+          else if (k === 'r') window.audioEngine.playHiHat(0, true);
+          else if (k === 'y') window.audioEngine.playCrash();
+          else if (k === 'f') window.audioEngine.playTom('high');
+          else if (k === 'g') window.audioEngine.playTom('mid');
+          else if (k === 'h') window.audioEngine.playTom('low');
+          return;
+        }
+      }
+
       if (keyMap[k] !== undefined) {
         const midi = keyMap[k];
         window.audioEngine.unlockAudio();
@@ -650,12 +1279,12 @@ class SynthStudio {
   }
 
   _highlightKey(midi, isPressed) {
-    const keyEl = this.keyboardContainer
-      ? this.keyboardContainer.querySelector(`.synth-key[data-midi="${midi}"]`)
-      : null;
-    if (keyEl) {
-      keyEl.classList.toggle('pressed', isPressed);
-    }
+    if (!this.keyboardContainer) return;
+    const targets = this.keyboardContainer.querySelectorAll(`[data-midi="${midi}"]`);
+    targets.forEach(el => {
+      el.classList.toggle('pressed', isPressed);
+      el.classList.toggle('active', isPressed);
+    });
   }
 
   midiToFreq(midi) {
@@ -698,7 +1327,27 @@ class SynthStudio {
     return curve;
   }
 
-  _startVoice(midi) {
+  triggerSinglePresetNote(instKey, midi = 48, duration = 0.35) {
+    if (!window.audioEngine) return;
+    window.audioEngine.unlockAudio();
+    this._startVoice(midi, instKey);
+    setTimeout(() => {
+      this._stopVoice(midi);
+    }, duration * 1000);
+  }
+
+  triggerPowerchord(instKey, midiNotes = [36, 43, 48], duration = 0.35) {
+    if (!window.audioEngine) return;
+    window.audioEngine.unlockAudio();
+    midiNotes.forEach((m, idx) => {
+      setTimeout(() => {
+        this._startVoice(m, instKey);
+        setTimeout(() => this._stopVoice(m), duration * 1000);
+      }, idx * 12);
+    });
+  }
+
+  _startVoice(midi, customInst = null) {
     if (!window.audioEngine) return;
     window.audioEngine.unlockAudio();
     const ctx = window.audioEngine.ctx;
@@ -709,7 +1358,7 @@ class SynthStudio {
 
     const freq = this.midiToFreq(midi);
     const now = ctx.currentTime;
-    const inst = this.currentInstrument;
+    const inst = customInst || this.currentInstrument;
 
     // Filter Node
     const filter = ctx.createBiquadFilter();

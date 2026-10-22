@@ -55,6 +55,7 @@ class BeatStudio {
     this.panelAddTrack = document.getElementById('seq-add-track-panel');
     this.btnCloseAdd = document.getElementById('btn-close-seq-add');
     this.selInstrument = document.getElementById('seq-select-instrument');
+    this.selPitch = document.getElementById('seq-select-pitch');
     this.btnAddInst = document.getElementById('btn-add-inst-track');
     this.selSample = document.getElementById('seq-select-sample');
     this.btnAddSample = document.getElementById('btn-add-sample-track');
@@ -145,7 +146,8 @@ class BeatStudio {
     if (this.btnAddInst && this.selInstrument) {
       this.btnAddInst.addEventListener('click', () => {
         const type = this.selInstrument.value;
-        this.addInstrumentTrack(type);
+        const pitch = this.selPitch ? this.selPitch.value : (document.getElementById('seq-select-pitch')?.value || 'default');
+        this.addInstrumentTrack(type, pitch);
         if (this.panelAddTrack) this.panelAddTrack.classList.add('hidden');
       });
     }
@@ -253,98 +255,360 @@ class BeatStudio {
     });
   }
 
-  addInstrumentTrack(type) {
+  createTrackSound(type, pitch = 'default') {
     let name = 'TRACK';
     let color = '#38bdf8';
     let soundFn = () => {};
 
+    const pitchOffsets = {
+      default: 0,
+      drop_c: 0,
+      c: 0,
+      d: 2,
+      ds: 3,
+      e: 4,
+      f: 5,
+      fs: 6,
+      g: 7,
+      gs: 8,
+      a: 9,
+      as: 10,
+      b: 11
+    };
+    const offset = pitchOffsets[pitch] !== undefined ? pitchOffsets[pitch] : 0;
+    const isPower = pitch && pitch.startsWith('power_');
+    const powerNotes = {
+      power_c: [36, 43, 48],
+      power_d: [38, 45, 50],
+      power_f: [41, 48, 53],
+      power_g: [43, 50, 55]
+    };
+
     switch (type) {
+      case 'rammstein_guitar':
+        name = isPower ? `🔥 GUITAR ${pitch.replace('power_', '').toUpperCase()}` : (pitch !== 'default' ? `🎸 GUITAR ${pitch.toUpperCase()}` : '🎸 METAL GUITAR');
+        color = '#ff4500';
+        soundFn = () => {
+          if (window.synthStudio) {
+            if (isPower) {
+              window.synthStudio.triggerPowerchord('rammstein_guitar', powerNotes[pitch] || [36, 43, 48], 0.28);
+            } else {
+              window.synthStudio.triggerSinglePresetNote('rammstein_guitar', 36 + offset, 0.28);
+            }
+          } else if (window.audioEngine) {
+            window.audioEngine.playLead(130.81);
+          }
+        };
+        break;
+
+      case 'guitar_power_c':
+        name = '🔥 GUITAR CHORD C';
+        color = '#ff4500';
+        soundFn = () => {
+          if (window.synthStudio) window.synthStudio.triggerPowerchord('rammstein_guitar', [36, 43, 48], 0.3);
+        };
+        break;
+
+      case 'guitar_power_d':
+        name = '⚡ GUITAR CHORD D';
+        color = '#ff6b35';
+        soundFn = () => {
+          if (window.synthStudio) window.synthStudio.triggerPowerchord('rammstein_guitar', [38, 45, 50], 0.3);
+        };
+        break;
+
+      case 'guitar_power_f':
+        name = '⚡ GUITAR CHORD F';
+        color = '#f97316';
+        soundFn = () => {
+          if (window.synthStudio) window.synthStudio.triggerPowerchord('rammstein_guitar', [41, 48, 53], 0.3);
+        };
+        break;
+
+      case 'guitar_power_g':
+        name = '⚡ GUITAR CHORD G';
+        color = '#ea580c';
+        soundFn = () => {
+          if (window.synthStudio) window.synthStudio.triggerPowerchord('rammstein_guitar', [43, 50, 55], 0.3);
+        };
+        break;
+
+      case 'industrial_pick_bass':
+      case 'industrial_bass_d':
+      case 'industrial_bass_f':
+      case 'industrial_bass_g': {
+        let bassMidi = 24 + offset;
+        if (type === 'industrial_bass_d') bassMidi = 26;
+        if (type === 'industrial_bass_f') bassMidi = 29;
+        if (type === 'industrial_bass_g') bassMidi = 31;
+        const pitchSuffix = pitch !== 'default' ? ` (${pitch.toUpperCase()})` : '';
+        name = `⚡ ROCK BASS${pitchSuffix}`;
+        color = '#00f0ff';
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('industrial_pick_bass', bassMidi, 0.32);
+          } else if (window.audioEngine) {
+            window.audioEngine.playBass(65.4);
+          }
+        };
+        break;
+      }
+
+      case 'stadium_kick':
+        name = '🥁 24" STADIUM KICK';
+        color = '#ef4444';
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('stadium_marching_drums', 36, 0.38);
+          } else if (window.audioEngine) {
+            window.audioEngine.playKick();
+          }
+        };
+        break;
+
+      case 'marching_snare':
+        name = '🥁 MARSCH-SNARE';
+        color = '#38bdf8';
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('stadium_marching_drums', 60, 0.30);
+          } else if (window.audioEngine) {
+            window.audioEngine.playSnare();
+          }
+        };
+        break;
+
+      case 'flake_pad':
+        name = `🎹 FLAKE PAD${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
+        color = '#818cf8';
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('flake_industrial_pad', 48 + offset, 0.45);
+          }
+        };
+        break;
+
+      case 'kick':
+        name = '💥 KICK';
+        color = '#00f0ff';
+        soundFn = () => window.audioEngine && window.audioEngine.playKick();
+        break;
+
+      case 'snare':
+        name = '🥁 SNARE';
+        color = '#f43f5e';
+        soundFn = () => window.audioEngine && window.audioEngine.playSnare();
+        break;
+
+      case 'hihat':
+        name = '✨ HI-HAT';
+        color = '#eab308';
+        soundFn = () => window.audioEngine && window.audioEngine.playHiHat(0, false);
+        break;
+
+      case 'hihat_open':
+        name = '🌟 OPEN HI-HAT';
+        color = '#facc15';
+        soundFn = () => window.audioEngine && window.audioEngine.playHiHat(0, true);
+        break;
+
+      case 'clap':
+        name = '👏 CLAP';
+        color = '#10b981';
+        soundFn = () => window.audioEngine && window.audioEngine.playClap();
+        break;
+
       case 'tom_high':
         name = '🥁 HI-TOM';
         color = '#f59e0b';
-        soundFn = () => window.audioEngine.playTom('high');
+        soundFn = () => window.audioEngine && window.audioEngine.playTom('high');
         break;
+
       case 'tom_mid':
         name = '🥁 MID-TOM';
         color = '#f59e0b';
-        soundFn = () => window.audioEngine.playTom('mid');
+        soundFn = () => window.audioEngine && window.audioEngine.playTom('mid');
         break;
+
       case 'tom_low':
         name = '🥁 LOW-TOM';
         color = '#d97706';
-        soundFn = () => window.audioEngine.playTom('low');
+        soundFn = () => window.audioEngine && window.audioEngine.playTom('low');
         break;
+
       case 'cowbell':
         name = '🔔 COWBELL';
         color = '#fbbf24';
-        soundFn = () => window.audioEngine.playCowbell();
+        soundFn = () => window.audioEngine && window.audioEngine.playCowbell();
         break;
+
       case 'rimshot':
         name = '🥢 RIMSHOT';
         color = '#a3e635';
-        soundFn = () => window.audioEngine.playRimshot();
+        soundFn = () => window.audioEngine && window.audioEngine.playRimshot();
         break;
+
       case 'shaker':
         name = '✨ SHAKER';
         color = '#34d399';
-        soundFn = () => window.audioEngine.playShaker();
+        soundFn = () => window.audioEngine && window.audioEngine.playShaker();
         break;
+
       case 'crash':
         name = '💥 CRASH';
         color = '#38bdf8';
-        soundFn = () => window.audioEngine.playCrash();
+        soundFn = () => window.audioEngine && window.audioEngine.playCrash();
         break;
+
       case 'tiesto_bass':
-        name = '💥 TIËSTO BASS';
+        name = `💥 TIËSTO BASS${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
         color = '#ef4444';
-        soundFn = () => window.audioEngine.playSynthStab('tiesto');
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('tiesto_bass', 36 + offset, 0.25);
+          } else if (window.audioEngine) {
+            window.audioEngine.playSynthStab('tiesto');
+          }
+        };
         break;
+
+      case 'future_rave_bass':
+        name = `🚀 FUTURE RAVE${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
+        color = '#a855f7';
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('future_rave_bass', 36 + offset, 0.28);
+          } else if (window.audioEngine) {
+            window.audioEngine.playBass(65.4);
+          }
+        };
+        break;
+
       case 'bass_808':
-        name = '🎸 808 BASS';
+        name = `🎸 808 BASS${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
         color = '#8b5cf6';
-        soundFn = () => window.audioEngine.playBass(55);
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('sub_bass', 36 + offset, 0.4);
+          } else if (window.audioEngine) {
+            window.audioEngine.playBass(55);
+          }
+        };
         break;
-      case 'lead_synth':
-        name = '⚡ EDM LEAD';
-        color = '#00f0ff';
-        soundFn = () => window.audioEngine.playLead();
-        break;
-      case 'piano_chord':
-        name = '🎹 KLAVIER';
-        color = '#10b981';
-        soundFn = () => window.audioEngine.playChord();
-        break;
-      case 'organ_stab':
-        name = '🎶 ORGEL';
+
+      case 'acid_bass':
+        name = `🔊 ACID BASS${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
         color = '#ec4899';
-        soundFn = () => window.audioEngine.playSynthStab('organ');
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('acid_bass', 36 + offset, 0.25);
+          } else if (window.audioEngine) {
+            window.audioEngine.playBass(65.4);
+          }
+        };
         break;
+
+      case 'lead_synth':
+        name = `⚡ EDM LEAD${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
+        color = '#00f0ff';
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('synth_lead', 60 + offset, 0.3);
+          } else if (window.audioEngine) {
+            window.audioEngine.playLead();
+          }
+        };
+        break;
+
+      case 'piano_chord':
+        name = '🎹 KLAVIER CHORD';
+        color = '#10b981';
+        soundFn = () => window.audioEngine && window.audioEngine.playChord();
+        break;
+
+      case 'piano_note':
+        name = `🎹 KLAVIER NOTE${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
+        color = '#10b981';
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('piano', 60 + offset, 0.45);
+          } else if (window.audioEngine) {
+            window.audioEngine.playChord();
+          }
+        };
+        break;
+
+      case 'organ_stab':
+        name = `🎶 ORGEL${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
+        color = '#ec4899';
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('organ', 60 + offset, 0.3);
+          } else if (window.audioEngine) {
+            window.audioEngine.playSynthStab('organ');
+          }
+        };
+        break;
+
       case 'marimba_pluck':
-        name = '🔔 PLUCK';
+        name = `🔔 PLUCK${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
         color = '#06b6d4';
-        soundFn = () => window.audioEngine.playSynthStab('pluck');
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('pluck_marimba', 60 + offset, 0.35);
+          } else if (window.audioEngine) {
+            window.audioEngine.playSynthStab('pluck');
+          }
+        };
         break;
+
       case 'flute_note':
-        name = '🪈 FLÖTE';
+        name = `🪈 FLÖTE${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
         color = '#14b8a6';
-        soundFn = () => window.audioEngine.playSynthStab('flute');
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('flute', 69 + offset, 0.35);
+          } else if (window.audioEngine) {
+            window.audioEngine.playSynthStab('flute');
+          }
+        };
         break;
+
+      case 'strings_pad':
+        name = `🎻 STRINGS${pitch !== 'default' ? ' ' + pitch.toUpperCase() : ''}`;
+        color = '#c084fc';
+        soundFn = () => {
+          if (window.synthStudio) {
+            window.synthStudio.triggerSinglePresetNote('strings_pad', 60 + offset, 0.55);
+          }
+        };
+        break;
+
       case 'scratch_fx':
         name = '💿 SCRATCH';
         color = '#f43f5e';
-        soundFn = () => window.audioEngine.playFx();
+        soundFn = () => window.audioEngine && window.audioEngine.playFx();
         break;
+
       default:
         name = type.toUpperCase();
-        soundFn = () => window.audioEngine.playTom('mid');
+        soundFn = () => window.audioEngine && window.audioEngine.playTom('mid');
     }
+
+    return { name, color, soundFn };
+  }
+
+  addInstrumentTrack(type, pitch = 'default') {
+    const cfg = this.createTrackSound(type, pitch);
 
     const newTrack = {
       id: 'track_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-      name: name,
+      name: cfg.name,
       type: 'instrument',
-      color: color,
-      sound: soundFn,
+      instrumentType: type,
+      pitch: pitch,
+      color: cfg.color,
+      sound: cfg.soundFn,
       steps: new Array(16).fill(false),
       isMuted: false,
       isCustom: true
@@ -352,6 +616,129 @@ class BeatStudio {
 
     this.seqTracks.push(newTrack);
     this._renderSequencer();
+  }
+
+  openTrackInstrumentModal(track) {
+    // Quick inline popup to change instrument & pitch without losing 16 steps
+    const existingModal = document.getElementById('seq-track-inst-modal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'seq-track-inst-modal';
+    modal.className = 'seq-track-modal-overlay';
+
+    modal.innerHTML = `
+      <div class="seq-track-modal-box">
+        <div class="seq-modal-header">
+          <span style="font-weight:800; font-size:12px; color:#38bdf8;">🔄 INSTRUMENT DIESER SPUR ÄNDERN:</span>
+          <button id="btn-close-track-modal" class="btn-close-lib" style="margin:0;">✖</button>
+        </div>
+        <div style="font-size:11px; color:#94a3b8; margin-bottom:10px;">
+          Wähle ein neues Instrument. Dein programmiertes 16-Step Beat-Muster bleibt vollständig erhalten!
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div>
+            <label style="font-size:10px; font-weight:800; color:#38bdf8; display:block; margin-bottom:3px;">INSTRUMENT:</label>
+            <select id="modal-track-inst-select" class="synth-select" style="width:100%;">
+              <optgroup label="🔥 Rammstein & Rock / Metal">
+                <option value="rammstein_guitar">🎸 Rammstein Metal Guitar (Drop-C)</option>
+                <option value="guitar_power_c">🔥 Guitar Powerchord C (0-0-0)</option>
+                <option value="guitar_power_d">⚡ Guitar Powerchord D (2-2-2)</option>
+                <option value="guitar_power_f">⚡ Guitar Powerchord F (5-5-5)</option>
+                <option value="guitar_power_g">⚡ Guitar Powerchord G (7-7-7)</option>
+                <option value="industrial_pick_bass">🎸 Industrial Rock Bass (C1 Punch)</option>
+                <option value="industrial_bass_d">🎸 Industrial Rock Bass (D1)</option>
+                <option value="industrial_bass_f">🎸 Industrial Rock Bass (F1)</option>
+                <option value="industrial_bass_g">🎸 Industrial Rock Bass (G1)</option>
+                <option value="stadium_kick">🥁 24" Stadium Basstrommel (55Hz)</option>
+                <option value="marching_snare">🥁 Stadium Marschtrommel / Snare</option>
+                <option value="flake_pad">🎹 Flake Dark Industrial Pad</option>
+              </optgroup>
+              <optgroup label="🥁 Drums & Percussion">
+                <option value="kick">💥 Electronic Beat Kick</option>
+                <option value="snare">🥁 Classic Trap / Club Snare</option>
+                <option value="hihat">✨ Hi-Hat (Closed)</option>
+                <option value="hihat_open">🌟 Hi-Hat (Open)</option>
+                <option value="clap">👏 Hand Clap</option>
+                <option value="tom_high">🥁 High Tom</option>
+                <option value="tom_mid">🥁 Mid Tom</option>
+                <option value="tom_low">🥁 Low / Floor Tom</option>
+                <option value="cowbell">🔔 808 Phonk Cowbell</option>
+                <option value="rimshot">🥢 Rimshot</option>
+                <option value="shaker">✨ Shaker</option>
+                <option value="crash">💥 Crash Cymbal</option>
+              </optgroup>
+              <optgroup label="🎹 Bässe & Synthesizer">
+                <option value="tiesto_bass">💥 Tiësto DZZZ Bass</option>
+                <option value="future_rave_bass">🚀 Future Rave Bass</option>
+                <option value="bass_808">🎸 Deep 808 Sub-Bass</option>
+                <option value="acid_bass">🔊 Acid / Slap Bass</option>
+                <option value="lead_synth">⚡ EDM Club Lead</option>
+                <option value="piano_chord">🎹 Konzert-Klavier Akkord</option>
+                <option value="piano_note">🎹 Konzert-Klavier Einzelton</option>
+                <option value="organ_stab">🎶 House Club Orgel</option>
+                <option value="marimba_pluck">🔔 Marimba Pluck</option>
+                <option value="flute_note">🪈 Flöten-Ton</option>
+                <option value="strings_pad">🎻 Synth Strings & Pad</option>
+                <option value="scratch_fx">💿 DJ Scratch FX</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:10px; font-weight:800; color:#38bdf8; display:block; margin-bottom:3px;">TONHÖHE / NOTE:</label>
+            <select id="modal-track-pitch-select" class="synth-select" style="width:100%;">
+              <option value="default">Standard-Tonhöhe</option>
+              <option value="drop_c">Drop-C (Tief C2)</option>
+              <option value="c">Note C</option>
+              <option value="d">Note D</option>
+              <option value="ds">Note D# / Eb</option>
+              <option value="e">Note E</option>
+              <option value="f">Note F</option>
+              <option value="fs">Note F#</option>
+              <option value="g">Note G</option>
+              <option value="gs">Note G# / Ab</option>
+              <option value="a">Note A</option>
+              <option value="as">Note A# / Bb</option>
+              <option value="b">Note H / B</option>
+              <option value="power_c">🔥 Powerchord C</option>
+              <option value="power_d">⚡ Powerchord D</option>
+              <option value="power_f">⚡ Powerchord F</option>
+              <option value="power_g">⚡ Powerchord G</option>
+            </select>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+            <button id="btn-cancel-track-modal" class="btn-synth-action danger" style="padding:5px 12px;">Abbrechen</button>
+            <button id="btn-apply-track-modal" class="btn-seq-confirm" style="padding:5px 14px;">✔ Übernehmen</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const selInst = modal.querySelector('#modal-track-inst-select');
+    const selP = modal.querySelector('#modal-track-pitch-select');
+
+    if (track.instrumentType && selInst) selInst.value = track.instrumentType;
+    if (track.pitch && selP) selP.value = track.pitch;
+
+    modal.querySelector('#btn-close-track-modal').addEventListener('click', () => modal.remove());
+    modal.querySelector('#btn-cancel-track-modal').addEventListener('click', () => modal.remove());
+
+    modal.querySelector('#btn-apply-track-modal').addEventListener('click', () => {
+      const newType = selInst.value;
+      const newPitch = selP.value;
+      const newCfg = this.createTrackSound(newType, newPitch);
+
+      track.name = newCfg.name;
+      track.color = newCfg.color;
+      track.sound = newCfg.soundFn;
+      track.instrumentType = newType;
+      track.pitch = newPitch;
+
+      modal.remove();
+      this._renderSequencer();
+    });
   }
 
   addSampleTrack(sampleId) {
@@ -475,6 +862,17 @@ class BeatStudio {
         row.classList.toggle('muted', track.isMuted);
       });
       infoBox.appendChild(btnMute);
+
+      // Switch / Change Instrument Button
+      const btnSwitch = document.createElement('button');
+      btnSwitch.className = 'btn-track-switch';
+      btnSwitch.textContent = '🔄';
+      btnSwitch.title = `Instrument / Sound von "${track.name}" ändern`;
+      btnSwitch.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.openTrackInstrumentModal(track);
+      });
+      infoBox.appendChild(btnSwitch);
 
       // Delete Button for ANY track with an "✖"
       const btnDel = document.createElement('button');

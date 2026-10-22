@@ -750,6 +750,10 @@
               </span>
             </div>
             <select id="synth-instrument-select" class="synth-select synth-header-select" style="margin-left:12px; font-size:11px; font-weight:700; background:#0f172a; color:#38bdf8; border:1px solid #38bdf8; border-radius:4px; padding:3px 8px; cursor:pointer;">
+              <option value="rammstein_guitar">🔥 Rammstein Metal Guitar (Drop-C)</option>
+              <option value="industrial_pick_bass">⚡ Industrial Rock Bass</option>
+              <option value="stadium_marching_drums">🥁 Stadium Drums (24" Kick & Snare)</option>
+              <option value="flake_industrial_pad">🎹 Flake Dark Industrial Pad</option>
               <option value="tiesto_bass" selected>💥 Tiësto DZZZ Bass (Club Slap)</option>
               <option value="future_rave_bass">🚀 Future Rave Bass (MORTEN / Guetta)</option>
               <option value="piano">🎹 Konzert-Klavier</option>
@@ -955,13 +959,30 @@
         </div>
       </div>
 
-      <!-- Playable Keyboard / Piano Bed -->
-      <div class="synth-keyboard-wrapper">
-        <div class="synth-keyboard-hint">
-          <span>💡 <strong>Spielen:</strong> Tippe/Klicke auf die Tasten (Wischen für Glissando) oder nutze deine Computertastatur (<strong>A, W, S, E, D, F...</strong>).</span>
+      <!-- Playable Instrument Surfaces: Keyboard, Guitar Fretboard, Bass Fretboard, Stadium Drums -->
+      <div class="synth-surfaces-wrapper">
+        <div class="synth-surface-tabs-bar">
+          <div class="synth-surface-tabs">
+            <button class="synth-surface-tab active" data-surface="keyboard" id="tab-surface-keyboard" title="Klassisches 25-Tasten Klavier / Synth-Keyboard">
+              <span class="tab-icon">🎹</span> KLAVIER-TASTATUR
+            </button>
+            <button class="synth-surface-tab" data-surface="guitar" id="tab-surface-guitar" title="E-Gitarren Griffbrett mit 6 Saiten, Bünden & Rammstein Drop-C Powerchords">
+              <span class="tab-icon">🎸</span> GITARREN-GRIFFBRETT (DROP-C)
+            </button>
+            <button class="synth-surface-tab" data-surface="bass" id="tab-surface-bass" title="Rock-Bass Griffbrett mit 4 dicken Bass-Saiten & Tiefbass">
+              <span class="tab-icon">🎸</span> BASS-GRIFFBRETT
+            </button>
+            <button class="synth-surface-tab" data-surface="drums" id="tab-surface-drums" title="Stadium Drum Kit: 24 Zoll Kick, Marsch-Snare & Becken">
+              <span class="tab-icon">🥁</span> STADIUM DRUM-PADS
+            </button>
+          </div>
+          <div id="synth-surface-hint" class="synth-surface-hint">
+            <span>💡 <strong>Tipp:</strong> Klicke einen Tab oder wähle oben ein Instrument, um das Griffbrett oder Schlagzeug zu öffnen!</span>
+          </div>
         </div>
+
         <div id="synth-keyboard-container" class="synth-keyboard-container">
-          <!-- Rendered dynamically -->
+          <!-- Rendered dynamically depending on active surface -->
         </div>
       </div>
     </section>
@@ -1280,9 +1301,28 @@
         <div id="seq-add-track-panel" class="seq-add-panel hidden">
           <div class="seq-add-section">
             <span class="seq-add-title">🥁 MUSIKINSTRUMENT / DRUM-TON:</span>
-            <div class="seq-add-row">
-              <select id="seq-select-instrument" class="synth-select" style="min-width:180px;">
-                <optgroup label="Toms & Percussion">
+            <div class="seq-add-row" style="flex-wrap:wrap; gap:8px;">
+              <select id="seq-select-instrument" class="synth-select" style="min-width:210px;">
+                <optgroup label="🔥 Rammstein & Rock / Metal">
+                  <option value="rammstein_guitar">🎸 Rammstein Metal Guitar (Drop-C)</option>
+                  <option value="guitar_power_c">🔥 Guitar Powerchord C (0-0-0)</option>
+                  <option value="guitar_power_d">⚡ Guitar Powerchord D (2-2-2)</option>
+                  <option value="guitar_power_f">⚡ Guitar Powerchord F (5-5-5)</option>
+                  <option value="guitar_power_g">⚡ Guitar Powerchord G (7-7-7)</option>
+                  <option value="industrial_pick_bass">🎸 Industrial Rock Bass (C1 Punch)</option>
+                  <option value="industrial_bass_d">🎸 Industrial Rock Bass (D1)</option>
+                  <option value="industrial_bass_f">🎸 Industrial Rock Bass (F1)</option>
+                  <option value="industrial_bass_g">🎸 Industrial Rock Bass (G1)</option>
+                  <option value="stadium_kick">🥁 24" Stadium Basstrommel (55Hz)</option>
+                  <option value="marching_snare">🥁 Stadium Marschtrommel / Snare</option>
+                  <option value="flake_pad">🎹 Flake Dark Industrial Pad</option>
+                </optgroup>
+                <optgroup label="🥁 Drums & Percussion">
+                  <option value="kick">💥 Electronic Beat Kick</option>
+                  <option value="snare">🥁 Classic Trap / Club Snare</option>
+                  <option value="hihat">✨ Hi-Hat (Closed)</option>
+                  <option value="hihat_open">🌟 Hi-Hat (Open)</option>
+                  <option value="clap">👏 Hand Clap</option>
                   <option value="tom_high">🥁 High Tom</option>
                   <option value="tom_mid">🥁 Mid Tom</option>
                   <option value="tom_low">🥁 Low / Floor Tom</option>
@@ -1291,18 +1331,43 @@
                   <option value="shaker">✨ Shaker</option>
                   <option value="crash">💥 Crash Cymbal</option>
                 </optgroup>
-                <optgroup label="Bässe & Synthesizer">
+                <optgroup label="🎹 Bässe & Synthesizer">
                   <option value="tiesto_bass">💥 Tiësto DZZZ Bass</option>
+                  <option value="future_rave_bass">🚀 Future Rave Bass</option>
                   <option value="bass_808">🎸 Deep 808 Sub-Bass</option>
+                  <option value="acid_bass">🔊 Acid / Slap Bass</option>
                   <option value="lead_synth">⚡ EDM Club Lead</option>
                   <option value="piano_chord">🎹 Konzert-Klavier Akkord</option>
+                  <option value="piano_note">🎹 Konzert-Klavier Einzelton</option>
                   <option value="organ_stab">🎶 House Club Orgel</option>
                   <option value="marimba_pluck">🔔 Marimba Pluck</option>
                   <option value="flute_note">🪈 Flöten-Ton</option>
+                  <option value="strings_pad">🎻 Synth Strings & Pad</option>
                   <option value="scratch_fx">💿 DJ Scratch FX</option>
                 </optgroup>
               </select>
-              <button id="btn-add-inst-track" class="btn-seq-confirm">➕ Instrument-Spur</button>
+
+              <select id="seq-select-pitch" class="synth-select" style="min-width:130px;" title="Tonhöhe / Note für Instrument wählen">
+                <option value="default">Standard-Tonhöhe</option>
+                <option value="drop_c">Drop-C (Tief C2)</option>
+                <option value="c">Note C</option>
+                <option value="d">Note D</option>
+                <option value="ds">Note D# / Eb</option>
+                <option value="e">Note E</option>
+                <option value="f">Note F</option>
+                <option value="fs">Note F#</option>
+                <option value="g">Note G</option>
+                <option value="gs">Note G# / Ab</option>
+                <option value="a">Note A</option>
+                <option value="as">Note A# / Bb</option>
+                <option value="b">Note H / B</option>
+                <option value="power_c">🔥 Powerchord C</option>
+                <option value="power_d">⚡ Powerchord D</option>
+                <option value="power_f">⚡ Powerchord F</option>
+                <option value="power_g">⚡ Powerchord G</option>
+              </select>
+
+              <button id="btn-add-inst-track" class="btn-seq-confirm">➕ Spur hinzufügen</button>
             </div>
           </div>
 

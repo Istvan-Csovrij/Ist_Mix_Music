@@ -3354,3 +3354,570 @@ body.deck-d-hidden .decks-right {
 
 
 
+
+/* ==========================================================================
+   MULTI-SURFACE INSTRUMENT STUDIO (Keyboard, Guitar, Bass, Stadium Drums)
+   ========================================================================== */
+
+.synth-surfaces-wrapper {
+  background: #06090e;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.synth-surface-tabs-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.synth-surface-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: #090d16;
+  padding: 4px;
+  border-radius: 6px;
+  border: 1px solid #1e293b;
+}
+
+.synth-surface-tab {
+  flex: 1;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.synth-surface-tab:hover {
+  color: #ffffff;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.synth-surface-tab.active {
+  background: #0f172a;
+  color: #38bdf8;
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+}
+
+.synth-surface-tab[data-surface="guitar"].active {
+  color: #ff5722;
+  border-color: #ff5722;
+  box-shadow: 0 0 12px rgba(255, 87, 34, 0.35);
+}
+
+.synth-surface-tab[data-surface="bass"].active {
+  color: #10b981;
+  border-color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+}
+
+.synth-surface-tab[data-surface="drums"].active {
+  color: #f43f5e;
+  border-color: #f43f5e;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
+}
+
+.synth-surface-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  padding: 2px 4px;
+}
+
+/* ==========================================================================
+   GUITAR & BASS FRETBOARD STYLES
+   ========================================================================== */
+
+.synth-guitar-fretboard-wrapper,
+.synth-bass-fretboard-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.guitar-fretboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #090d16;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.guitar-tuning-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.guitar-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #ff5722;
+  padding: 2px 6px;
+  background: rgba(255, 87, 34, 0.1);
+  border: 1px solid rgba(255, 87, 34, 0.3);
+  border-radius: 4px;
+}
+
+.btn-tuning-select {
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-tuning-select:hover {
+  color: #ffffff;
+  border-color: #38bdf8;
+}
+
+.btn-tuning-select.active {
+  background: rgba(255, 87, 34, 0.2);
+  border-color: #ff5722;
+  color: #ff5722;
+  box-shadow: 0 0 8px rgba(255, 87, 34, 0.3);
+}
+
+.synth-bass-fretboard-wrapper .btn-tuning-select.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+/* Powerchord Quick Riff Bar */
+.guitar-powerchords-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #0b0f19;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.powerchords-label {
+  font-size: 10px;
+  font-weight: 900;
+  color: #ff5722;
+  letter-spacing: 0.5px;
+}
+
+.powerchords-btns {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.btn-guitar-powerchord {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  user-select: none;
+}
+
+.btn-guitar-powerchord:hover {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  border-color: #ff5722;
+  color: #ff5722;
+  transform: translateY(-1px);
+}
+
+.btn-guitar-powerchord.active,
+.btn-guitar-powerchord:active {
+  background: #ff5722 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px #ff5722 !important;
+  transform: translateY(1px);
+}
+
+/* Fretboard Neck Graphic Container */
+.guitar-fretboard-neck {
+  position: relative;
+  min-width: 820px;
+  width: 100%;
+  background: linear-gradient(180deg, #18110b 0%, #2c1d12 40%, #1e130b 100%);
+  border: 2px solid #3d2919;
+  border-radius: 6px;
+  padding: 8px 0 10px 0;
+  box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.8), 0 4px 14px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+
+.guitar-fretboard-neck.bass-neck {
+  background: linear-gradient(180deg, #0e1713 0%, #192b23 40%, #0d1712 100%);
+  border-color: #1a4231;
+}
+
+/* Fret Numbers Header */
+.guitar-frets-header {
+  display: flex;
+  padding-left: 55px; /* space for string labels */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 4px;
+}
+
+.guitar-fret-number {
+  flex: 1;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 800;
+  font-family: var(--font-mono, monospace);
+  color: #64748b;
+  padding: 2px 0;
+}
+
+.guitar-fret-number.inlay-marker {
+  color: #ff5722;
+  font-weight: 900;
+}
+
+.bass-neck .guitar-fret-number.inlay-marker {
+  color: #10b981;
+}
+
+/* Inlays Row Overlay */
+.guitar-inlays-row {
+  display: flex;
+  padding-left: 55px;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.guitar-inlay-cell {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.fret-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f1f5f9 0%, #94a3b8 70%, #64748b 100%);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+  opacity: 0.65;
+}
+
+.fret-dot.double {
+  width: 7px;
+  height: 7px;
+}
+
+/* Strings Container */
+.guitar-strings-container {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.guitar-string-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 26px;
+}
+
+/* Visual String Wire */
+.guitar-string-wire {
+  position: absolute;
+  left: 55px;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 50%, #475569 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.guitar-string-wire.bass-wire {
+  background: linear-gradient(180deg, #cbd5e1 0%, #64748b 40%, #1e293b 100%);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.95);
+}
+
+.guitar-string-wire.vibrating {
+  animation: string-vibrate 0.18s ease-in-out infinite;
+}
+
+@keyframes string-vibrate {
+  0%   { transform: translateY(-50%) translateY(-1.5px); }
+  50%  { transform: translateY(-50%) translateY(1.5px); }
+  100% { transform: translateY(-50%) translateY(0); }
+}
+
+/* String Label on Left */
+.guitar-string-label {
+  width: 55px;
+  font-size: 10px;
+  font-weight: 900;
+  font-family: var(--font-mono, monospace);
+  color: #f1f5f9;
+  text-align: center;
+  padding: 2px 4px;
+  background: #0f172a;
+  border-right: 2px solid #e2e8f0;
+  border-radius: 3px 0 0 3px;
+  z-index: 3;
+}
+
+.guitar-string-label.bass-label {
+  color: #10b981;
+  border-right-color: #10b981;
+}
+
+/* Interactive Fret Positions */
+.guitar-fret-pos {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 2px solid #cbd5e1;
+  position: relative;
+  z-index: 3;
+  cursor: pointer;
+  transition: all 0.08s ease;
+}
+
+.guitar-fret-pos.open-nut {
+  border-right: 4px solid #f8fafc;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.guitar-fret-pos:hover {
+  background: rgba(255, 87, 34, 0.15);
+}
+
+.bass-neck .guitar-fret-pos:hover {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.fret-note-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #e2e8f0;
+  pointer-events: none;
+  transition: all 0.1s ease;
+}
+
+.fret-note-oct {
+  font-size: 7px;
+  color: #94a3b8;
+}
+
+.guitar-fret-pos.pressed .fret-note-pill,
+.guitar-fret-pos.active .fret-note-pill {
+  background: #ff5722 !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px #ff5722 !important;
+  transform: scale(1.15);
+}
+
+.guitar-fret-pos.pressed .fret-note-oct,
+.guitar-fret-pos.active .fret-note-oct {
+  color: #ffffff !important;
+}
+
+.bass-neck .guitar-fret-pos.pressed .fret-note-pill,
+.bass-neck .guitar-fret-pos.active .fret-note-pill {
+  background: #10b981 !important;
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px #10b981 !important;
+  transform: scale(1.15);
+}
+
+/* ==========================================================================
+   STADIUM DRUM KIT PADS
+   ========================================================================== */
+
+.synth-drum-kit-wrapper {
+  width: 100%;
+  padding: 6px 0;
+}
+
+.stadium-drum-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .stadium-drum-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stadium-drum-pad {
+  position: relative;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid var(--drum-color, #38bdf8);
+  border-radius: 8px;
+  padding: 16px 12px;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.stadium-drum-pad:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), 0 0 12px var(--drum-color, #38bdf8);
+}
+
+.stadium-drum-pad.hit,
+.stadium-drum-pad:active {
+  transform: translateY(2px) scale(0.98);
+  background: var(--drum-color, #38bdf8) !important;
+  box-shadow: 0 0 24px var(--drum-color, #38bdf8), inset 0 2px 8px rgba(0,0,0,0.6) !important;
+}
+
+.drum-pad-sensor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.drum-pad-icon {
+  font-size: 26px;
+}
+
+.drum-pad-name {
+  font-size: 11px;
+  font-weight: 900;
+  color: #f1f5f9;
+  letter-spacing: 0.5px;
+}
+
+.drum-pad-sub {
+  font-size: 9px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.drum-pad-key {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 9px;
+  font-weight: 900;
+  font-family: var(--font-mono, monospace);
+  color: var(--drum-color, #38bdf8);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.stadium-drum-pad.hit .drum-pad-name,
+.stadium-drum-pad.hit .drum-pad-sub,
+.stadium-drum-pad.hit .drum-pad-key {
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   SEQUENCER TRACK SWITCHER & MODAL
+   ========================================================================== */
+
+.btn-track-switch {
+  background: transparent;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  border-radius: 3px;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.btn-track-switch:hover {
+  color: #38bdf8;
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+}
+
+.seq-track-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.15s ease;
+}
+
+.seq-track-modal-box {
+  background: #0f172a;
+  border: 2px solid #38bdf8;
+  border-radius: 8px;
+  padding: 16px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.3);
+}
+
+.seq-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #1e293b;
+}
