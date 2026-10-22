@@ -192,6 +192,46 @@ class SynthStudio {
         attack: 0.002,
         release: 0.35,
         drive: 0.0
+      },
+      rammstein_guitar: {
+        name: 'Rammstein Metal Guitar',
+        icon: '🔥',
+        cutoff: 4200,
+        res: 4.5,
+        octave: -1,
+        attack: 0.002,
+        release: 0.16,
+        drive: 0.88
+      },
+      industrial_pick_bass: {
+        name: 'Industrial Rock Bass',
+        icon: '⚡',
+        cutoff: 2600,
+        res: 5.0,
+        octave: -2,
+        attack: 0.003,
+        release: 0.22,
+        drive: 0.75
+      },
+      stadium_marching_drums: {
+        name: 'Stadium Kick & Marsch-Snare',
+        icon: '🥁',
+        cutoff: 6000,
+        res: 2.0,
+        octave: -1,
+        attack: 0.001,
+        release: 0.35,
+        drive: 0.40
+      },
+      flake_industrial_pad: {
+        name: 'Flake Dark Industrial Pad',
+        icon: '🎹',
+        cutoff: 3400,
+        res: 3.5,
+        octave: 0,
+        attack: 0.18,
+        release: 0.80,
+        drive: 0.25
       }
     };
 
@@ -1030,6 +1070,202 @@ class SynthStudio {
 
         envGain.gain.linearRampToValueAtTime(0.9, now + this.attackTime);
         envGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        break;
+      }
+
+      case 'rammstein_guitar': {
+        // Rammstein Mesa Boogie Dual Rectifier / Drop-C High Gain Distortion
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const subOsc = ctx.createOscillator();
+
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(freq, now);
+
+        osc2.type = 'sawtooth';
+        osc2.frequency.setValueAtTime(freq, now);
+        osc2.detune.setValueAtTime(8.0, now); // 8 cents detune for massive stereo-like width
+
+        // Fifth / sub-octave powerchord harmonic body
+        subOsc.type = 'square';
+        subOsc.frequency.setValueAtTime(freq * 0.5, now);
+
+        // Palm-Mute Pick Chug Transient in first 22ms
+        osc1.frequency.setValueAtTime(freq * 1.35, now);
+        osc1.frequency.exponentialRampToValueAtTime(freq, now + 0.022);
+        osc2.frequency.setValueAtTime(freq * 1.35, now);
+        osc2.frequency.exponentialRampToValueAtTime(freq, now + 0.022);
+
+        // Pre-gain into extreme High-Gain Distortion
+        const preGain = ctx.createGain();
+        preGain.gain.setValueAtTime(1.4, now);
+        osc1.connect(preGain);
+        osc2.connect(preGain);
+        subOsc.connect(preGain);
+
+        // Non-linear WaveShaper for high-gain tube distortion
+        const shaper = ctx.createWaveShaper();
+        shaper.curve = this._getTanhCurve(3.2); // heavy crunch
+        shaper.oversample = '4x';
+        preGain.connect(shaper);
+
+        // 4x12 Guitar Cabinet Speaker Simulation (Bandpass peak around 2.6kHz + High Shelf Cut)
+        const cabFilter = ctx.createBiquadFilter();
+        cabFilter.type = 'bandpass';
+        cabFilter.frequency.setValueAtTime(2600, now);
+        cabFilter.Q.setValueAtTime(1.8, now);
+
+        shaper.connect(cabFilter);
+        cabFilter.connect(filter);
+
+        filter.Q.setValueAtTime(Math.max(3.5, this.filterResonance), now);
+        filter.frequency.setValueAtTime(Math.min(7500, this.filterCutoff), now);
+
+        // Punchy palm-mute decay
+        envGain.gain.linearRampToValueAtTime(0.95, now + 0.002);
+        envGain.gain.exponentialRampToValueAtTime(0.40, now + 0.16);
+
+        [osc1, osc2, subOsc].forEach(o => { o.start(now); voice.oscillators.push(o); });
+        break;
+      }
+
+      case 'industrial_pick_bass': {
+        // Bi-Amp Pick Rock Bass: Deep Clean Sub + Overdriven Grunt
+        const subOsc = ctx.createOscillator();
+        subOsc.type = 'sine';
+        subOsc.frequency.setValueAtTime(freq, now);
+
+        const subGain = ctx.createGain();
+        subGain.gain.setValueAtTime(0.85, now);
+        subOsc.connect(subGain);
+        subGain.connect(envGain); // clean punchy sub 40-90Hz
+
+        // Overdrive layer for pick attack & bite
+        const driveOsc1 = ctx.createOscillator();
+        const driveOsc2 = ctx.createOscillator();
+        driveOsc1.type = 'sawtooth';
+        driveOsc1.frequency.setValueAtTime(freq, now);
+        driveOsc2.type = 'triangle';
+        driveOsc2.frequency.setValueAtTime(freq, now);
+        driveOsc2.detune.setValueAtTime(4.0, now);
+
+        // Pick click transient at 1.8kHz
+        driveOsc1.frequency.setValueAtTime(freq * 1.8, now);
+        driveOsc1.frequency.exponentialRampToValueAtTime(freq, now + 0.015);
+
+        const drivePre = ctx.createGain();
+        drivePre.gain.setValueAtTime(1.2, now);
+        driveOsc1.connect(drivePre);
+        driveOsc2.connect(drivePre);
+
+        const shaper = ctx.createWaveShaper();
+        shaper.curve = this._getTanhCurve(2.2);
+        drivePre.connect(shaper);
+        shaper.connect(filter);
+
+        filter.frequency.setValueAtTime(Math.min(3800, this.filterCutoff), now);
+        filter.Q.setValueAtTime(4.0, now);
+
+        envGain.gain.linearRampToValueAtTime(0.95, now + 0.003);
+        envGain.gain.exponentialRampToValueAtTime(0.35, now + 0.22);
+
+        [subOsc, driveOsc1, driveOsc2].forEach(o => { o.start(now); voice.oscillators.push(o); });
+        break;
+      }
+
+      case 'stadium_marching_drums': {
+        // Doom Schneider Stadium Kick (lower notes) / Marching Snare (higher notes)
+        if (midi < 54) {
+          // Stadium Basstrommel (24" Kick with 55Hz sub & click)
+          const kickOsc = ctx.createOscillator();
+          kickOsc.type = 'sine';
+          kickOsc.frequency.setValueAtTime(190, now);
+          kickOsc.frequency.exponentialRampToValueAtTime(52, now + 0.08);
+          kickOsc.frequency.exponentialRampToValueAtTime(28, now + 0.35);
+
+          const kickGain = ctx.createGain();
+          kickGain.gain.setValueAtTime(1.4, now);
+          kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          kickOsc.connect(kickGain);
+          kickGain.connect(filter);
+
+          kickOsc.start(now);
+          kickOsc.stop(now + 0.5);
+          voice.oscillators.push(kickOsc);
+        } else {
+          // Marsch-Snare mit Snare-Teppich Noise & Body
+          const snareOsc = ctx.createOscillator();
+          snareOsc.type = 'triangle';
+          snareOsc.frequency.setValueAtTime(220, now);
+          snareOsc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+
+          const snareGain = ctx.createGain();
+          snareGain.gain.setValueAtTime(0.9, now);
+          snareGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          snareOsc.connect(snareGain);
+          snareGain.connect(filter);
+
+          // White noise snare wires
+          if (window.audioEngine && window.audioEngine.noiseBuffer) {
+            const noise = ctx.createBufferSource();
+            noise.buffer = window.audioEngine.noiseBuffer;
+            const noiseFilter = ctx.createBiquadFilter();
+            noiseFilter.type = 'highpass';
+            noiseFilter.frequency.setValueAtTime(1200, now);
+            const noiseGain = ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.85, now);
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(filter);
+            noise.start(now);
+            noise.stop(now + 0.3);
+          }
+
+          snareOsc.start(now);
+          snareOsc.stop(now + 0.2);
+          voice.oscillators.push(snareOsc);
+        }
+
+        envGain.gain.setValueAtTime(1.0, now);
+        break;
+      }
+
+      case 'flake_industrial_pad': {
+        // Christian "Flake" Lorenz Eerie Industrial Synth Pad with Glassy Overtone
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const bellOsc = ctx.createOscillator();
+
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(freq, now);
+
+        osc2.type = 'sawtooth';
+        osc2.frequency.setValueAtTime(freq, now);
+        osc2.detune.setValueAtTime(14.0, now);
+
+        // Glassy bell overtone (+19 semitones = Octave + Fifth)
+        bellOsc.type = 'sine';
+        bellOsc.frequency.setValueAtTime(freq * 3.0, now);
+
+        const bellGain = ctx.createGain();
+        bellGain.gain.setValueAtTime(0.35, now);
+        bellOsc.connect(bellGain);
+        bellGain.connect(filter);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(Math.min(4500, this.filterCutoff), now);
+        filter.Q.setValueAtTime(3.0, now);
+
+        // Atmospheric slow attack & ambient swell
+        envGain.gain.setValueAtTime(0.0, now);
+        envGain.gain.linearRampToValueAtTime(0.9, now + Math.max(0.12, this.attackTime));
+        envGain.gain.exponentialRampToValueAtTime(0.45, now + 0.4);
+
+        [osc1, osc2, bellOsc].forEach(o => { o.start(now); voice.oscillators.push(o); });
         break;
       }
     }
